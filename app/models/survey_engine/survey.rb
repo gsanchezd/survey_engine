@@ -5,9 +5,9 @@ module SurveyEngine
     end
 
     has_many :questions, dependent: :destroy
-    # has_many :participants, dependent: :destroy  # Will be added in Phase 2
-    # has_many :responses, dependent: :destroy  # Will be added in Phase 2
-    # has_many :settings, dependent: :destroy  # Will be added in Phase 2
+    has_many :participants, dependent: :destroy
+    has_many :responses, dependent: :destroy
+    # has_many :settings, dependent: :destroy  # Will be added when Settings model is created
 
     validates :title, presence: true, length: { maximum: 255 }
     validates :description, length: { maximum: 2000 }
@@ -56,13 +56,13 @@ module SurveyEngine
       questions.count
     end
 
-    # def responses_count
-    #   responses.count
-    # end
+    def responses_count
+      responses.count
+    end
 
-    # def participants_count
-    #   participants.count
-    # end
+    def participants_count
+      participants.count
+    end
 
     def publish!
       update!(status: 'published', is_active: true, published_at: Time.current)

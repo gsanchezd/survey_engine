@@ -5,7 +5,8 @@ module SurveyEngine
     end
 
     belongs_to :question
-    # has_many :answer_options, dependent: :destroy  # Will be added in Phase 2
+    has_many :answer_options, dependent: :destroy
+    has_many :answers, through: :answer_options
 
     validates :option_text, presence: true, length: { maximum: 255 }
     validates :option_value, presence: true, length: { maximum: 100 }

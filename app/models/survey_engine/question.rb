@@ -7,7 +7,7 @@ module SurveyEngine
     belongs_to :survey
     belongs_to :question_type
     has_many :options, dependent: :destroy
-    # has_many :answers, dependent: :destroy  # Will be added in Phase 2
+    has_many :answers, dependent: :destroy
 
     validates :title, presence: true, length: { maximum: 500 }
     validates :description, length: { maximum: 1000 }
