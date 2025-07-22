@@ -42,10 +42,7 @@ survey_template = SurveyEngine::Survey.create!(
 
 #### Add Question Types (one-time setup)
 ```ruby
-# Seed standard question types
-SurveyEngine::QuestionType.seed_standard_types
-
-# Or create custom types
+# Create standard question types
 text_type = SurveyEngine::QuestionType.create!(
   name: "text",
   description: "Free text input",
@@ -53,16 +50,51 @@ text_type = SurveyEngine::QuestionType.create!(
   allows_multiple_selections: false
 )
 
-choice_type = SurveyEngine::QuestionType.create!(
+single_choice_type = SurveyEngine::QuestionType.create!(
   name: "single_choice", 
   description: "Single selection",
   allows_options: true,
   allows_multiple_selections: false
 )
 
+multiple_choice_type = SurveyEngine::QuestionType.create!(
+  name: "multiple_choice",
+  description: "Multiple selections allowed",
+  allows_options: true,
+  allows_multiple_selections: true
+)
+
 scale_type = SurveyEngine::QuestionType.create!(
   name: "scale",
   description: "Numeric scale",
+  allows_options: false,
+  allows_multiple_selections: false
+)
+
+boolean_type = SurveyEngine::QuestionType.create!(
+  name: "boolean",
+  description: "Yes/No questions",
+  allows_options: false,
+  allows_multiple_selections: false
+)
+
+email_type = SurveyEngine::QuestionType.create!(
+  name: "email",
+  description: "Email address input",
+  allows_options: false,
+  allows_multiple_selections: false
+)
+
+number_type = SurveyEngine::QuestionType.create!(
+  name: "number",
+  description: "Numeric input",
+  allows_options: false,
+  allows_multiple_selections: false
+)
+
+date_type = SurveyEngine::QuestionType.create!(
+  name: "date",
+  description: "Date selection",
   allows_options: false,
   allows_multiple_selections: false
 )
@@ -96,7 +128,7 @@ scale_question = SurveyEngine::Question.create!(
 # Multiple choice question
 choice_question = SurveyEngine::Question.create!(
   survey: survey_template,
-  question_type: choice_type,
+  question_type: single_choice_type,
   title: "Which format did you prefer?",
   is_required: true,
   order_position: 3
@@ -138,8 +170,15 @@ SurveyEngine::Option.create!(
 
 #### Create Survey Per Cohort (Recommended Approach)
 ```ruby
-# For each cohort, create a survey from the template
-cohort_ids = ["cohort_spring_2024", "cohort_summer_2024", "cohort_fall_2024"]
+# Define your cohorts (replace with your actual cohort identifiers)
+cohort_ids = [
+  "cohort_spring_2024",
+  "cohort_summer_2024", 
+  "cohort_fall_2024",
+  "cohort_enterprise_pilot",
+  "cohort_beta_users",
+  "cohort_premium_customers"
+]
 
 cohort_ids.each do |cohort_id|
   # Create survey for this cohort
@@ -288,6 +327,21 @@ def submit_answer(response_id, question_id, answer_data)
     { error: answer.errors.full_messages.join(", ") }
   end
 end
+
+# Example usage - answering a text question
+submit_answer(response_id, text_question.id, { text_answer: "The course was very informative and well-structured" })
+
+# Example usage - answering a scale question  
+submit_answer(response_id, scale_question.id, { numeric_answer: 4 })
+
+# Example usage - answering a single choice question
+submit_answer(response_id, choice_question.id, { option_id: online_option.id })
+
+# Example usage - answering "other" option with custom text
+submit_answer(response_id, choice_question.id, { 
+  option_id: other_option.id, 
+  other_text: "Combination of recorded videos and live Q&A sessions" 
+})
 ```
 
 #### Complete Survey Response
@@ -307,6 +361,146 @@ def complete_survey_response(response_id)
     completion_time: response.completion_time
   }
 end
+```
+
+### Complete Survey Response Simulation
+
+Here's a complete example simulating multiple users responding to a survey:
+
+```ruby
+# Assume we have a published survey with questions already created
+survey = SurveyEngine::Survey.find_by(title: "Student Satisfaction Survey Template - cohort_spring_2024")
+
+# Get the questions for reference
+text_question = survey.questions.find_by(order_position: 1)
+scale_question = survey.questions.find_by(order_position: 2) 
+choice_question = survey.questions.find_by(order_position: 3)
+
+# Get choice options
+in_person_option = choice_question.options.find_by(option_value: "in_person")
+online_option = choice_question.options.find_by(option_value: "online")
+hybrid_option = choice_question.options.find_by(option_value: "hybrid")
+other_option = choice_question.options.find_by(option_value: "other")
+
+# Simulate responses from different participants
+participants_data = [
+  {
+    email: "alice.student@university.edu",
+    text_answer: "The interactive sessions and practical examples were excellent",
+    scale_answer: 5,
+    choice_option: in_person_option
+  },
+  {
+    email: "bob.learner@college.edu", 
+    text_answer: "Good content but could use more hands-on exercises",
+    scale_answer: 4,
+    choice_option: hybrid_option
+  },
+  {
+    email: "carol.pupil@school.edu",
+    text_answer: "Amazing course! Very well structured and informative",
+    scale_answer: 5,
+    choice_option: online_option
+  },
+  {
+    email: "david.scholar@academy.edu",
+    text_answer: "The course was okay, nothing exceptional",
+    scale_answer: 3,
+    choice_option: in_person_option
+  },
+  {
+    email: "eve.trainee@institute.edu",
+    text_answer: "Loved the flexibility and personalized feedback approach",
+    scale_answer: 4,
+    choice_option: other_option,
+    other_text: "Self-paced online with weekly mentorship calls"
+  }
+]
+
+# Create responses for each participant
+participants_data.each do |participant_data|
+  # Create participant
+  participant = SurveyEngine::Participant.create!(
+    survey: survey,
+    email: participant_data[:email],
+    status: 'invited'
+  )
+  
+  # Start response
+  response = SurveyEngine::Response.create!(
+    survey: survey,
+    participant: participant
+  )
+  
+  # Answer text question
+  text_answer = SurveyEngine::Answer.create!(
+    response: response,
+    question: text_question,
+    text_answer: participant_data[:text_answer]
+  )
+  
+  # Answer scale question
+  scale_answer = SurveyEngine::Answer.create!(
+    response: response,
+    question: scale_question,
+    numeric_answer: participant_data[:scale_answer]
+  )
+  
+  # Answer choice question
+  choice_answer = SurveyEngine::Answer.create!(
+    response: response,
+    question: choice_question
+  )
+  
+  # Add the selected option
+  SurveyEngine::AnswerOption.create!(
+    answer: choice_answer,
+    option: participant_data[:choice_option]
+  )
+  
+  # Add other text if it's an "other" option
+  if participant_data[:choice_option] == other_option && participant_data[:other_text]
+    choice_answer.update!(other_text: participant_data[:other_text])
+  end
+  
+  # Complete the response
+  response.complete!
+  participant.complete!
+  
+  puts "✅ #{participant_data[:email]} completed survey"
+end
+
+# Display survey results summary
+puts "\n📊 SURVEY RESULTS SUMMARY"
+puts "=" * 50
+puts "Survey: #{survey.title}"
+puts "Total Participants: #{survey.participants.count}"
+puts "Completed Responses: #{survey.participants.completed.count}"
+puts "Completion Rate: #{SurveyEngine::Participant.completion_rate_for_survey(survey)}%"
+
+# Show scale question results
+scale_scores = survey.responses.completed
+  .joins(:answers)
+  .where(survey_engine_answers: { question: scale_question })
+  .pluck(:numeric_answer)
+
+puts "\nSatisfaction Ratings (1-5 scale):"
+puts "Average: #{(scale_scores.sum.to_f / scale_scores.count).round(2)}"
+puts "Distribution: #{scale_scores.group_by(&:itself).transform_values(&:count)}"
+
+# Show choice question results
+choice_results = {}
+survey.responses.completed.each do |response|
+  answer = response.answer_for_question(choice_question)
+  if answer&.options&.any?
+    option = answer.options.first
+    key = option.is_other? ? "Other: #{answer.other_text}" : option.option_text
+    choice_results[key] = (choice_results[key] || 0) + 1
+  end
+end
+
+puts "\nPreferred Format:"
+choice_results.each { |format, count| puts "  #{format}: #{count}" }
 ```
 
 ### 4. Analytics & Reporting
@@ -690,8 +884,8 @@ nps_scores = []
 feedback_responses = []
 
 completed_responses.each do |response|
-  nps_answer = response.answers.joins(:question).find_by(questions: { order_position: 1 })
-  feedback_answer = response.answers.joins(:question).find_by(questions: { order_position: 2 })
+  nps_answer = response.answers.joins(:question).find_by(survey_engine_questions: { order_position: 1 })
+  feedback_answer = response.answers.joins(:question).find_by(survey_engine_questions: { order_position: 2 })
   
   nps_scores << nps_answer.numeric_answer if nps_answer
   feedback_responses << {
@@ -807,7 +1001,7 @@ nps_surveys.each do |cohort_survey|
   
   if responses.any?
     scores = responses.map do |response|
-      nps_answer = response.answers.joins(:question).find_by(questions: { order_position: 1 })
+      nps_answer = response.answers.joins(:question).find_by(survey_engine_questions: { order_position: 1 })
       nps_answer&.numeric_answer
     end.compact
     
