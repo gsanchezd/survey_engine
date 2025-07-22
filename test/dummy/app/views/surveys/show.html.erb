@@ -1,0 +1,87 @@
+<%= link_to "← Back to Surveys", surveys_path, style: "text-decoration: none; color: #007cba;" %>
+
+<h1><%= @survey.title %></h1>
+<p><%= @survey.description %></p>
+
+<div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+  <strong>Survey Details:</strong>
+  <%= @survey.questions.count %> questions | 
+  <%= @survey.participants.count %> participants |
+  Status: <span style="color: green;"><%= @survey.status.capitalize %></span>
+</div>
+
+<% unless @survey.can_receive_responses? %>
+  <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; color: #856404;">
+    <strong>Notice:</strong> This survey is not currently accepting responses.
+  </div>
+<% end %>
+
+<% if @participant&.completed? %>
+  <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #155724;">
+    <strong>Already Completed!</strong> You have already completed this survey.
+    <%= link_to "View Results", survey_completed_path(@survey, email: @email), 
+        style: "background: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; margin-left: 10px;" %>
+  </div>
+<% elsif @survey.can_receive_responses? %>
+  
+  <div style="background: white; border: 1px solid #ddd; padding: 20px; border-radius: 5px; margin: 20px 0;">
+    <h3>Start Survey</h3>
+    <p>Please enter your email address to begin:</p>
+    
+    <%= form_tag start_survey_path(@survey), method: :post, style: "margin: 15px 0;" do %>
+      <div style="margin: 10px 0;">
+        <%= label_tag :email, "Email Address:", style: "display: block; margin-bottom: 5px; font-weight: bold;" %>
+        <%= email_field_tag :email, @email, 
+            placeholder: "your.email@example.com",
+            required: true,
+            style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; width: 300px; max-width: 100%;" %>
+      </div>
+      
+      <div style="margin: 20px 0;">
+        <%= submit_tag "Start Survey", 
+            style: "background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 3px; cursor: pointer; font-size: 16px;" %>
+      </div>
+    <% end %>
+  </div>
+
+<% end %>
+
+<div style="margin: 30px 0;">
+  <h3>Survey Preview</h3>
+  <p style="color: #666; font-style: italic;">This is what participants will see:</p>
+  
+  <div style="border: 1px solid #eee; padding: 20px; border-radius: 5px; background: #fafafa;">
+    <% @questions.each_with_index do |question, index| %>
+      <div style="margin: 20px 0; padding: 15px; background: white; border-radius: 3px;">
+        <h4 style="margin: 0 0 10px 0; color: #333;">
+          <%= index + 1 %>. <%= question.title %>
+          <% if question.required? %>
+            <span style="color: red;">*</span>
+          <% end %>
+        </h4>
+        
+        <% if question.description.present? %>
+          <p style="color: #666; margin: 5px 0 15px 0; font-size: 0.9em;"><%= question.description %></p>
+        <% end %>
+        
+        <div style="color: #888; font-size: 0.85em;">
+          <strong>Type:</strong> <%= question.question_type.description %>
+          
+          <% case question.question_type.name %>
+          <% when 'text' %>
+            <br><em>Participants will enter free text</em>
+          <% when 'scale' %>
+            <br><em>Scale from <%= question.scale_min %> (<%= question.scale_min_label %>) to <%= question.scale_max %> (<%= question.scale_max_label %>)</em>
+          <% when 'single_choice', 'multiple_choice' %>
+            <br><em>Options:</em>
+            <ul style="margin: 5px 0; padding-left: 20px;">
+              <% question.options.ordered.each do |option| %>
+                <li><%= option.option_text %><% if option.is_other? %> <em>(allows custom text)</em><% end %></li>
+              <% end %>
+            </ul>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

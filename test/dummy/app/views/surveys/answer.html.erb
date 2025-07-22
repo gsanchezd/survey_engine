@@ -1,0 +1,149 @@
+<%= link_to "← Back to Surveys", surveys_path, style: "text-decoration: none; color: #007cba;" %>
+
+<h1>Answering: <%= @survey.title %></h1>
+<p><%= @survey.description %></p>
+
+<div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
+  <strong>Progress:</strong> 
+  <%= @response.answers.count %> of <%= @questions.count %> questions answered
+  (<%= @response.completion_percentage %>% complete)
+</div>
+
+<% if notice %>
+  <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #155724;">
+    <%= notice %>
+  </div>
+<% end %>
+
+<% if alert %>
+  <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #721c24;">
+    <%= alert %>
+  </div>
+<% end %>
+
+<% @questions.each_with_index do |question, index| %>
+  <div style="border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 5px; background: white;">
+    <h3 style="margin: 0 0 15px 0; color: #333;">
+      <%= index + 1 %>. <%= question.title %>
+      <% if question.required? %>
+        <span style="color: red; font-size: 0.8em;">*required</span>
+      <% end %>
+    </h3>
+    
+    <% if question.description.present? %>
+      <p style="color: #666; margin: 5px 0 20px 0;"><%= question.description %></p>
+    <% end %>
+    
+    <%= form_tag submit_answer_survey_path(@survey), method: :post, style: "margin: 15px 0;" do %>
+      <%= hidden_field_tag :question_id, question.id %>
+      
+      <% existing_answer = @answers[question.id] %>
+      
+      <% case question.question_type.name %>
+      <% when 'text' %>
+        <%= text_area_tag :text_answer, existing_answer&.text_answer, 
+            placeholder: question.placeholder_text || "Enter your answer here...",
+            style: "width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 3px;",
+            maxlength: question.max_characters %>
+            
+      <% when 'scale' %>
+        <div style="margin: 15px 0;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+            <span style="font-size: 0.9em; color: #666;"><%= question.scale_min_label %></span>
+            <span style="font-size: 0.9em; color: #666;"><%= question.scale_max_label %></span>
+          </div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <% (question.scale_min..question.scale_max).each do |value| %>
+              <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+                <%= radio_button_tag :numeric_answer, value, 
+                    existing_answer&.numeric_answer == value,
+                    style: "margin-bottom: 5px;" %>
+                <span style="font-size: 0.9em;"><%= value %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+        
+      <% when 'number' %>
+        <%= number_field_tag :numeric_answer, existing_answer&.numeric_answer,
+            style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; width: 150px;" %>
+            
+      <% when 'boolean' %>
+        <div style="margin: 15px 0;">
+          <label style="display: block; margin: 10px 0; cursor: pointer;">
+            <%= radio_button_tag :boolean_answer, '1', existing_answer&.boolean_answer == true %>
+            Yes
+          </label>
+          <label style="display: block; margin: 10px 0; cursor: pointer;">
+            <%= radio_button_tag :boolean_answer, '0', existing_answer&.boolean_answer == false %>
+            No
+          </label>
+        </div>
+        
+      <% when 'single_choice' %>
+        <div style="margin: 15px 0;">
+          <% question.options.ordered.each do |option| %>
+            <label style="display: block; margin: 10px 0; cursor: pointer;">
+              <%= radio_button_tag :option_id, option.id, 
+                  existing_answer&.options&.include?(option),
+                  onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil %>
+              <%= option.option_text %>
+            </label>
+            
+            <% if option.is_other? %>
+              <div id="other_text_<%= question.id %>" style="<%= existing_answer&.options&.include?(option) ? 'display: block;' : 'display: none;' %> margin-left: 25px; margin-top: 5px;">
+                <%= text_field_tag :other_text, existing_answer&.other_text,
+                    placeholder: "Please specify...",
+                    style: "padding: 8px; border: 1px solid #ccc; border-radius: 3px; width: 300px; max-width: 100%;" %>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+        
+      <% when 'multiple_choice' %>
+        <div style="margin: 15px 0;">
+          <% question.options.ordered.each do |option| %>
+            <label style="display: block; margin: 10px 0; cursor: pointer;">
+              <%= check_box_tag "option_ids[]", option.id, 
+                  existing_answer&.options&.include?(option),
+                  onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil %>
+              <%= option.option_text %>
+            </label>
+          <% end %>
+          
+          <% if question.options.any?(&:is_other?) %>
+            <div id="other_text_<%= question.id %>" style="<%= existing_answer&.other_text.present? ? 'display: block;' : 'display: none;' %> margin-left: 25px; margin-top: 10px;">
+              <%= text_field_tag :other_text, existing_answer&.other_text,
+                  placeholder: "Please specify other option...",
+                  style: "padding: 8px; border: 1px solid #ccc; border-radius: 3px; width: 300px; max-width: 100%;" %>
+            </div>
+          <% end %>
+        </div>
+        
+      <% end %>
+      
+      <div style="margin: 20px 0;">
+        <%= submit_tag existing_answer ? "Update Answer" : "Save Answer", 
+            style: "background: #007cba; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer;" %>
+      </div>
+    <% end %>
+    
+    <% if existing_answer %>
+      <div style="background: #e8f5e8; padding: 10px; border-radius: 3px; margin-top: 15px; font-size: 0.9em;">
+        <strong>Current answer:</strong> <%= existing_answer.display_value %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<div style="text-align: center; margin: 40px 0; padding: 20px; background: #f8f9fa; border-radius: 5px;">
+  <h3>Ready to submit your survey?</h3>
+  <p>Make sure you've answered all the questions you want to answer.</p>
+  
+  <%= form_tag complete_survey_path(@survey), method: :post do %>
+    <%= submit_tag "Complete Survey", 
+        style: "background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;",
+        confirm: "Are you sure you want to complete the survey? You won't be able to change your answers after this." %>
+  <% end %>
+</div>
