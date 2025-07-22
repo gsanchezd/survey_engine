@@ -129,32 +129,28 @@ Answer options for choice-based questions with enhanced functionality.
 - `created_at`, `updated_at`: Timestamps
 
 #### participants
-User participation/session tracking.
+Email-based duplicate prevention and completion tracking.
 - `id` (PK): Unique identifier
 - `survey_id` (FK): Reference to surveys
-- `user_id` or `participant_identifier`: User reference (can be polymorphic)
-- `status`: Enum (invited, started, completed, abandoned)
-- `invited_at`: When participant was invited
-- `started_at`: When response was started
-- `completed_at`: When response was completed
-- `last_activity_at`: Last interaction timestamp
+- `email`: Email address of participant (from external platform)
+- `status`: Enum (invited, completed) - simplified two-state tracking
+- `completed_at`: When survey was completed
 - `created_at`, `updated_at`: Timestamps
+- **Unique Index**: `[survey_id, email]` - prevents duplicate responses per survey
 
 #### responses
 Complete user submission to a survey.
 - `id` (PK): Unique identifier
 - `survey_id` (FK): Reference to surveys
 - `participant_id` (FK): Reference to participants
-- `started_at`: Response start time
-- `completed_at`: Response completion time
-- `is_completed`: Boolean, if survey finished
+- `completed_at`: When response was submitted
 - `created_at`, `updated_at`: Timestamps
 
 #### answers
 Individual answers to survey questions with multiple choice support.
 - `id` (PK): Unique identifier
 - `response_id` (FK): Reference to responses
-- `survey_question_id` (FK): Reference to survey_questions
+- `question_id` (FK): Reference to questions (updated from survey_questions)
 - `text_answer`: Text response
 - `numeric_answer`: Integer response
 - `decimal_answer`: Decimal/float response
@@ -162,14 +158,14 @@ Individual answers to survey questions with multiple choice support.
 - `other_text`: Text input when "Other" option is selected
 - `selection_count`: Cached count of selected options (for performance)
 - `answered_at`: When question was answered
+- `created_at`, `updated_at`: Timestamps
 
 #### answer_options
-Junction table for multiple choice selections with enhanced tracking.
+Junction table for multiple choice selections.
 - `id` (PK): Unique identifier
 - `answer_id` (FK): Reference to answers
 - `option_id` (FK): Reference to options
-- `selected_at`: Timestamp when option was selected
-- `selection_order`: Order in which option was selected (for tracking behavior)
+- `created_at`, `updated_at`: Timestamps
 
 #### settings
 Key-value settings for surveys.
@@ -185,9 +181,25 @@ Key-value settings for surveys.
 - surveys → settings (one-to-many)
 - questions → options (one-to-many)
 - questions ← question_types (many-to-one)
-- participants → responses (one-to-many)
+- participants → responses (one-to-one) - simplified: each participant answers once
 - responses → answers (one-to-many)
 - answers ← answer_options → options (many-to-many)
+
+### Survey Response Flow
+This engine uses a simplified approach for email-based duplicate prevention:
+
+1. **Survey Access**: User clicks survey link with email parameter from external platform
+2. **Duplicate Check**: System checks if participant record exists for [survey_id, email] combination
+3. **Already Completed**: If participant exists with status 'completed' → show "already completed" message
+4. **New Participant**: If no participant record → create participant with status 'invited' and email
+5. **Survey Completion**: When user submits survey → update participant status to 'completed' + create response record
+6. **One Response Per Email**: Unique index on [survey_id, email] prevents duplicate responses
+
+**Key Features:**
+- Email-based duplicate prevention (one response per email per survey)
+- Simple two-state tracking (invited → completed)
+- No session management or resume capability
+- Direct integration with external platform emails
 
 ### Multiple Choice Question Patterns
 
