@@ -1,0 +1,25 @@
+# SurveyEngine Question Types Fixtures
+
+text:
+  name: text
+  description: Entrada de texto libre
+  allows_options: false
+  allows_multiple_selections: false
+
+single_choice:
+  name: single_choice
+  description: Selección única (radio buttons)
+  allows_options: true
+  allows_multiple_selections: false
+
+multiple_choice:
+  name: multiple_choice
+  description: Selección múltiple (checkboxes)
+  allows_options: true
+  allows_multiple_selections: true
+
+scale:
+  name: scale
+  description: Escala Likert o de valoración
+  allows_options: false
+  allows_multiple_selections: false

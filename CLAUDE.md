@@ -74,7 +74,7 @@ Main survey/questionnaire entity with linear structure.
 - `status`: Enum (draft, published, paused, archived)
 - `created_at`, `updated_at`: Timestamps
 
-#### survey_question_types
+#### question_types
 Defines possible question types with specific multiple choice support.
 - `id` (PK): Unique identifier
 - `name`: Type name (e.g., "single_choice", "multiple_choice", "text", "scale")
@@ -95,11 +95,11 @@ Defines possible question types with specific multiple choice support.
 - `date`: Date picker
 - `email`: Email input with validation
 
-#### survey_questions
+#### questions
 Questions within surveys with enhanced multiple choice support.
 - `id` (PK): Unique identifier
 - `survey_id` (FK): Reference to surveys
-- `survey_question_type_id` (FK): Reference to survey_question_types
+- `question_type_id` (FK): Reference to question_types
 - `title`: Main question text
 - `description`: Help text for question
 - `is_required`: Boolean, if question must be answered
@@ -116,10 +116,10 @@ Questions within surveys with enhanced multiple choice support.
 - `help_text`: Additional help text
 - `created_at`, `updated_at`: Timestamps
 
-#### survey_question_options
+#### options
 Answer options for choice-based questions with enhanced functionality.
 - `id` (PK): Unique identifier
-- `survey_question_id` (FK): Reference to survey_questions
+- `question_id` (FK): Reference to questions
 - `option_text`: Display text
 - `option_value`: Stored value
 - `order_position`: Position among options
@@ -128,7 +128,7 @@ Answer options for choice-based questions with enhanced functionality.
 - `is_active`: Boolean, if option is currently available
 - `created_at`, `updated_at`: Timestamps
 
-#### survey_participants
+#### participants
 User participation/session tracking.
 - `id` (PK): Unique identifier
 - `survey_id` (FK): Reference to surveys
@@ -140,20 +140,20 @@ User participation/session tracking.
 - `last_activity_at`: Last interaction timestamp
 - `created_at`, `updated_at`: Timestamps
 
-#### survey_responses
+#### responses
 Complete user submission to a survey.
 - `id` (PK): Unique identifier
 - `survey_id` (FK): Reference to surveys
-- `survey_participant_id` (FK): Reference to survey_participants
+- `participant_id` (FK): Reference to participants
 - `started_at`: Response start time
 - `completed_at`: Response completion time
 - `is_completed`: Boolean, if survey finished
 - `created_at`, `updated_at`: Timestamps
 
-#### survey_question_answers
+#### answers
 Individual answers to survey questions with multiple choice support.
 - `id` (PK): Unique identifier
-- `survey_response_id` (FK): Reference to survey_responses
+- `response_id` (FK): Reference to responses
 - `survey_question_id` (FK): Reference to survey_questions
 - `text_answer`: Text response
 - `numeric_answer`: Integer response
@@ -163,15 +163,15 @@ Individual answers to survey questions with multiple choice support.
 - `selection_count`: Cached count of selected options (for performance)
 - `answered_at`: When question was answered
 
-#### survey_question_answer_options
+#### answer_options
 Junction table for multiple choice selections with enhanced tracking.
 - `id` (PK): Unique identifier
-- `survey_question_answer_id` (FK): Reference to survey_question_answers
-- `survey_question_option_id` (FK): Reference to survey_question_options
+- `answer_id` (FK): Reference to answers
+- `option_id` (FK): Reference to options
 - `selected_at`: Timestamp when option was selected
 - `selection_order`: Order in which option was selected (for tracking behavior)
 
-#### survey_settings
+#### settings
 Key-value settings for surveys.
 - `id` (PK): Unique identifier
 - `survey_id` (FK): Reference to surveys
@@ -180,14 +180,14 @@ Key-value settings for surveys.
 - `created_at`, `updated_at`: Timestamps
 
 ### Key Relationships
-- surveys → survey_questions (one-to-many)
-- surveys → survey_participants (one-to-many)
-- surveys → survey_settings (one-to-many)
-- survey_questions → survey_question_options (one-to-many)
-- survey_questions ← survey_question_types (many-to-one)
-- survey_participants → survey_responses (one-to-many)
-- survey_responses → survey_question_answers (one-to-many)
-- survey_question_answers ← survey_question_answer_options → survey_question_options (many-to-many)
+- surveys → questions (one-to-many)
+- surveys → participants (one-to-many)  
+- surveys → settings (one-to-many)
+- questions → options (one-to-many)
+- questions ← question_types (many-to-one)
+- participants → responses (one-to-many)
+- responses → answers (one-to-many)
+- answers ← answer_options → options (many-to-many)
 
 ### Multiple Choice Question Patterns
 
@@ -222,7 +222,7 @@ allow_other: true      # Allow custom "Other" option
 
 #### With Exclusive Options
 ```ruby
-# Option setup (e.g., "None of the above")
+# Option setup (e.g., "None of the above") 
 option.is_exclusive = true
 
 # Logic: If exclusive option selected, all other selections are cleared
@@ -256,21 +256,21 @@ survey_question.validation_rules = {
 ### Required Indexes
 ```sql
 -- Performance-critical indexes
-CREATE INDEX idx_survey_questions_survey_order ON survey_questions(survey_id, order_position);
-CREATE INDEX idx_survey_question_options_question_order ON survey_question_options(survey_question_id, order_position);
-CREATE INDEX idx_survey_question_answers_response_question ON survey_question_answers(survey_response_id, survey_question_id);
-CREATE INDEX idx_survey_responses_survey_completed ON survey_responses(survey_id, completed_at);
-CREATE INDEX idx_survey_settings_survey_key ON survey_settings(survey_id, setting_key);
-CREATE INDEX idx_survey_participants_status ON survey_participants(survey_id, status);
-CREATE INDEX idx_survey_question_answer_options_answer ON survey_question_answer_options(survey_question_answer_id);
-CREATE INDEX idx_survey_question_answer_options_selected_at ON survey_question_answer_options(selected_at);
+CREATE INDEX idx_questions_survey_order ON questions(survey_id, order_position);
+CREATE INDEX idx_options_question_order ON options(question_id, order_position);
+CREATE INDEX idx_answers_response_question ON answers(response_id, question_id);
+CREATE INDEX idx_responses_survey_completed ON responses(survey_id, completed_at);
+CREATE INDEX idx_settings_survey_key ON settings(survey_id, setting_key);
+CREATE INDEX idx_participants_status ON participants(survey_id, status);
+CREATE INDEX idx_answer_options_answer ON answer_options(answer_id);
+CREATE INDEX idx_answer_options_selected_at ON answer_options(selected_at);
 ```
 
 ### Database Constraints (NOT NULL)
 
 #### surveys
 **Required (NOT NULL):**
-- `id`, `title`, `is_active`, `global`, `kickoff`, `status`, `created_at`, `updated_at`
+- `id`, `title`, `is_active`, `global`, `status`, `created_at`, `updated_at`
 
 **Optional (CAN BE NULL):**
 - `description`, `published_at`, `expires_at`
@@ -282,49 +282,49 @@ CREATE INDEX idx_survey_question_answer_options_selected_at ON survey_question_a
 **Optional (CAN BE NULL):**
 - `description`
 
-#### survey_questions
+#### questions
 **Required (NOT NULL):**
 - `id`, `survey_id`, `question_type_id`, `title`, `is_required`, `order_position`, `allow_other`, `randomize_options`, `created_at`, `updated_at`
 
 **Optional (CAN BE NULL):**
 - `description`, `scale_min`, `scale_max`, `scale_min_label`, `scale_max_label`, `max_characters`, `min_selections`, `max_selections`, `validation_rules`, `placeholder_text`, `help_text`
 
-#### survey_question_options
+#### options
 **Required (NOT NULL):**
-- `id`, `survey_question_id`, `option_text`, `option_value`, `order_position`, `is_other`, `is_exclusive`, `is_active`, `created_at`, `updated_at`
+- `id`, `question_id`, `option_text`, `option_value`, `order_position`, `is_other`, `is_exclusive`, `is_active`, `created_at`, `updated_at`
 
 **Optional (CAN BE NULL):**
 - `skip_logic`
 
-#### survey_participants
+#### participants
 **Required (NOT NULL):**
 - `id`, `survey_id`, `status`, `created_at`, `updated_at`
 
 **Optional (CAN BE NULL):**
 - `user_id`, `participant_identifier`, `invited_at`, `started_at`, `completed_at`, `last_activity_at`
 
-#### survey_responses
+#### responses
 **Required (NOT NULL):**
 - `id`, `survey_id`, `survey_participant_id`, `is_completed`, `created_at`, `updated_at`
 
 **Optional (CAN BE NULL):**
 - `started_at`, `completed_at`
 
-#### survey_question_answers
+#### answers
 **Required (NOT NULL):**
 - `id`, `survey_response_id`, `survey_question_id`, `selection_count`
 
 **Optional (CAN BE NULL):**
 - `text_answer`, `numeric_answer`, `decimal_answer`, `boolean_answer`, `other_text`, `answered_at`
 
-#### survey_question_answer_options
+#### answer_options
 **Required (NOT NULL):**
 - `id`, `question_answer_id`, `question_option_id`, `selected_at`
 
 **Optional (CAN BE NULL):**
 - `selection_order`
 
-#### survey_settings
+#### settings
 **Required (NOT NULL):**
 - `id`, `survey_id`, `setting_key`, `setting_value`, `created_at`, `updated_at`
 
@@ -354,31 +354,31 @@ end
 
 **Final Table Names:**
 - `survey_engine_surveys`
-- `survey_engine_survey_question_types`
-- `survey_engine_survey_questions`  
-- `survey_engine_survey_question_options`
-- `survey_engine_survey_participants`
-- `survey_engine_survey_responses`
-- `survey_engine_survey_question_answers`
-- `survey_engine_survey_question_answer_options`
-- `survey_engine_survey_settings`
+- `survey_engine_question_types`
+- `survey_engine_questions`  
+- `survey_engine_options`
+- `survey_engine_participants`
+- `survey_engine_responses`
+- `survey_engine_answers`
+- `survey_engine_answer_options`
+- `survey_engine_settings`
 
 This prevents naming conflicts with host application tables.
 
 #### Phase 1: Core Models (Build First)
-1. `SurveyEngine::SurveyQuestionType` - Seed with standard question types
+1. `SurveyEngine::QuestionType` - Seed with standard question types
 2. `SurveyEngine::Survey` - Main survey entity
-3. `SurveyEngine::SurveyQuestion` - Questions within surveys  
-4. `SurveyEngine::SurveyQuestionOption` - Choice options for questions
+3. `SurveyEngine::Question` - Questions within surveys  
+4. `SurveyEngine::Option` - Choice options for questions
 
 #### Phase 2: Response System (Build Second)
-5. `SurveyEngine::SurveyParticipant` - Participant tracking
-6. `SurveyEngine::SurveyResponse` - Response sessions
-7. `SurveyEngine::SurveyQuestionAnswer` - Individual question answers
-8. `SurveyEngine::SurveyQuestionAnswerOption` - Multiple choice selections
+5. `SurveyEngine::Participant` - Participant tracking
+6. `SurveyEngine::Response` - Response sessions
+7. `SurveyEngine::Answer` - Individual question answers
+8. `SurveyEngine::AnswerOption` - Multiple choice selections
 
 #### Phase 3: Configuration (Build Last)  
-9. `SurveyEngine::SurveySetting` - Survey-specific settings
+9. `SurveyEngine::Setting` - Survey-specific settings
 
 ### Survey Settings (Initial Implementation)
 

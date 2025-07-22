@@ -1,0 +1,29 @@
+# SurveyEngine Questions Fixtures
+
+text_question:
+  survey: basic_survey
+  question_type: text
+  title: "¿Cuál es tu nombre?"
+  description: "Ingresa tu nombre completo"
+  is_required: true
+  order_position: 1
+
+choice_question:
+  survey: basic_survey
+  question_type: single_choice
+  title: "¿Cuál es tu color favorito?"
+  description: "Selecciona una opción"
+  is_required: true
+  order_position: 2
+
+scale_question:
+  survey: published_survey
+  question_type: scale
+  title: "¿Qué tan satisfecho estás?"
+  description: "Califica del 1 al 5"
+  is_required: true
+  order_position: 1
+  scale_min: 1
+  scale_max: 5
+  scale_min_label: "Muy insatisfecho"
+  scale_max_label: "Muy satisfecho"

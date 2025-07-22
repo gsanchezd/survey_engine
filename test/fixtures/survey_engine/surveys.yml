@@ -1,0 +1,25 @@
+# SurveyEngine Surveys Fixtures
+
+basic_survey:
+  title: "Encuesta Básica"
+  description: "Una encuesta de prueba básica"
+  is_active: true
+  global: false
+  status: draft
+
+published_survey:
+  title: "Encuesta Publicada"
+  description: "Una encuesta ya publicada"
+  is_active: true
+  global: true
+  status: published
+  published_at: <%= 1.week.ago %>
+
+expired_survey:
+  title: "Encuesta Expirada"
+  description: "Una encuesta que ya expiró"
+  is_active: false
+  global: false
+  status: archived
+  published_at: <%= 2.weeks.ago %>
+  expires_at: <%= 1.week.ago %>

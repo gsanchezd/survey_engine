@@ -1,0 +1,37 @@
+# SurveyEngine Options Fixtures
+
+red_option:
+  question: choice_question
+  option_text: "Rojo"
+  option_value: "red"
+  order_position: 1
+  is_other: false
+  is_exclusive: false
+  is_active: true
+
+blue_option:
+  question: choice_question
+  option_text: "Azul"
+  option_value: "blue"
+  order_position: 2
+  is_other: false
+  is_exclusive: false
+  is_active: true
+
+green_option:
+  question: choice_question
+  option_text: "Verde"
+  option_value: "green"
+  order_position: 3
+  is_other: false
+  is_exclusive: false
+  is_active: true
+
+other_option:
+  question: choice_question
+  option_text: "Otro"
+  option_value: "other"
+  order_position: 4
+  is_other: true
+  is_exclusive: false
+  is_active: true
