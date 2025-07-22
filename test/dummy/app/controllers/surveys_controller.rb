@@ -161,13 +161,21 @@ class SurveysController < ApplicationController
       if errors.any?
         redirect_to answer_survey_path(@survey), alert: "Cannot complete survey due to errors: #{errors.join('; ')}"
       else
-        # Complete the response and participant
-        @response.complete!
-        @response.participant.complete!
+        # Validate required fields for completion
+        missing_required = validate_required_fields_for_completion(@survey, @response)
         
-        session.delete(:response_id)
-        
-        redirect_to completed_survey_path(@survey, email: @response.participant.email)
+        if missing_required.any?
+          error_message = "Please answer these required questions before completing: #{missing_required.join(', ')}"
+          redirect_to answer_survey_path(@survey), alert: error_message
+        else
+          # Complete the response and participant
+          @response.complete!
+          @response.participant.complete!
+          
+          session.delete(:response_id)
+          
+          redirect_to completed_survey_path(@survey, email: @response.participant.email)
+        end
       end
     else
       # Just saving answers (though this path won't be used with the new UI)
@@ -185,5 +193,39 @@ class SurveysController < ApplicationController
     @email = params[:email]
     @participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
     @response = @participant&.response
+  end
+
+  private
+
+  def validate_required_fields_for_completion(survey, response)
+    missing_required = []
+    
+    survey.questions.required.each do |question|
+      answer = response.answers.find_by(question: question)
+      
+      # Check if answer exists and has content
+      if answer.nil? || !answer_has_content?(answer)
+        missing_required << question.title
+      end
+    end
+    
+    missing_required
+  end
+
+  def answer_has_content?(answer)
+    return false if answer.nil?
+    
+    case answer.question.question_type.name
+    when 'text'
+      answer.text_answer.present?
+    when 'scale', 'number'
+      answer.numeric_answer.present?
+    when 'boolean'
+      !answer.boolean_answer.nil?
+    when 'single_choice', 'multiple_choice'
+      answer.answer_options.any?
+    else
+      false
+    end
   end
 end

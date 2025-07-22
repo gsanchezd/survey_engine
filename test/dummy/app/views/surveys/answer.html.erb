@@ -10,14 +10,14 @@
 </div>
 
 <% if notice %>
-  <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #155724;">
+  <div class="alert alert-notice">
     <%= notice %>
   </div>
 <% end %>
 
 <% if alert %>
-  <div style="background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #721c24;">
-    <%= alert %>
+  <div class="alert alert-error">
+    <strong>⚠️ Validation Error:</strong> <%= alert %>
   </div>
 <% end %>
 
@@ -44,7 +44,10 @@
       <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
           placeholder: question.placeholder_text || "Enter your answer here...",
           style: "width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 3px;",
-          maxlength: question.max_characters %>
+          maxlength: question.max_characters,
+          required: question.required?,
+          class: "survey-field #{'required-field' if question.required?}",
+          data: { question_id: question.id, question_title: question.title } %>
             
     <% when 'scale' %>
       <div style="margin: 15px 0;">
@@ -53,12 +56,14 @@
           <span style="font-size: 0.9em; color: #666;"><%= question.scale_max_label %></span>
         </div>
         
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
           <% (question.scale_min..question.scale_max).each do |value| %>
             <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
               <%= radio_button_tag "answers[#{question.id}][numeric_answer]", value, 
                   existing_answer&.numeric_answer == value,
-                  style: "margin-bottom: 5px;" %>
+                  style: "margin-bottom: 5px;",
+                  required: question.required?,
+                  class: "survey-field" %>
               <span style="font-size: 0.9em;"><%= value %></span>
             </label>
           <% end %>
@@ -67,27 +72,34 @@
         
     <% when 'number' %>
       <%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
-          style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; width: 150px;" %>
+          style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; width: 150px;",
+          required: question.required?,
+          class: "survey-field #{'required-field' if question.required?}",
+          data: { question_id: question.id, question_title: question.title } %>
           
     <% when 'boolean' %>
-      <div style="margin: 15px 0;">
+      <div style="margin: 15px 0;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
         <label style="display: block; margin: 10px 0; cursor: pointer;">
-          <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', existing_answer&.boolean_answer == true %>
+          <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', existing_answer&.boolean_answer == true,
+              required: question.required?, class: "survey-field" %>
           Yes
         </label>
         <label style="display: block; margin: 10px 0; cursor: pointer;">
-          <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', existing_answer&.boolean_answer == false %>
+          <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', existing_answer&.boolean_answer == false,
+              required: question.required?, class: "survey-field" %>
           No
         </label>
       </div>
         
     <% when 'single_choice' %>
-      <div style="margin: 15px 0;">
+      <div style="margin: 15px 0;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
         <% question.options.ordered.each do |option| %>
           <label style="display: block; margin: 10px 0; cursor: pointer;">
             <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
                 existing_answer&.options&.include?(option),
-                onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil %>
+                onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil,
+                required: question.required?,
+                class: "survey-field" %>
             <%= option.option_text %>
           </label>
           
@@ -102,12 +114,14 @@
       </div>
         
     <% when 'multiple_choice' %>
-      <div style="margin: 15px 0;">
+      <div style="margin: 15px 0;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
         <% question.options.ordered.each do |option| %>
           <label style="display: block; margin: 10px 0; cursor: pointer;">
             <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
                 existing_answer&.options&.include?(option),
-                onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil %>
+                onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil,
+                class: "survey-field #{'required-checkbox' if question.required?}",
+                data: { question_id: question.id } %>
             <%= option.option_text %>
           </label>
         <% end %>
@@ -138,8 +152,9 @@
   
   <%= submit_tag "Complete Survey", 
       style: "background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;",
-      confirm: "Are you sure you want to complete the survey? This will save all your answers and you won't be able to change them after this.",
-      name: "complete_survey" %>
+      name: "complete_survey",
+      formnovalidate: false %>
 </div>
 
 <% end %> <!-- Close the main form -->
+
