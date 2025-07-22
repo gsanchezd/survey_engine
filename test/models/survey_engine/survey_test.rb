@@ -101,8 +101,8 @@ module SurveyEngine
     # end
 
     test "should destroy dependent questions" do
-      survey = Survey.create!(title: "Test Survey")
-      question_type = QuestionType.create!(name: "text", allows_options: false, allows_multiple_selections: false)
+      survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      question_type = QuestionType.create!(name: "text_#{SecureRandom.hex(4)}", allows_options: false, allows_multiple_selections: false)
       question = survey.questions.create!(question_type: question_type, title: "Test Question", order_position: 1)
       
       assert_difference('Question.count', -1) do
