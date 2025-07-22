@@ -21,7 +21,7 @@ class SurveysController < ApplicationController
   end
 
   def show
-    @survey = SurveyEngine::Survey.find(params[:id])
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
     @email = params[:email] || session[:email]
     
     if @email.present?
@@ -38,7 +38,7 @@ class SurveysController < ApplicationController
   end
 
   def start
-    @survey = SurveyEngine::Survey.find(params[:id])
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
     @email = params[:email]
     
     if @email.blank?
@@ -74,7 +74,7 @@ class SurveysController < ApplicationController
   end
 
   def answer
-    @survey = SurveyEngine::Survey.find(params[:id])
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
     @response = SurveyEngine::Response.find(session[:response_id])
     @questions = @survey.questions.ordered.includes(:question_type, :options)
     
@@ -86,7 +86,7 @@ class SurveysController < ApplicationController
   end
 
   def submit_answer
-    @survey = SurveyEngine::Survey.find(params[:id])
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
     @response = SurveyEngine::Response.find(session[:response_id])
     
     errors = []
@@ -189,14 +189,14 @@ class SurveysController < ApplicationController
 
 
   def completed
-    @survey = SurveyEngine::Survey.find(params[:id])
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
     @email = params[:email]
     @participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
     @response = @participant&.response
   end
 
   def results
-    @survey = SurveyEngine::Survey.find(params[:id])
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
     @responses = @survey.responses.completed.includes(:participant, answers: [:question, :options])
     @questions = @survey.questions.ordered.includes(:question_type, :options)
     

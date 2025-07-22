@@ -14,8 +14,11 @@ module SurveyEngine
     validates :status, presence: true, inclusion: { in: %w[draft published paused archived] }
     validates :is_active, inclusion: { in: [true, false] }
     validates :global, inclusion: { in: [true, false] }
+    validates :uuid, presence: true, uniqueness: true
 
     validate :published_at_before_expires_at
+
+    before_validation :generate_uuid, on: :create
 
     enum :status, {
       draft: 'draft',
@@ -31,6 +34,11 @@ module SurveyEngine
     scope :published, -> { where(status: 'published') }
     scope :current, -> { where('expires_at IS NULL OR expires_at > ?', Time.current) }
     scope :expired, -> { where('expires_at < ?', Time.current) }
+
+    # Use UUID for URLs instead of ID
+    def to_param
+      uuid
+    end
 
     def active?
       is_active && (status == 'published')
@@ -87,6 +95,10 @@ module SurveyEngine
     # end
 
     private
+
+    def generate_uuid
+      self.uuid ||= SecureRandom.uuid
+    end
 
     def published_at_before_expires_at
       return unless published_at.present? && expires_at.present?
