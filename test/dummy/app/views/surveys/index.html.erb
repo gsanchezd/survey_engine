@@ -1,5 +1,32 @@
 <h1>Available Surveys</h1>
 
+<% unless @current_email.present? %>
+  <div style="background: #e3f2fd; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #2196f3;">
+    <h3 style="margin: 0 0 15px 0;">Welcome!</h3>
+    <p>To see your survey completion status and continue any in-progress surveys, please enter your email address:</p>
+    
+    <%= form_tag surveys_path, method: :get, style: "margin: 15px 0;" do %>
+      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <%= email_field_tag :email, params[:email], 
+            placeholder: "your.email@example.com",
+            style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; flex: 1; min-width: 250px;" %>
+        <%= submit_tag "Set Email", 
+            style: "background: #2196f3; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer;" %>
+      </div>
+    <% end %>
+    
+    <p style="font-size: 0.9em; color: #666; margin: 10px 0 0 0;">
+      <em>This helps us track your survey progress and prevent duplicate submissions.</em>
+    </p>
+  </div>
+<% else %>
+  <div style="background: #e8f5e8; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4caf50;">
+    <strong>Signed in as:</strong> <%= @current_email %>
+    <%= link_to "Change Email", surveys_path, 
+        style: "color: #4caf50; text-decoration: none; margin-left: 15px;" %>
+  </div>
+<% end %>
+
 <% if @surveys.any? %>
   <div style="margin: 20px 0;">
     <% @surveys.each do |survey| %>
@@ -14,8 +41,25 @@
         </div>
         
         <% if survey.can_receive_responses? %>
-          <%= link_to "Take Survey", survey_path(survey), 
-              style: "background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px; display: inline-block; margin-top: 10px;" %>
+          <% if @current_email.present? && @completed_surveys&.dig(survey.id) %>
+            <!-- Already completed -->
+            <div style="margin-top: 10px;">
+              <span style="background: #6c757d; color: white; padding: 10px 20px; border-radius: 3px; display: inline-block;">
+                ✓ Completed
+              </span>
+              <%= link_to "View Results", completed_survey_path(survey, email: @current_email), 
+                  style: "background: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; display: inline-block; margin-left: 10px;" %>
+            </div>
+          <% else %>
+            <!-- Can take survey -->
+            <% if @current_email.present? %>
+              <%= link_to "Continue Survey", survey_path(survey, email: @current_email), 
+                  style: "background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px; display: inline-block; margin-top: 10px;" %>
+            <% else %>
+              <%= link_to "Take Survey", survey_path(survey), 
+                  style: "background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px; display: inline-block; margin-top: 10px;" %>
+            <% end %>
+          <% end %>
         <% else %>
           <span style="color: #999; font-style: italic;">Survey not available</span>
         <% end %>

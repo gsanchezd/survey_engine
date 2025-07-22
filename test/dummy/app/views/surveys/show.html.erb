@@ -19,7 +19,7 @@
 <% if @participant&.completed? %>
   <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #155724;">
     <strong>Already Completed!</strong> You have already completed this survey.
-    <%= link_to "View Results", survey_completed_path(@survey, email: @email), 
+    <%= link_to "View Results", completed_survey_path(@survey, email: @email), 
         style: "background: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; margin-left: 10px;" %>
   </div>
 <% elsif @survey.can_receive_responses? %>

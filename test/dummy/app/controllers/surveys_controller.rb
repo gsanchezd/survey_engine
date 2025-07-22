@@ -1,6 +1,23 @@
 class SurveysController < ApplicationController
   def index
     @surveys = SurveyEngine::Survey.published.includes(:questions)
+    
+    # Set email from params or session
+    if params[:email].present?
+      session[:email] = params[:email]
+      @current_email = params[:email]
+    else
+      @current_email = session[:email]
+    end
+    
+    # Get completion status for current user if email is available
+    if @current_email.present?
+      @completed_surveys = {}
+      @surveys.each do |survey|
+        participant = SurveyEngine::Participant.find_by(survey: survey, email: @current_email)
+        @completed_surveys[survey.id] = participant&.completed? || false
+      end
+    end
   end
 
   def show
@@ -12,7 +29,7 @@ class SurveysController < ApplicationController
       @response = @participant&.response if @participant
       
       if @participant&.completed?
-        redirect_to survey_completed_path(@survey, email: @email)
+        redirect_to completed_survey_path(@survey, email: @email)
         return
       end
     end
@@ -32,7 +49,7 @@ class SurveysController < ApplicationController
     # Check if user already completed
     participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
     if participant&.completed?
-      redirect_to survey_completed_path(@survey, email: @email)
+      redirect_to completed_survey_path(@survey, email: @email)
       return
     end
     
@@ -71,75 +88,97 @@ class SurveysController < ApplicationController
   def submit_answer
     @survey = SurveyEngine::Survey.find(params[:id])
     @response = SurveyEngine::Response.find(session[:response_id])
-    question = SurveyEngine::Question.find(params[:question_id])
     
-    # Find or create answer
-    answer = SurveyEngine::Answer.find_or_initialize_by(
-      response: @response,
-      question: question
-    )
+    errors = []
+    saved_count = 0
     
-    # Clear existing data
-    answer.text_answer = nil
-    answer.numeric_answer = nil
-    answer.decimal_answer = nil
-    answer.boolean_answer = nil
-    answer.other_text = nil
-    answer.answer_options.destroy_all if answer.persisted?
-    
-    # Set answer based on question type
-    case question.question_type.name
-    when 'text'
-      answer.text_answer = params[:text_answer]
-    when 'scale', 'number'
-      answer.numeric_answer = params[:numeric_answer]
-    when 'boolean'
-      answer.boolean_answer = params[:boolean_answer] == '1'
-    when 'single_choice'
-      if params[:option_id].present?
-        option = SurveyEngine::Option.find(params[:option_id])
-        if answer.new_record?
-          answer.answer_options.build(option: option)
-        else
-          answer.save! # Save first if existing record
-          SurveyEngine::AnswerOption.create!(answer: answer, option: option)
-        end
-        answer.other_text = params[:other_text] if option.is_other? && params[:other_text].present?
-      end
-    when 'multiple_choice'
-      if params[:option_ids].present?
-        params[:option_ids].each do |option_id|
-          option = SurveyEngine::Option.find(option_id)
-          if answer.new_record?
-            answer.answer_options.build(option: option)
-          else
-            answer.save! # Save first if existing record
-            SurveyEngine::AnswerOption.create!(answer: answer, option: option)
+    # Process all submitted answers
+    if params[:answers].present?
+      params[:answers].each do |question_id, answer_data|
+        question = SurveyEngine::Question.find(question_id)
+        
+        # Skip if no data provided for this question
+        next if answer_data.values.all?(&:blank?)
+        
+        # Find or create answer
+        answer = SurveyEngine::Answer.find_or_initialize_by(
+          response: @response,
+          question: question
+        )
+        
+        # Clear existing data
+        answer.text_answer = nil
+        answer.numeric_answer = nil
+        answer.decimal_answer = nil
+        answer.boolean_answer = nil
+        answer.other_text = nil
+        answer.answer_options.destroy_all if answer.persisted?
+        
+        # Set answer based on question type
+        case question.question_type.name
+        when 'text'
+          answer.text_answer = answer_data[:text_answer] if answer_data[:text_answer].present?
+        when 'scale', 'number'
+          answer.numeric_answer = answer_data[:numeric_answer] if answer_data[:numeric_answer].present?
+        when 'boolean'
+          answer.boolean_answer = answer_data[:boolean_answer] == '1' if answer_data[:boolean_answer].present?
+        when 'single_choice'
+          if answer_data[:option_id].present?
+            option = SurveyEngine::Option.find(answer_data[:option_id])
+            if answer.new_record?
+              answer.answer_options.build(option: option)
+            else
+              answer.save! # Save first if existing record
+              SurveyEngine::AnswerOption.create!(answer: answer, option: option)
+            end
+            answer.other_text = answer_data[:other_text] if option.is_other? && answer_data[:other_text].present?
+          end
+        when 'multiple_choice'
+          if answer_data[:option_ids].present?
+            answer_data[:option_ids].reject(&:blank?).each do |option_id|
+              option = SurveyEngine::Option.find(option_id)
+              if answer.new_record?
+                answer.answer_options.build(option: option)
+              else
+                answer.save! # Save first if existing record
+                SurveyEngine::AnswerOption.create!(answer: answer, option: option)
+              end
+            end
+            answer.other_text = answer_data[:other_text] if answer_data[:other_text].present?
           end
         end
-        answer.other_text = params[:other_text] if params[:other_text].present?
+        
+        if answer.save
+          saved_count += 1
+        else
+          errors << "#{question.title}: #{answer.errors.full_messages.join(', ')}"
+        end
       end
     end
     
-    if answer.save
-      redirect_to answer_survey_path(@survey), notice: "Answer saved!"
+    # Check if this is a completion request
+    if params[:complete_survey].present?
+      if errors.any?
+        redirect_to answer_survey_path(@survey), alert: "Cannot complete survey due to errors: #{errors.join('; ')}"
+      else
+        # Complete the response and participant
+        @response.complete!
+        @response.participant.complete!
+        
+        session.delete(:response_id)
+        
+        redirect_to completed_survey_path(@survey, email: @response.participant.email)
+      end
     else
-      redirect_to answer_survey_path(@survey), alert: "Error: #{answer.errors.full_messages.join(', ')}"
+      # Just saving answers (though this path won't be used with the new UI)
+      if errors.any?
+        redirect_to answer_survey_path(@survey), alert: "Some answers couldn't be saved: #{errors.join('; ')}"
+      else
+        redirect_to answer_survey_path(@survey), notice: "#{saved_count} answer#{'s' if saved_count != 1} saved successfully!"
+      end
     end
   end
 
-  def complete
-    @survey = SurveyEngine::Survey.find(params[:id])
-    @response = SurveyEngine::Response.find(session[:response_id])
-    
-    # Complete the response and participant
-    @response.complete!
-    @response.participant.complete!
-    
-    session.delete(:response_id)
-    
-    redirect_to survey_completed_path(@survey, email: @response.participant.email)
-  end
 
   def completed
     @survey = SurveyEngine::Survey.find(params[:id])

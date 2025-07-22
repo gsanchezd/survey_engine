@@ -7,7 +7,6 @@ Rails.application.routes.draw do
       post :start
       get :answer
       post :submit_answer
-      post :complete
       get :completed
     end
   end
