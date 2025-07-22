@@ -44,7 +44,7 @@ Rails.application.routes.draw do
 end
 ```
 
-### Step 2: Generate Views (Optional but Recommended)
+### Step 2: Generate Views and Controllers (Optional but Recommended)
 
 Generate customizable view templates:
 
@@ -53,6 +53,14 @@ $ rails generate survey_engine:views
 ```
 
 This copies all survey views to `app/views/survey_engine/` in your application, allowing you to customize the appearance. The generator also copies a CSS file with styled components.
+
+Generate customizable controllers:
+
+```bash
+$ rails generate survey_engine:controllers
+```
+
+This copies the engine controllers to your application where you can override and customize the behavior.
 
 Add the stylesheet to your application layout (`app/views/layouts/application.html.erb`):
 
