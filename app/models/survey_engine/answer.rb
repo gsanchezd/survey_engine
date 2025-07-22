@@ -8,6 +8,8 @@ module SurveyEngine
     belongs_to :question
     has_many :answer_options, dependent: :destroy
     has_many :options, through: :answer_options
+    
+    accepts_nested_attributes_for :answer_options, allow_destroy: true
 
     validates :response_id, presence: true
     validates :question_id, presence: true
@@ -99,7 +101,8 @@ module SurveyEngine
           errors.add(:numeric_answer, "is required for scale questions")
         end
       when 'single_choice', 'multiple_choice'
-        unless answer_options.any?
+        # Check both persisted and built associations
+        unless answer_options.any? || answer_options.loaded?
           errors.add(:base, "Must select at least one option for choice questions")
         end
         

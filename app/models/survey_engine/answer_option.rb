@@ -7,7 +7,7 @@ module SurveyEngine
     belongs_to :answer
     belongs_to :option
 
-    validates :answer_id, presence: true
+    validates :answer_id, presence: true, unless: :new_record_with_built_answer?
     validates :option_id, presence: true
     validates :answer_id, uniqueness: { scope: :option_id, message: "cannot select the same option twice" }
     validate :option_belongs_to_same_question
@@ -17,6 +17,10 @@ module SurveyEngine
     delegate :option_text, :option_value, :is_other?, :is_exclusive?, to: :option
 
     private
+
+    def new_record_with_built_answer?
+      new_record? && answer.present? && answer.new_record?
+    end
 
     def option_belongs_to_same_question
       return unless answer.present? && option.present?
