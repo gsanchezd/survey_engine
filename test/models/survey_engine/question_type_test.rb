@@ -48,7 +48,7 @@ module SurveyEngine
       survey = Survey.create!(title: "Test Survey For Restriction")
       survey.questions.create!(question_type: qt, title: "Test Question", order_position: 1)
       
-      assert_raises(ActiveRecord::DeleteRestrictionError) do
+      assert_raises(ActiveRecord::RecordNotDestroyed) do
         qt.destroy!
       end
     end

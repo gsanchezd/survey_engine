@@ -7,7 +7,7 @@ module SurveyEngine
     belongs_to :survey
     belongs_to :question_type
     has_many :options, dependent: :destroy
-    has_many :answers, dependent: :destroy
+    # has_many :answers, dependent: :destroy  # Will be added in Phase 2
 
     validates :title, presence: true, length: { maximum: 500 }
     validates :description, length: { maximum: 1000 }
@@ -75,13 +75,13 @@ module SurveyEngine
     def scale_range_is_valid
       return unless scale_min.present? && scale_max.present?
       
-      errors.add(:scale_max, 'debe ser mayor que el valor mínimo') if scale_max <= scale_min
+      errors.add(:scale_max, 'must be greater than minimum value') if scale_max <= scale_min
     end
 
     def selection_range_is_valid
       return unless min_selections.present? && max_selections.present?
       
-      errors.add(:max_selections, 'debe ser mayor o igual que el mínimo de selecciones') if max_selections < min_selections
+      errors.add(:max_selections, 'must be greater than or equal to minimum selections') if max_selections < min_selections
     end
 
     def question_type_compatibility
@@ -89,16 +89,16 @@ module SurveyEngine
 
       # Validate options-related fields
       unless question_type.supports_options?
-        errors.add(:allow_other, 'no es compatible con este tipo de pregunta') if allow_other?
-        errors.add(:randomize_options, 'no es compatible con este tipo de pregunta') if randomize_options?
-        errors.add(:min_selections, 'no es compatible con este tipo de pregunta') if min_selections.present?
-        errors.add(:max_selections, 'no es compatible con este tipo de pregunta') if max_selections.present?
+        errors.add(:allow_other, 'is not compatible with this question type') if allow_other?
+        errors.add(:randomize_options, 'is not compatible with this question type') if randomize_options?
+        errors.add(:min_selections, 'is not compatible with this question type') if min_selections.present?
+        errors.add(:max_selections, 'is not compatible with this question type') if max_selections.present?
       end
 
       # Validate multiple selection fields
       unless question_type.supports_multiple_selections?
         if max_selections.present? && max_selections > 1
-          errors.add(:max_selections, 'debe ser 1 para este tipo de pregunta')
+          errors.add(:max_selections, 'must be 1 for this question type')
         end
       end
     end

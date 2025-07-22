@@ -5,9 +5,9 @@ module SurveyEngine
     end
 
     has_many :questions, dependent: :destroy
-    has_many :participants, dependent: :destroy
-    has_many :responses, dependent: :destroy
-    has_many :settings, dependent: :destroy
+    # has_many :participants, dependent: :destroy  # Will be added in Phase 2
+    # has_many :responses, dependent: :destroy  # Will be added in Phase 2
+    # has_many :settings, dependent: :destroy  # Will be added in Phase 2
 
     validates :title, presence: true, length: { maximum: 255 }
     validates :description, length: { maximum: 2000 }
@@ -56,13 +56,13 @@ module SurveyEngine
       questions.count
     end
 
-    def responses_count
-      responses.count
-    end
+    # def responses_count
+    #   responses.count
+    # end
 
-    def participants_count
-      participants.count
-    end
+    # def participants_count
+    #   participants.count
+    # end
 
     def publish!
       update!(status: 'published', is_active: true, published_at: Time.current)
@@ -76,22 +76,22 @@ module SurveyEngine
       update!(status: 'archived', is_active: false)
     end
 
-    def setting(key)
-      settings.find_by(setting_key: key)&.setting_value
-    end
+    # def setting(key)
+    #   settings.find_by(setting_key: key)&.setting_value
+    # end
 
-    def set_setting(key, value)
-      setting_record = settings.find_or_initialize_by(setting_key: key)
-      setting_record.setting_value = value.to_s
-      setting_record.save!
-    end
+    # def set_setting(key, value)
+    #   setting_record = settings.find_or_initialize_by(setting_key: key)
+    #   setting_record.setting_value = value.to_s
+    #   setting_record.save!
+    # end
 
     private
 
     def published_at_before_expires_at
       return unless published_at.present? && expires_at.present?
       
-      errors.add(:expires_at, 'debe ser posterior a la fecha de publicación') if expires_at <= published_at
+      errors.add(:expires_at, 'must be after publication date') if expires_at <= published_at
     end
   end
 end

@@ -5,7 +5,7 @@ module SurveyEngine
     end
 
     belongs_to :question
-    has_many :answer_options, dependent: :destroy
+    # has_many :answer_options, dependent: :destroy  # Will be added in Phase 2
 
     validates :option_text, presence: true, length: { maximum: 255 }
     validates :option_value, presence: true, length: { maximum: 100 }
@@ -82,13 +82,13 @@ module SurveyEngine
       existing_other = existing_other.where.not(id: id) unless new_record?
       
       if existing_other.exists?
-        errors.add(:is_other, 'solo puede haber una opción "Otro" por pregunta')
+        errors.add(:is_other, 'can only have one "Other" option per question')
       end
     end
 
     def exclusive_and_other_are_mutually_exclusive
       if is_other? && is_exclusive?
-        errors.add(:is_exclusive, 'no puede ser exclusiva y "Otro" al mismo tiempo')
+        errors.add(:is_exclusive, 'cannot be both exclusive and "Other" at the same time')
       end
     end
   end
