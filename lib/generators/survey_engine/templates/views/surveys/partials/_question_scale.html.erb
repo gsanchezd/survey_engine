@@ -1,0 +1,20 @@
+<div class="se-scale-question #{'se-required-field' if question.required?}" 
+     data-question-id="<%= question.id %>" 
+     data-question-title="<%= question.title %>">
+  <div class="se-scale-labels">
+    <span class="se-scale-label-min"><%= question.scale_min_label %></span>
+    <span class="se-scale-label-max"><%= question.scale_max_label %></span>
+  </div>
+  
+  <div class="se-scale-options">
+    <% (question.scale_min..question.scale_max).each do |value| %>
+      <label class="se-scale-option">
+        <%= radio_button_tag "answers[#{question.id}][numeric_answer]", value, 
+            existing_answer&.numeric_answer == value,
+            required: question.required?,
+            class: "se-radio" %>
+        <span class="se-scale-value"><%= value %></span>
+      </label>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+<div class="se-single-choice-question #{'se-required-field' if question.required?}" 
+     data-question-id="<%= question.id %>" 
+     data-question-title="<%= question.title %>">
+  <% question.options.ordered.each do |option| %>
+    <label class="se-radio-label">
+      <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
+          existing_answer&.options&.include?(option),
+          required: question.required?,
+          class: "se-radio",
+          data: { other: option.is_other? } %>
+      <span><%= option.option_text %></span>
+      
+      <% if option.is_other? %>
+        <div class="se-other-input" <%= 'style="display: block;"'.html_safe if existing_answer&.options&.include?(option) %>>
+          <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
+              placeholder: "Please specify...",
+              class: "se-input" %>
+        </div>
+      <% end %>
+    </label>
+  <% end %>
+</div>

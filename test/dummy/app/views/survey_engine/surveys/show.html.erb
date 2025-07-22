@@ -1,0 +1,95 @@
+<div class="se-container">
+  <nav class="se-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+  </nav>
+
+  <header class="se-header">
+    <h1><%= @survey.title %></h1>
+    <p><%= @survey.description %></p>
+  </header>
+
+  <div class="se-survey-details">
+    <strong>Survey Details:</strong>
+    <%= @survey.questions.count %> questions | 
+    <%= @survey.participants.count %> participants |
+    Status: <span class="se-status se-status-<%= @survey.status %>"><%= @survey.status.capitalize %></span>
+  </div>
+
+  <% unless @survey.can_receive_responses? %>
+    <div class="se-warning-panel">
+      <strong>Notice:</strong> This survey is not currently accepting responses.
+    </div>
+  <% end %>
+
+  <% if @participant&.completed? %>
+    <div class="se-success-panel">
+      <strong>Already Completed!</strong> You have already completed this survey.
+      <%= link_to "View Results", completed_survey_path(@survey, email: @email), 
+          class: "se-btn se-btn-success" %>
+    </div>
+  <% elsif @survey.can_receive_responses? %>
+    <div class="se-start-panel">
+      <h3>Start Survey</h3>
+      <p>Please enter your email address to begin:</p>
+      
+      <%= form_tag start_survey_path(@survey), method: :post, class: "se-start-form", local: true do %>
+        <div class="se-form-group">
+          <%= label_tag :email, "Email Address:", class: "se-label" %>
+          <%= email_field_tag :email, @email, 
+              placeholder: "your.email@example.com",
+              required: true,
+              class: "se-input" %>
+        </div>
+        
+        <div class="se-form-group">
+          <%= submit_tag "Start Survey", class: "se-btn se-btn-success se-btn-large" %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <section class="se-preview-section">
+    <h3>Survey Preview</h3>
+    <p class="se-helper-text">This is what participants will see:</p>
+    
+    <div class="se-preview-container">
+      <% @questions.each_with_index do |question, index| %>
+        <article class="se-question-preview">
+          <h4 class="se-question-title">
+            <%= index + 1 %>. <%= question.title %>
+            <% if question.required? %>
+              <span class="se-required">*</span>
+            <% end %>
+          </h4>
+          
+          <% if question.description.present? %>
+            <p class="se-question-description"><%= question.description %></p>
+          <% end %>
+          
+          <div class="se-question-meta">
+            <strong>Type:</strong> <%= question.question_type.description %>
+            
+            <% case question.question_type.name %>
+            <% when 'text' %>
+              <br><em>Participants will enter free text</em>
+            <% when 'scale' %>
+              <br><em>Scale from <%= question.scale_min %> (<%= question.scale_min_label %>) to <%= question.scale_max %> (<%= question.scale_max_label %>)</em>
+            <% when 'single_choice', 'multiple_choice' %>
+              <br><em>Options:</em>
+              <ul class="se-options-preview">
+                <% question.options.ordered.each do |option| %>
+                  <li>
+                    <%= option.option_text %>
+                    <% if option.is_other? %>
+                      <em class="se-other-option">(allows custom text)</em>
+                    <% end %>
+                  </li>
+                <% end %>
+              </ul>
+            <% end %>
+          </div>
+        </article>
+      <% end %>
+    </div>
+  </section>
+</div>

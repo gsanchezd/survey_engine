@@ -1,0 +1,22 @@
+<div class="se-multiple-choice-question #{'se-required-field' if question.required?}" 
+     data-question-id="<%= question.id %>" 
+     data-question-title="<%= question.title %>">
+  <% question.options.ordered.each do |option| %>
+    <label class="se-checkbox-label">
+      <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
+          existing_answer&.options&.include?(option),
+          class: "se-checkbox",
+          data: { question_id: question.id, other: option.is_other? } %>
+      <span><%= option.option_text %></span>
+    </label>
+  <% end %>
+  
+  <% if question.options.any?(&:is_other?) %>
+    <div class="se-other-input" data-other-for-multiple="<%= question.id %>" 
+         style="<%= existing_answer&.other_text.present? ? 'display: block;' : 'display: none;' %>">
+      <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
+          placeholder: "Please specify other option...",
+          class: "se-input" %>
+    </div>
+  <% end %>
+</div>

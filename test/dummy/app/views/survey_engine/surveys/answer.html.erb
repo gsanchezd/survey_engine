@@ -1,0 +1,74 @@
+<div class="se-container">
+  <nav class="se-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+  </nav>
+
+  <header class="se-header">
+    <h1>Answering: <%= @survey.title %></h1>
+    <p><%= @survey.description %></p>
+  </header>
+
+  <div class="se-progress-bar">
+    <div class="se-progress-info">
+      <strong>Progress:</strong> 
+      <%= @response.answers.count %> of <%= @questions.count %> questions answered
+      (<%= @response.completion_percentage %>% complete)
+    </div>
+    <div class="se-progress">
+      <div class="se-progress-fill" style="width: <%= @response.completion_percentage %>%"></div>
+    </div>
+  </div>
+
+  <% if notice %>
+    <div class="se-alert se-alert-success">
+      <%= notice %>
+    </div>
+  <% end %>
+
+  <% if alert %>
+    <div class="se-alert se-alert-error">
+      <strong>⚠️ Validation Error:</strong> <%= alert %>
+    </div>
+  <% end %>
+
+  <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "se-survey-form", local: true do %>
+    <div class="se-questions-container">
+      <% @questions.each_with_index do |question, index| %>
+        <article class="se-question-card">
+          <h3 class="se-question-title">
+            <%= index + 1 %>. <%= question.title %>
+            <% if question.required? %>
+              <span class="se-required">*required</span>
+            <% end %>
+          </h3>
+          
+          <% if question.description.present? %>
+            <p class="se-question-description"><%= question.description %></p>
+          <% end %>
+          
+          <% existing_answer = @answers[question.id] %>
+          
+          <div class="se-question-input">
+            <%= render partial: "surveys/partials/question_#{question.question_type.name}", 
+                locals: { question: question, existing_answer: existing_answer } %>
+          </div>
+          
+          <% if existing_answer %>
+            <div class="se-current-answer">
+              <strong>Current answer:</strong> <%= existing_answer.display_value %>
+            </div>
+          <% end %>
+        </article>
+      <% end %>
+    </div>
+
+    <div class="se-submit-section">
+      <h3>Ready to submit your survey?</h3>
+      <p>This will save all your answers and complete the survey. You won't be able to change your answers after this.</p>
+      
+      <%= submit_tag "Complete Survey", 
+          class: "se-btn se-btn-success se-btn-large",
+          name: "complete_survey" %>
+    </div>
+  <% end %>
+</div>

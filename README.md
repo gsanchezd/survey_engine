@@ -26,6 +26,261 @@ $ rails survey_engine:install:migrations
 $ rails db:migrate
 ```
 
+## Integration in a New Rails Project
+
+### Step 1: Add Routes
+
+Add SurveyEngine routes to your `config/routes.rb`:
+
+```ruby
+Rails.application.routes.draw do
+  # Mount SurveyEngine at the root or a custom path
+  mount SurveyEngine::Engine => "/surveys"
+  
+  # Or mount at root for direct access
+  # mount SurveyEngine::Engine => "/"
+  
+  # Your other routes...
+end
+```
+
+### Step 2: Generate Views (Optional but Recommended)
+
+Generate customizable view templates:
+
+```bash
+$ rails generate survey_engine:views
+```
+
+This copies all survey views to `app/views/survey_engine/` in your application, allowing you to customize the appearance. The generator also copies a CSS file with styled components.
+
+Add the stylesheet to your application layout (`app/views/layouts/application.html.erb`):
+
+```erb
+<%= stylesheet_link_tag 'survey_engine' %>
+```
+
+### Step 3: Seed Question Types
+
+Create the standard question types in your Rails console or seeds file:
+
+```ruby
+# db/seeds.rb or rails console
+
+# Create standard question types
+question_types = [
+  {
+    name: "text",
+    description: "Free text input",
+    allows_options: false,
+    allows_multiple_selections: false
+  },
+  {
+    name: "single_choice", 
+    description: "Single selection",
+    allows_options: true,
+    allows_multiple_selections: false
+  },
+  {
+    name: "multiple_choice",
+    description: "Multiple selections allowed",
+    allows_options: true,
+    allows_multiple_selections: true
+  },
+  {
+    name: "scale",
+    description: "Numeric scale",
+    allows_options: false,
+    allows_multiple_selections: false
+  },
+  {
+    name: "boolean",
+    description: "Yes/No questions",
+    allows_options: false,
+    allows_multiple_selections: false
+  },
+  {
+    name: "number",
+    description: "Numeric input",
+    allows_options: false,
+    allows_multiple_selections: false
+  }
+]
+
+question_types.each do |qt_data|
+  SurveyEngine::QuestionType.find_or_create_by(name: qt_data[:name]) do |qt|
+    qt.description = qt_data[:description]
+    qt.allows_options = qt_data[:allows_options]
+    qt.allows_multiple_selections = qt_data[:allows_multiple_selections]
+  end
+end
+```
+
+### Step 4: Create Your First Survey
+
+Use Rails console or create a rake task:
+
+```ruby
+# Example: Create a simple feedback survey
+survey = SurveyEngine::Survey.create!(
+  title: "Customer Feedback Survey",
+  description: "Help us improve our service",
+  status: "published",
+  is_active: true
+)
+
+# Add a text question
+text_type = SurveyEngine::QuestionType.find_by(name: "text")
+SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: text_type,
+  title: "What did you like most about our service?",
+  is_required: true,
+  order_position: 1
+)
+
+# Add a scale question
+scale_type = SurveyEngine::QuestionType.find_by(name: "scale")
+SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: scale_type,
+  title: "How would you rate our service overall?",
+  is_required: true,
+  order_position: 2,
+  scale_min: 1,
+  scale_max: 5,
+  scale_min_label: "Poor",
+  scale_max_label: "Excellent"
+)
+
+puts "Survey created! Visit http://localhost:3000/surveys to see it."
+```
+
+### Step 5: Customize Appearance (Optional)
+
+The generated views use CSS custom properties for easy theming. Edit `app/assets/stylesheets/survey_engine.css`:
+
+```css
+:root {
+  --se-primary: #your-brand-color;
+  --se-success: #your-success-color;
+  /* ... other color variables */
+}
+```
+
+### Step 6: Add Helper Methods to Your Application (Optional)
+
+Create application helpers for common survey operations:
+
+```ruby
+# app/helpers/application_helper.rb
+module ApplicationHelper
+  def time_duration_in_words(seconds)
+    return "0 seconds" if seconds.nil? || seconds.zero?
+    
+    if seconds < 60
+      "#{seconds.round} seconds"
+    elsif seconds < 3600
+      minutes = (seconds / 60).round
+      "#{minutes} minute#{'s' if minutes != 1}"
+    else
+      hours = (seconds / 3600).round(1)
+      "#{hours} hour#{'s' if hours != 1}"
+    end
+  end
+end
+```
+
+### Integration Patterns
+
+#### Pattern 1: Standalone Survey Application
+Mount the engine at root for a dedicated survey application:
+
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  mount SurveyEngine::Engine => "/"
+  # All survey routes will be at root level: /surveys, /surveys/:id, etc.
+end
+```
+
+#### Pattern 2: Survey Module in Existing Application
+Mount under a namespace to integrate with existing functionality:
+
+```ruby
+# config/routes.rb
+Rails.application.routes.draw do
+  mount SurveyEngine::Engine => "/feedback"
+  
+  # Your existing routes
+  resources :users
+  resources :products
+  # Survey routes will be at /feedback/surveys, etc.
+end
+```
+
+#### Pattern 3: Custom Controller Integration
+Use the engine models in your own controllers:
+
+```ruby
+# app/controllers/admin/surveys_controller.rb
+class Admin::SurveysController < ApplicationController
+  before_action :authenticate_admin!
+  
+  def index
+    @surveys = SurveyEngine::Survey.includes(:questions, :participants)
+  end
+  
+  def analytics
+    @survey = SurveyEngine::Survey.find(params[:id])
+    @analytics = calculate_survey_analytics(@survey)
+  end
+  
+  private
+  
+  def calculate_survey_analytics(survey)
+    # Your custom analytics logic using engine models
+    {
+      total_responses: survey.responses.completed.count,
+      completion_rate: survey.participants.completed.count.to_f / survey.participants.count * 100
+      # ... more analytics
+    }
+  end
+end
+```
+
+### Testing Your Integration
+
+1. **Start your Rails server:**
+   ```bash
+   rails server
+   ```
+
+2. **Visit the surveys index:**
+   - If mounted at root: `http://localhost:3000/`
+   - If mounted at `/surveys`: `http://localhost:3000/surveys`
+
+3. **Test the survey flow:**
+   - View available surveys
+   - Start a survey by entering an email
+   - Complete the survey
+   - View results
+
+### Deployment Considerations
+
+1. **Database Migrations:** Ensure migrations are run in production
+2. **Asset Compilation:** The CSS file should be included in asset compilation
+3. **UUID Generation:** The engine uses SecureRandom.uuid which works in all environments
+4. **Email Validation:** Consider adding email validation in your application layer if needed
+
+### Rails Version Compatibility
+
+This engine is designed for Rails 7.1+ and uses modern Rails features:
+- `form_with` for forms
+- UUID support for survey routing
+- Modern CSS with custom properties
+- Zero JavaScript dependencies
+
 ## Complete Survey Flow API
 
 ### 1. Create Survey Structure
@@ -713,19 +968,20 @@ Here's a complete example showing how to build a Net Promoter Score (NPS) survey
 rails console
 
 # Create question types (if not already created)
-SurveyEngine::QuestionType.create!(
-  name: "scale",
-  description: "Numeric scale questions",
-  allows_options: false,
-  allows_multiple_selections: false
-)
+## They are created in the migrations, so this is just for reference
+# SurveyEngine::QuestionType.create!(
+#   name: "scale",
+#   description: "Numeric scale questions",
+#   allows_options: false,
+#   allows_multiple_selections: false
+# )
 
-SurveyEngine::QuestionType.create!(
-  name: "text", 
-  description: "Free text input",
-  allows_options: false,
-  allows_multiple_selections: false
-)
+# SurveyEngine::QuestionType.create!(
+#   name: "text", 
+#   description: "Free text input",
+#   allows_options: false,
+#   allows_multiple_selections: false
+# )
 
 # Create NPS survey template
 nps_template = SurveyEngine::Survey.create!(
