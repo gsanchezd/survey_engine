@@ -1,42 +1,44 @@
-<%= link_to "← Back to Surveys", surveys_path, style: "text-decoration: none; color: #007cba;" %>
+<div class="survey-breadcrumb">
+  <%= link_to "← Back to Surveys", surveys_path %>
+</div>
 
-<div style="text-align: center; padding: 40px 20px;">
-  <h1 style="color: #28a745; margin-bottom: 20px;">🎉 Survey Completed!</h1>
+<div class="survey-completed-container">
+  <h1 class="survey-completed-title">🎉 Survey Completed!</h1>
   
-  <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 30px; border-radius: 10px; margin: 20px auto; max-width: 600px;">
-    <h2 style="margin: 0 0 15px 0;"><%= @survey.title %></h2>
-    <p style="font-size: 1.1em; margin: 15px 0;">Thank you for completing the survey!</p>
+  <div class="survey-completed-card">
+    <h2><%= @survey.title %></h2>
+    <p class="survey-completed-thank-you">Thank you for completing the survey!</p>
     
     <% if @response %>
-      <div style="background: white; padding: 20px; border-radius: 5px; margin: 20px 0; text-align: left;">
-        <h3 style="margin: 0 0 15px 0;">Your Response Summary</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin: 8px 0;"><strong>Participant:</strong> <%= @participant.email %></li>
-          <li style="margin: 8px 0;"><strong>Completed:</strong> <%= @response.completed_at.strftime("%B %d, %Y at %I:%M %p") %></li>
-          <li style="margin: 8px 0;"><strong>Time taken:</strong> <%= time_duration_in_words(@response.completion_time.to_i) %></li>
-          <li style="margin: 8px 0;"><strong>Questions answered:</strong> <%= @response.answers.count %> of <%= @survey.questions.count %></li>
-          <li style="margin: 8px 0;"><strong>Completion rate:</strong> <%= @response.completion_percentage %>%</li>
+      <div class="survey-response-summary">
+        <h3>Your Response Summary</h3>
+        <ul>
+          <li><strong>Participant:</strong> <%= @participant.email %></li>
+          <li><strong>Completed:</strong> <%= @response.completed_at.strftime("%B %d, %Y at %I:%M %p") %></li>
+          <li><strong>Time taken:</strong> <%= time_duration_in_words(@response.completion_time.to_i) %></li>
+          <li><strong>Questions answered:</strong> <%= @response.answers.count %> of <%= @survey.questions.count %></li>
+          <li><strong>Completion rate:</strong> <%= @response.completion_percentage %>%</li>
         </ul>
       </div>
     <% end %>
   </div>
   
   <% if @response&.answers&.any? %>
-    <div style="margin: 30px auto; max-width: 800px; text-align: left;">
+    <div class="survey-answers-review">
       <h3>Your Answers</h3>
       
       <% @survey.questions.ordered.each_with_index do |question, index| %>
         <% answer = @response.answer_for_question(question) %>
-        <div style="border: 1px solid #eee; padding: 20px; margin: 15px 0; border-radius: 5px; background: #fafafa;">
-          <h4 style="margin: 0 0 10px 0; color: #333;">
+        <div class="survey-answer-card">
+          <h4>
             <%= index + 1 %>. <%= question.title %>
           </h4>
           
-          <div style="background: white; padding: 15px; border-radius: 3px;">
+          <div class="survey-answer-display">
             <% if answer %>
               <strong>Your answer:</strong> <%= answer.complete_answer %>
             <% else %>
-              <em style="color: #666;">Not answered</em>
+              <em class="survey-text-muted">Not answered</em>
             <% end %>
           </div>
         </div>
@@ -44,8 +46,7 @@
     </div>
   <% end %>
   
-  <div style="margin: 40px 0;">
-    <%= link_to "Take Another Survey", surveys_path, 
-        style: "background: #007cba; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px;" %>
+  <div class="survey-completed-footer">
+    <%= link_to "Take Another Survey", surveys_path, class: "survey-btn survey-btn-primary survey-btn-large" %>
   </div>
 </div>

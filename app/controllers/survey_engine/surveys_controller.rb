@@ -110,5 +110,165 @@ module SurveyEngine
       
       redirect_to survey_path(@survey), alert: "Survey not completed" unless @participant&.completed?
     end
+
+    def results
+      @survey = Survey.find_by!(uuid: params[:id])
+      @responses = @survey.responses.where.not(completed_at: nil).includes(:participant, answers: [:question, :options])
+      @questions = @survey.questions.order(:order_position).includes(:question_type, :options)
+      
+      # Calculate general statistics
+      @stats = {
+        total_participants: @survey.participants.count,
+        completed_responses: @responses.count,
+        completion_rate: @survey.participants.any? ? 
+          (@responses.count.to_f / @survey.participants.count * 100).round(1) : 0
+      }
+      
+      # Calculate question-specific analytics
+      @question_analytics = {}
+      @questions.each do |question|
+        @question_analytics[question.id] = analyze_question_responses(question, @responses)
+      end
+      
+      # Handle export formats
+      respond_to do |format|
+        format.html # Default view
+        format.csv { send_data generate_csv_export, filename: "survey_#{@survey.id}_results.csv" }
+        format.json { render json: generate_json_export }
+      end
+    end
+
+    private
+
+    def analyze_question_responses(question, responses)
+      answers = responses.map { |r| r.answer_for_question(question) }.compact
+      
+      case question.question_type.name
+      when 'text'
+        {
+          type: 'text',
+          response_count: answers.count,
+          responses: answers.map(&:text_answer).reject(&:blank?)
+        }
+      when 'scale', 'number'
+        numeric_answers = answers.map(&:numeric_answer).compact
+        {
+          type: 'numeric',
+          response_count: numeric_answers.count,
+          average: numeric_answers.any? ? (numeric_answers.sum.to_f / numeric_answers.count).round(2) : 0,
+          min: numeric_answers.min || 0,
+          max: numeric_answers.max || 0,
+          distribution: numeric_answers.group_by(&:itself).transform_values(&:count)
+        }
+      when 'boolean'
+        boolean_answers = answers.map(&:boolean_answer).compact
+        {
+          type: 'boolean',
+          response_count: boolean_answers.count,
+          yes_count: boolean_answers.count(true),
+          no_count: boolean_answers.count(false),
+          yes_percentage: boolean_answers.any? ? (boolean_answers.count(true).to_f / boolean_answers.count * 100).round(1) : 0
+        }
+      when 'single_choice', 'multiple_choice'
+        option_counts = {}
+        other_responses = []
+        
+        answers.each do |answer|
+          answer.options.each do |option|
+            option_counts[option.option_text] = (option_counts[option.option_text] || 0) + 1
+            if option.is_other? && answer.other_text.present?
+              other_responses << answer.other_text
+            end
+          end
+        end
+        
+        {
+          type: 'choice',
+          response_count: answers.count,
+          option_counts: option_counts,
+          other_responses: other_responses
+        }
+      else
+        { type: 'unknown', response_count: 0 }
+      end
+    end
+
+    def generate_csv_export
+      require 'csv'
+      
+      CSV.generate do |csv|
+        # Header row
+        headers = ['Participant Email', 'Completed At']
+        @questions.each { |q| headers << q.title }
+        csv << headers
+        
+        # Data rows
+        @responses.each do |response|
+          row = [
+            response.participant.email,
+            response.completed_at&.strftime("%Y-%m-%d %H:%M:%S")
+          ]
+          
+          @questions.each do |question|
+            answer = response.answer_for_question(question)
+            row << (answer ? format_answer_for_export(answer) : "")
+          end
+          
+          csv << row
+        end
+      end
+    end
+
+    def generate_json_export
+      {
+        survey: {
+          id: @survey.id,
+          title: @survey.title,
+          description: @survey.description,
+          created_at: @survey.created_at
+        },
+        statistics: @stats,
+        questions: @questions.map do |question|
+          {
+            id: question.id,
+            title: question.title,
+            type: question.question_type.name,
+            analytics: @question_analytics[question.id]
+          }
+        end,
+        responses: @responses.map do |response|
+          {
+            participant_email: response.participant.email,
+            completed_at: response.completed_at,
+            answers: @questions.map do |question|
+              answer = response.answer_for_question(question)
+              {
+                question_id: question.id,
+                question_title: question.title,
+                value: answer ? format_answer_for_export(answer) : nil
+              }
+            end
+          }
+        end
+      }
+    end
+
+    def format_answer_for_export(answer)
+      case answer.question.question_type.name
+      when 'text'
+        answer.text_answer
+      when 'scale', 'number'
+        answer.numeric_answer
+      when 'boolean'
+        answer.boolean_answer ? 'Yes' : 'No'
+      when 'single_choice', 'multiple_choice'
+        option_texts = answer.options.map(&:option_text)
+        result = option_texts.join(', ')
+        result += " (Other: #{answer.other_text})" if answer.other_text.present?
+        result
+      else
+        'Unknown'
+      end
+    end
   end
 end

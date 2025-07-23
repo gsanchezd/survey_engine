@@ -11,18 +11,27 @@ module SurveyEngine
         directory 'views', 'app/views/survey_engine'
       end
       
+      def copy_helpers
+        directory 'helpers', 'app/helpers'
+      end
+      
       def copy_stylesheet
         copy_file 'stylesheets/survey_engine.css', 'app/assets/stylesheets/survey_engine.css'
       end
       
       def show_instructions
         say ""
-        say "Views generated successfully!", :green
+        say "Views, helpers, and styles generated successfully!", :green
         say ""
         say "Add the following to your application layout to include the stylesheet:", :blue
         say "  <%= stylesheet_link_tag 'survey_engine' %>"
         say ""
-        say "You can now customize the views in app/views/survey_engine/", :blue
+        say "Files generated:", :blue
+        say "  - Views: app/views/survey_engine/"
+        say "  - Helpers: app/helpers/survey_engine/"
+        say "  - Stylesheet: app/assets/stylesheets/survey_engine.css"
+        say ""
+        say "You can now customize all generated files as needed.", :blue
       end
     end
   end

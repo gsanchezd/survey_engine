@@ -1,95 +1,97 @@
-<h1>Available Surveys</h1>
-
-<% unless @current_email.present? %>
-  <div style="background: #e3f2fd; padding: 20px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #2196f3;">
-    <h3 style="margin: 0 0 15px 0;">Welcome!</h3>
-    <p>To see your survey completion status and continue any in-progress surveys, please enter your email address:</p>
-    
-    <%= form_tag surveys_path, method: :get, style: "margin: 15px 0;" do %>
-      <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-        <%= email_field_tag :email, params[:email], 
-            placeholder: "your.email@example.com",
-            style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; flex: 1; min-width: 250px;" %>
-        <%= submit_tag "Set Email", 
-            style: "background: #2196f3; color: white; padding: 10px 20px; border: none; border-radius: 3px; cursor: pointer;" %>
-      </div>
-    <% end %>
-    
-    <p style="font-size: 0.9em; color: #666; margin: 10px 0 0 0;">
-      <em>This helps us track your survey progress and prevent duplicate submissions.</em>
-    </p>
+<div class="survey-container">
+  <div class="survey-header">
+    <h1>Available Surveys</h1>
   </div>
-<% else %>
-  <div style="background: #e8f5e8; padding: 15px; margin: 20px 0; border-radius: 5px; border-left: 4px solid #4caf50;">
-    <strong>Signed in as:</strong> <%= @current_email %>
-    <%= link_to "Change Email", surveys_path, 
-        style: "color: #4caf50; text-decoration: none; margin-left: 15px;" %>
-  </div>
-<% end %>
 
-<% if @surveys.any? %>
-  <div style="margin: 20px 0;">
-    <% @surveys.each do |survey| %>
-      <div style="border: 1px solid #ccc; padding: 20px; margin: 10px 0; border-radius: 5px;">
-        <h2><%= survey.title %></h2>
-        <p><%= survey.description %></p>
-        
-        <div style="color: #666; font-size: 0.9em; margin: 10px 0;">
-          <strong>Questions:</strong> <%= survey.questions.count %> |
-          <strong>Participants:</strong> <%= survey.participants.count %> |
-          <strong>Status:</strong> <span style="color: green;"><%= survey.status.capitalize %></span>
+  <% unless @current_email.present? %>
+    <div class="survey-alert survey-alert-info">
+      <h3>Welcome!</h3>
+      <p>To see your survey completion status and continue any in-progress surveys, please enter your email address:</p>
+      
+      <%= form_tag surveys_path, method: :get, class: "survey-form" do %>
+        <div class="survey-form-row">
+          <%= email_field_tag :email, params[:email], 
+              placeholder: "your.email@example.com",
+              class: "survey-email-input" %>
+          <%= submit_tag "Set Email", class: "survey-btn survey-btn-primary" %>
         </div>
-        
-        <div style="margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <% if survey.can_receive_responses? %>
-            <% if @current_email.present? && @completed_surveys&.dig(survey.id) %>
-              <!-- Already completed -->
-              <span style="background: #6c757d; color: white; padding: 10px 20px; border-radius: 3px; display: inline-block;">
-                ✓ Completed
-              </span>
-              <%= link_to "View My Results", completed_survey_path(survey, email: @current_email), 
-                  style: "background: #28a745; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; display: inline-block;" %>
-            <% else %>
-              <!-- Can take survey -->
-              <% if @current_email.present? %>
-                <%= link_to "Continue Survey", survey_path(survey, email: @current_email), 
-                    style: "background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px; display: inline-block;" %>
-              <% else %>
-                <%= link_to "Take Survey", survey_path(survey), 
-                    style: "background: #007cba; color: white; padding: 10px 20px; text-decoration: none; border-radius: 3px; display: inline-block;" %>
-              <% end %>
-            <% end %>
-          <% else %>
-            <span style="color: #999; font-style: italic;">Survey not available</span>
-          <% end %>
+      <% end %>
+      
+      <p class="survey-helper-text">
+        <em>This helps us track your survey progress and prevent duplicate submissions.</em>
+      </p>
+    </div>
+  <% else %>
+    <div class="survey-alert survey-alert-success">
+      <strong>Signed in as:</strong> <%= @current_email %>
+      <%= link_to "Change Email", surveys_path, class: "survey-breadcrumb" %>
+    </div>
+  <% end %>
+
+  <% if @surveys.any? %>
+    <div class="survey-list">
+      <% @surveys.each do |survey| %>
+        <div class="survey-card">
+          <h2><%= survey.title %></h2>
+          <p><%= survey.description %></p>
           
-          <!-- Survey Analytics Button -->
-          <% if survey.participants.any? %>
-            <%= link_to "📊 View Survey Results", results_survey_path(survey), 
-                style: "background: #6f42c1; color: white; padding: 8px 15px; text-decoration: none; border-radius: 3px; display: inline-block;" %>
-          <% else %>
-            <span style="background: #e9ecef; color: #6c757d; padding: 8px 15px; border-radius: 3px; display: inline-block;">
-              📊 No results yet
-            </span>
-          <% end %>
+          <div class="survey-meta">
+            <strong>Questions:</strong> <%= survey.questions.count %> |
+            <strong>Participants:</strong> <%= survey.participants.count %> |
+            <strong>Status:</strong> <span class="survey-status"><%= survey.status.capitalize %></span>
+          </div>
+          
+          <div class="survey-actions">
+            <% if survey.can_receive_responses? %>
+              <% if @current_email.present? && @completed_surveys&.dig(survey.id) %>
+                <!-- Already completed -->
+                <span class="survey-btn survey-btn-completed">
+                  ✓ Completed
+                </span>
+                <%= link_to "View My Results", completed_survey_path(survey, email: @current_email), 
+                    class: "survey-btn survey-btn-success" %>
+              <% else %>
+                <!-- Can take survey -->
+                <% if @current_email.present? %>
+                  <%= link_to "Continue Survey", survey_path(survey, email: @current_email), 
+                      class: "survey-btn survey-btn-primary" %>
+                <% else %>
+                  <%= link_to "Take Survey", survey_path(survey), 
+                      class: "survey-btn survey-btn-primary" %>
+                <% end %>
+              <% end %>
+            <% else %>
+              <span class="survey-text-muted survey-font-italic">Survey not available</span>
+            <% end %>
+            
+            <!-- Survey Analytics Button -->
+            <% if survey.participants.any? %>
+              <%= link_to "📊 View Survey Results", results_survey_path(survey), 
+                  class: "survey-btn survey-btn-secondary" %>
+            <% else %>
+              <span class="survey-btn survey-btn-disabled">
+                📊 No results yet
+              </span>
+            <% end %>
+          </div>
         </div>
-      </div>
-    <% end %>
-  </div>
-<% else %>
-  <div style="text-align: center; padding: 40px; color: #666;">
-    <h3>No surveys available</h3>
-    <p>There are no published surveys at the moment.</p>
-    <p><small>You can create surveys using the Rails console or seeds file.</small></p>
-  </div>
-<% end %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="survey-empty-state">
+      <h3>No surveys available</h3>
+      <p>There are no published surveys at the moment.</p>
+      <p><small>You can create surveys using the Rails console or seeds file.</small></p>
+    </div>
+  <% end %>
 
-<div style="margin-top: 40px; padding: 20px; background: #f5f5f5; border-radius: 5px;">
-  <h3>For Developers</h3>
-  <p>This is a demo interface for the SurveyEngine Rails Engine.</p>
-  <ul>
-    <li>Survey data is populated from <code>db/seeds.rb</code></li>
-    <li>All survey responses are stored in the engine's database tables</li>
-    <li>Check the console for debugging information</li>
-  </ul>
+  <div class="survey-developer-info">
+    <h3>For Developers</h3>
+    <p>This is a demo interface for the SurveyEngine Rails Engine.</p>
+    <ul>
+      <li>Survey data is populated from <code>db/seeds.rb</code></li>
+      <li>All survey responses are stored in the engine's database tables</li>
+      <li>Check the console for debugging information</li>
+    </ul>
+  </div>
 </div>

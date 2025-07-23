@@ -1,159 +1,160 @@
-<%= link_to "← Back to Surveys", surveys_path, style: "text-decoration: none; color: #007cba;" %>
-
-<h1>Answering: <%= @survey.title %></h1>
-<p><%= @survey.description %></p>
-
-<div style="background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-  <strong>Progress:</strong> 
-  <%= @response.answers.count %> of <%= @questions.count %> questions answered
-  (<%= @response.completion_percentage %>% complete)
-</div>
-
-<% if notice %>
-  <div class="alert alert-notice">
-    <%= notice %>
+<div class="survey-container">
+  <div class="survey-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path %>
   </div>
-<% end %>
 
-<% if alert %>
-  <div class="alert alert-error">
-    <strong>⚠️ Validation Error:</strong> <%= alert %>
+  <div class="survey-header">
+    <h1>Answering: <%= @survey.title %></h1>
+    <p><%= @survey.description %></p>
   </div>
-<% end %>
 
-<!-- Single form for all questions -->
-<%= form_tag submit_answer_survey_path(@survey), method: :post, style: "margin: 15px 0;" do %>
+  <div class="survey-progress">
+    <strong>Progress:</strong> 
+    <%= @response.answers.count %> of <%= @questions.count %> questions answered
+    (<%= @response.completion_percentage %>% complete)
+  </div>
 
-<% @questions.each_with_index do |question, index| %>
-  <div style="border: 1px solid #ddd; padding: 20px; margin: 20px 0; border-radius: 5px; background: white;">
-    <h3 style="margin: 0 0 15px 0; color: #333;">
-      <%= index + 1 %>. <%= question.title %>
-      <% if question.required? %>
-        <span style="color: red; font-size: 0.8em;">*required</span>
-      <% end %>
-    </h3>
-    
-    <% if question.description.present? %>
-      <p style="color: #666; margin: 5px 0 20px 0;"><%= question.description %></p>
-    <% end %>
-    
-    <% existing_answer = @answers[question.id] %>
+  <% if notice %>
+    <div class="survey-alert survey-alert-success">
+      <%= notice %>
+    </div>
+  <% end %>
+
+  <% if alert %>
+    <div class="survey-alert survey-alert-danger">
+      <strong>⚠️ Validation Error:</strong> <%= alert %>
+    </div>
+  <% end %>
+
+  <!-- Single form for all questions -->
+  <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "survey-form" do %>
+
+  <% @questions.each_with_index do |question, index| %>
+    <div class="survey-question">
+      <h3>
+        <%= index + 1 %>. <%= question.title %>
+        <% if question.required? %>
+          <span class="survey-question-required">*required</span>
+        <% end %>
+      </h3>
       
-    <% case question.question_type.name %>
-    <% when 'text' %>
-      <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
-          placeholder: question.placeholder_text || "Enter your answer here...",
-          style: "width: 100%; height: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 3px;",
-          maxlength: question.max_characters,
-          required: question.required?,
-          class: "survey-field #{'required-field' if question.required?}",
-          data: { question_id: question.id, question_title: question.title } %>
-            
-    <% when 'scale' %>
-      <div style="margin: 15px 0;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-          <span style="font-size: 0.9em; color: #666;"><%= question.scale_min_label %></span>
-          <span style="font-size: 0.9em; color: #666;"><%= question.scale_max_label %></span>
-        </div>
+      <% if question.description.present? %>
+        <p class="survey-question-description"><%= question.description %></p>
+      <% end %>
+      
+      <% existing_answer = @answers[question.id] %>
         
-        <div style="display: flex; justify-content: space-between; align-items: center;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
-          <% (question.scale_min..question.scale_max).each do |value| %>
-            <label style="display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-              <%= radio_button_tag "answers[#{question.id}][numeric_answer]", value, 
-                  existing_answer&.numeric_answer == value,
-                  style: "margin-bottom: 5px;",
+      <% case question.question_type.name %>
+      <% when 'text' %>
+        <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
+            placeholder: question.placeholder_text || "Enter your answer here...",
+            class: "survey-textarea #{'required-field' if question.required?}",
+            maxlength: question.max_characters,
+            required: question.required?,
+            data: { question_id: question.id, question_title: question.title } %>
+              
+      <% when 'scale' %>
+        <div class="survey-scale-container">
+          <div class="survey-scale-labels">
+            <span><%= question.scale_min_label %></span>
+            <span><%= question.scale_max_label %></span>
+          </div>
+          
+          <div class="survey-scale-options <%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
+            <% (question.scale_min..question.scale_max).each do |value| %>
+              <label class="survey-scale-option">
+                <%= radio_button_tag "answers[#{question.id}][numeric_answer]", value, 
+                    existing_answer&.numeric_answer == value,
+                    required: question.required?,
+                    class: "survey-field" %>
+                <span><%= value %></span>
+              </label>
+            <% end %>
+          </div>
+        </div>
+          
+      <% when 'number' %>
+        <%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
+            class: "survey-number-input #{'required-field' if question.required?}",
+            required: question.required?,
+            data: { question_id: question.id, question_title: question.title } %>
+            
+      <% when 'boolean' %>
+        <div class="survey-question-options <%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
+          <label class="survey-question-option">
+            <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', existing_answer&.boolean_answer == true,
+                required: question.required?, class: "survey-field" %>
+            Yes
+          </label>
+          <label class="survey-question-option">
+            <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', existing_answer&.boolean_answer == false,
+                required: question.required?, class: "survey-field" %>
+            No
+          </label>
+        </div>
+          
+      <% when 'single_choice' %>
+        <div class="survey-question-options <%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
+          <% question.options.ordered.each do |option| %>
+            <label class="survey-question-option">
+              <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
+                  existing_answer&.options&.include?(option),
+                  onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil,
                   required: question.required?,
                   class: "survey-field" %>
-              <span style="font-size: 0.9em;"><%= value %></span>
+              <%= option.option_text %>
             </label>
+            
+            <% if option.is_other? %>
+              <div id="other_text_<%= question.id %>" class="survey-other-input" style="<%= existing_answer&.options&.include?(option) ? 'display: block;' : 'display: none;' %>">
+                <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
+                    placeholder: "Please specify..." %>
+              </div>
+            <% end %>
           <% end %>
         </div>
-      </div>
-        
-    <% when 'number' %>
-      <%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
-          style: "padding: 10px; border: 1px solid #ccc; border-radius: 3px; width: 150px;",
-          required: question.required?,
-          class: "survey-field #{'required-field' if question.required?}",
-          data: { question_id: question.id, question_title: question.title } %>
           
-    <% when 'boolean' %>
-      <div style="margin: 15px 0;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
-        <label style="display: block; margin: 10px 0; cursor: pointer;">
-          <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', existing_answer&.boolean_answer == true,
-              required: question.required?, class: "survey-field" %>
-          Yes
-        </label>
-        <label style="display: block; margin: 10px 0; cursor: pointer;">
-          <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', existing_answer&.boolean_answer == false,
-              required: question.required?, class: "survey-field" %>
-          No
-        </label>
-      </div>
-        
-    <% when 'single_choice' %>
-      <div style="margin: 15px 0;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
-        <% question.options.ordered.each do |option| %>
-          <label style="display: block; margin: 10px 0; cursor: pointer;">
-            <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
-                existing_answer&.options&.include?(option),
-                onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil,
-                required: question.required?,
-                class: "survey-field" %>
-            <%= option.option_text %>
-          </label>
+      <% when 'multiple_choice' %>
+        <div class="survey-question-options <%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
+          <% question.options.ordered.each do |option| %>
+            <label class="survey-question-option">
+              <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
+                  existing_answer&.options&.include?(option),
+                  onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil,
+                  class: "survey-field #{'required-checkbox' if question.required?}",
+                  data: { question_id: question.id } %>
+              <%= option.option_text %>
+            </label>
+          <% end %>
           
-          <% if option.is_other? %>
-            <div id="other_text_<%= question.id %>" style="<%= existing_answer&.options&.include?(option) ? 'display: block;' : 'display: none;' %> margin-left: 25px; margin-top: 5px;">
+          <% if question.options.any?(&:is_other?) %>
+            <div id="other_text_<%= question.id %>" class="survey-other-input" style="<%= existing_answer&.other_text.present? ? 'display: block;' : 'display: none;' %>">
               <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
-                  placeholder: "Please specify...",
-                  style: "padding: 8px; border: 1px solid #ccc; border-radius: 3px; width: 300px; max-width: 100%;" %>
+                  placeholder: "Please specify other option..." %>
             </div>
           <% end %>
-        <% end %>
-      </div>
-        
-    <% when 'multiple_choice' %>
-      <div style="margin: 15px 0;" class="<%= 'required-field' if question.required? %>" data-question-id="<%= question.id %>" data-question-title="<%= question.title %>">
-        <% question.options.ordered.each do |option| %>
-          <label style="display: block; margin: 10px 0; cursor: pointer;">
-            <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
-                existing_answer&.options&.include?(option),
-                onchange: option.is_other? ? "document.getElementById('other_text_#{question.id}').style.display = this.checked ? 'block' : 'none'" : nil,
-                class: "survey-field #{'required-checkbox' if question.required?}",
-                data: { question_id: question.id } %>
-            <%= option.option_text %>
-          </label>
-        <% end %>
-        
-        <% if question.options.any?(&:is_other?) %>
-          <div id="other_text_<%= question.id %>" style="<%= existing_answer&.other_text.present? ? 'display: block;' : 'display: none;' %> margin-left: 25px; margin-top: 10px;">
-            <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
-                placeholder: "Please specify other option...",
-                style: "padding: 8px; border: 1px solid #ccc; border-radius: 3px; width: 300px; max-width: 100%;" %>
-          </div>
-        <% end %>
-      </div>
-        
-    <% end %>
+        </div>
+          
+      <% end %>
+      
+      <% if existing_answer %>
+        <div class="survey-current-answer">
+          <strong>Current answer:</strong> <%= existing_answer.display_value %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Complete survey button -->
+  <div class="survey-completion-panel">
+    <h3>Ready to submit your survey?</h3>
+    <p>This will save all your answers and complete the survey. You won't be able to change your answers after this.</p>
     
-    <% if existing_answer %>
-      <div style="background: #e8f5e8; padding: 10px; border-radius: 3px; margin-top: 15px; font-size: 0.9em;">
-        <strong>Current answer:</strong> <%= existing_answer.display_value %>
-      </div>
-    <% end %>
+    <%= submit_tag "Complete Survey", 
+        class: "survey-btn survey-btn-submit",
+        name: "complete_survey",
+        formnovalidate: false %>
   </div>
-<% end %>
 
-<!-- Complete survey button -->
-<div style="text-align: center; margin: 40px 0; padding: 20px; background: #f8f9fa; border-radius: 5px;">
-  <h3>Ready to submit your survey?</h3>
-  <p style="color: #666; margin: 20px 0;">This will save all your answers and complete the survey. You won't be able to change your answers after this.</p>
-  
-  <%= submit_tag "Complete Survey", 
-      style: "background: #28a745; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold;",
-      name: "complete_survey",
-      formnovalidate: false %>
+  <% end %> <!-- Close the main form -->
 </div>
-
-<% end %> <!-- Close the main form -->

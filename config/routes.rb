@@ -6,6 +6,7 @@ SurveyEngine::Engine.routes.draw do
       get :answer
       post :submit_answer
       get :completed
+      get :results
     end
   end
 end

@@ -50,11 +50,41 @@ $ rails generate survey_engine:views
 $ rails generate survey_engine:controllers
 ```
 
+The views generator will automatically copy:
+- All survey view templates to `app/views/survey_engine/`
+- CSS file to `app/assets/stylesheets/survey_engine.css`
+
 Add the stylesheet to your application layout:
 
 ```erb
 <%= stylesheet_link_tag 'survey_engine' %>
 ```
+
+#### Styling System
+
+The engine includes a comprehensive CSS system with:
+
+- **CSS Custom Properties**: Easy theme customization via CSS variables
+- **Responsive Design**: Mobile-first approach with breakpoints
+- **Component-Based Classes**: Modular styling system
+
+**CSS Variable Customization:**
+```css
+/* Override in your application.css */
+:root {
+  --survey-primary-color: #your-brand-color;
+  --survey-success-color: #your-success-color;
+  --survey-spacing: 16px; /* Adjust spacing */
+  --survey-font-family: 'Your Font', sans-serif;
+}
+```
+
+**Key CSS Classes:**
+- `.survey-container` - Main wrapper with responsive padding
+- `.survey-alert-*` - Alert panels (info, success, warning, danger)
+- `.survey-btn-*` - Button variants (primary, success, secondary)
+- `.survey-question` - Individual question containers
+- `.survey-form-*` - Form elements and layout
 
 ### 3. Create Your First Survey
 
