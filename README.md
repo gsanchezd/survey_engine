@@ -57,7 +57,7 @@ The views generator will automatically copy:
 Add the stylesheet to your application layout:
 
 ```erb
-<%= stylesheet_link_tag 'survey_engine' %>
+<%= stylesheet_link_tag 'survey_engine/application' %>
 ```
 
 #### Styling System

@@ -24,7 +24,7 @@ module SurveyEngine
         say "Views, helpers, and styles generated successfully!", :green
         say ""
         say "Add the following to your application layout to include the stylesheet:", :blue
-        say "  <%= stylesheet_link_tag 'survey_engine' %>"
+        say "  <%= stylesheet_link_tag 'survey_engine/application' %>"
         say ""
         say "Files generated:", :blue
         say "  - Views: app/views/survey_engine/"
