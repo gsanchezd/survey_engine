@@ -49,7 +49,7 @@
           <% existing_answer = @answers[question.id] %>
           
           <div class="se-question-input">
-            <%= render partial: "surveys/partials/question_#{question.question_type.name}", 
+            <%= render partial: "survey_engine/surveys/partials/question_#{question.question_type.name}", 
                 locals: { question: question, existing_answer: existing_answer } %>
           </div>
           
