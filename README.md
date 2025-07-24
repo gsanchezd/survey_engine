@@ -265,20 +265,247 @@ Rails.application.routes.draw do
 end
 ```
 
-### Pattern 3: Custom Controller Integration
+### Pattern 3: Custom Controllers with Engine Models (Recommended)
+
+This approach gives you complete control over routes and functionality while leveraging the engine's robust models and business logic:
+
 ```ruby
-# Use engine models in your controllers
-class Admin::SurveysController < ApplicationController
-  def index
-    @surveys = SurveyEngine::Survey.includes(:questions, :participants)
+# config/routes.rb - Don't mount the engine at all
+Rails.application.routes.draw do
+  # Create your own survey routes with only the functionality you need
+  resources :surveys, only: [:show] do
+    member do
+      get :start
+      post :submit_answer
+      post :complete
+    end
   end
   
-  def analytics
-    @survey = SurveyEngine::Survey.find(params[:id])
-    # Your custom analytics using engine models
+  # Optional: Admin interface for survey management
+  namespace :admin do
+    resources :surveys do
+      member do
+        get :results
+        get :analytics
+        post :publish
+        post :pause
+      end
+      
+      resources :questions, except: [:show]
+    end
   end
 end
 ```
+
+Create your custom controllers using the engine's models:
+
+```ruby
+# app/controllers/surveys_controller.rb
+class SurveysController < ApplicationController
+  before_action :find_survey
+  
+  def show
+    # Check if user can access this survey
+    unless @survey.can_receive_responses?
+      redirect_to root_path, alert: "Survey is not available"
+      return
+    end
+    
+    @questions = @survey.questions.includes(:options, :question_type).ordered
+  end
+  
+  def start
+    email = params[:email] || session[:user_email]
+    
+    # Check for existing participation
+    @participant = SurveyEngine::Participant.find_by(
+      survey: @survey, 
+      email: email
+    )
+    
+    if @participant&.completed?
+      redirect_to @survey, notice: "You have already completed this survey"
+      return
+    end
+    
+    # Create or find participant
+    @participant = SurveyEngine::Participant.find_or_create_by(
+      survey: @survey,
+      email: email
+    ) do |p|
+      p.status = 'invited'
+    end
+    
+    # Create response
+    @response = SurveyEngine::Response.create!(
+      survey: @survey,
+      participant: @participant
+    )
+    
+    session[:response_id] = @response.id
+    redirect_to @survey
+  end
+  
+  def submit_answer
+    @response = SurveyEngine::Response.find(session[:response_id])
+    @question = SurveyEngine::Question.find(params[:question_id])
+    
+    # Find or create answer
+    @answer = SurveyEngine::Answer.find_or_initialize_by(
+      response: @response,
+      question: @question
+    )
+    
+    # Handle different question types
+    case @question.question_type.name
+    when 'text', 'textarea'
+      @answer.text_answer = params[:text_answer]
+    when 'number', 'scale'
+      @answer.numeric_answer = params[:numeric_answer]
+    when 'boolean'
+      @answer.boolean_answer = params[:boolean_answer]
+    when 'single_choice'
+      @answer.answer_options.destroy_all
+      if params[:option_id].present?
+        option = SurveyEngine::Option.find(params[:option_id])
+        @answer.answer_options.create!(option: option)
+      end
+    when 'multiple_choice'
+      @answer.answer_options.destroy_all
+      if params[:option_ids].present?
+        params[:option_ids].each do |option_id|
+          option = SurveyEngine::Option.find(option_id)
+          @answer.answer_options.create!(option: option)
+        end
+      end
+    end
+    
+    # Handle "other" text for choice questions
+    @answer.other_text = params[:other_text] if params[:other_text].present?
+    @answer.answered_at = Time.current
+    @answer.save!
+    
+    render json: { status: 'success' }
+  end
+  
+  def complete
+    @response = SurveyEngine::Response.find(session[:response_id])
+    
+    # Mark response and participant as completed
+    @response.update!(completed_at: Time.current)
+    @response.participant.update!(
+      status: 'completed',
+      completed_at: Time.current
+    )
+    
+    session.delete(:response_id)
+    redirect_to survey_completed_path(@survey)
+  end
+  
+  private
+  
+  def find_survey
+    @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
+  end
+end
+```
+
+Optional admin controller for survey management:
+
+```ruby
+# app/controllers/admin/surveys_controller.rb
+class Admin::SurveysController < ApplicationController
+  before_action :find_survey, except: [:index, :new, :create]
+  
+  def index
+    @surveys = SurveyEngine::Survey.includes(:questions, :participants)
+                                   .order(created_at: :desc)
+    
+    # Filter by surveyable if needed
+    if params[:cohort_id].present?
+      cohort = Cohort.find(params[:cohort_id])
+      @surveys = @surveys.for_surveyable(cohort)
+    end
+  end
+  
+  def show
+    @questions = @survey.questions.includes(:options)
+    @participants_count = @survey.participants.count
+    @responses_count = @survey.responses.count
+  end
+  
+  def results
+    @responses = @survey.responses.completed.includes(:answers, :participant)
+    @analytics = calculate_analytics(@survey)
+  end
+  
+  def analytics
+    @question_analytics = @survey.questions.map do |question|
+      {
+        question: question,
+        response_count: question.answers.count,
+        response_summary: summarize_question_responses(question)
+      }
+    end
+  end
+  
+  def publish
+    @survey.publish!
+    redirect_to admin_survey_path(@survey), notice: "Survey published successfully"
+  end
+  
+  def pause
+    @survey.pause!
+    redirect_to admin_survey_path(@survey), notice: "Survey paused"
+  end
+  
+  private
+  
+  def find_survey
+    @survey = SurveyEngine::Survey.find(params[:id])
+  end
+  
+  def calculate_analytics(survey)
+    {
+      total_participants: survey.participants.count,
+      completed_responses: survey.participants.completed.count,
+      completion_rate: survey.participants.count > 0 ? 
+        (survey.participants.completed.count.to_f / survey.participants.count * 100).round(2) : 0
+    }
+  end
+  
+  def summarize_question_responses(question)
+    # Implementation depends on question type
+    case question.question_type.name
+    when 'scale', 'number'
+      answers = question.answers.where.not(numeric_answer: nil)
+      {
+        average: answers.average(:numeric_answer)&.round(2),
+        count: answers.count
+      }
+    when 'single_choice', 'multiple_choice'
+      option_counts = {}
+      question.answers.joins(:answer_options, :options).each do |answer|
+        answer.options.each do |option|
+          option_counts[option.option_text] ||= 0
+          option_counts[option.option_text] += 1
+        end
+      end
+      option_counts
+    else
+      { response_count: question.answers.count }
+    end
+  end
+end
+```
+
+**Benefits of this approach:**
+
+- **Complete control**: You define exactly which routes and functionality you need
+- **Leverage engine models**: Use the robust data models and business logic without UI constraints
+- **Custom workflows**: Implement your specific survey flow and user experience
+- **Easy integration**: Seamlessly integrate with your existing authentication and authorization
+- **No route conflicts**: No unwanted engine routes in your application
 
 ## Survey Response Flow
 
