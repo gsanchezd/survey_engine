@@ -72,6 +72,10 @@ Main survey/questionnaire entity with linear structure.
 - `published_at`: When survey went live
 - `expires_at`: Survey expiration date
 - `status`: Enum (draft, published, paused, archived)
+- `surveyable_type`: Polymorphic type for associated resource
+- `surveyable_id`: Polymorphic ID for associated resource
+- `uuid`: Unique identifier for URLs
+- `global`: Boolean, whether survey is global or resource-specific
 - `created_at`, `updated_at`: Timestamps
 
 #### question_types
@@ -179,6 +183,7 @@ Key-value settings for surveys.
 - surveys → questions (one-to-many)
 - surveys → participants (one-to-many)  
 - surveys → settings (one-to-many)
+- surveys ← surveyable (polymorphic belongs_to) - surveys can belong to any resource
 - questions → options (one-to-many)
 - questions ← question_types (many-to-one)
 - participants → responses (one-to-one) - simplified: each participant answers once
@@ -200,6 +205,67 @@ This engine uses a simplified approach for email-based duplicate prevention:
 - Simple two-state tracking (invited → completed)
 - No session management or resume capability
 - Direct integration with external platform emails
+
+### Polymorphic Surveyable Relationship
+
+Surveys can be associated with any resource through a polymorphic relationship:
+
+#### Making Resources Surveyable
+Include the `SurveyEngine::Surveyable` concern in your models:
+
+```ruby
+class Cohort < ApplicationRecord
+  include SurveyEngine::Surveyable
+end
+
+class Course < ApplicationRecord
+  include SurveyEngine::Surveyable
+end
+```
+
+#### Creating Resource-Specific Surveys
+```ruby
+# Create survey for a specific cohort
+cohort = Cohort.find(1)
+survey = cohort.create_survey(
+  title: "Cohort Satisfaction Survey",
+  description: "Please rate your experience",
+  status: "draft"
+)
+
+# Or create manually
+survey = SurveyEngine::Survey.create(
+  title: "Course Evaluation",
+  surveyable: course,
+  status: "draft"
+)
+```
+
+#### Querying Surveys by Resource
+```ruby
+# Get all surveys for a cohort
+cohort.surveys
+cohort.active_surveys
+cohort.published_surveys
+
+# Query across all surveys
+SurveyEngine::Survey.for_surveyable(cohort)
+SurveyEngine::Survey.for_surveyable_type("Cohort")
+
+# Global surveys (not tied to any resource)
+SurveyEngine::Survey.global_surveys
+```
+
+#### Available Methods on Surveyable Resources
+- `surveys` - All surveys for this resource
+- `active_surveys` - Only active surveys
+- `published_surveys` - Only published surveys
+- `current_surveys` - Non-expired surveys
+- `create_survey(attributes)` - Create new survey
+- `find_survey_by_uuid(uuid)` - Find survey by UUID
+- `survey_responses_count` - Total responses across all surveys
+- `survey_participants_count` - Total participants across all surveys
+- `can_have_surveys?` - Override to control survey access
 
 ### Multiple Choice Question Patterns
 
@@ -276,6 +342,7 @@ CREATE INDEX idx_settings_survey_key ON settings(survey_id, setting_key);
 CREATE INDEX idx_participants_status ON participants(survey_id, status);
 CREATE INDEX idx_answer_options_answer ON answer_options(answer_id);
 CREATE INDEX idx_answer_options_selected_at ON answer_options(selected_at);
+CREATE INDEX idx_surveys_surveyable ON surveys(surveyable_type, surveyable_id);
 ```
 
 ### Database Constraints (NOT NULL)

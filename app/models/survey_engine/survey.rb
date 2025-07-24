@@ -4,6 +4,7 @@ module SurveyEngine
       "survey_engine_"
     end
 
+    belongs_to :surveyable, polymorphic: true, optional: true
     has_many :questions, dependent: :destroy
     has_many :participants, dependent: :destroy
     has_many :responses, dependent: :destroy
@@ -34,6 +35,8 @@ module SurveyEngine
     scope :published, -> { where(status: 'published') }
     scope :current, -> { where('expires_at IS NULL OR expires_at > ?', Time.current) }
     scope :expired, -> { where('expires_at < ?', Time.current) }
+    scope :for_surveyable, ->(surveyable) { where(surveyable: surveyable) }
+    scope :for_surveyable_type, ->(type) { where(surveyable_type: type) }
 
     # Use UUID for URLs instead of ID
     def to_param

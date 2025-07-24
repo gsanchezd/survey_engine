@@ -8,6 +8,7 @@ SurveyEngine provides a complete survey system designed for scenarios where:
 - Each person can answer each survey only once (email-based tracking)
 - Rich answer types (text, numeric, multiple choice, scales)
 - UUID-based survey routing
+- Polymorphic associations - surveys can belong to any resource (cohorts, courses, etc.)
 - Comprehensive analytics and reporting
 
 ## Installation
@@ -124,6 +125,114 @@ SurveyEngine::Question.create!(
 )
 
 puts "Survey created! Visit /surveys/#{survey.uuid}"
+```
+
+## Making Resources Surveyable
+
+SurveyEngine supports polymorphic associations, allowing surveys to be attached to any resource in your application.
+
+### 1. Include the Surveyable Concern
+
+Add the `SurveyEngine::Surveyable` concern to any model that should have surveys:
+
+```ruby
+class Cohort < ApplicationRecord
+  include SurveyEngine::Surveyable
+end
+
+class Course < ApplicationRecord
+  include SurveyEngine::Surveyable
+end
+
+class Organization < ApplicationRecord
+  include SurveyEngine::Surveyable
+end
+```
+
+### 2. Create Resource-Specific Surveys
+
+```ruby
+# Create survey for a specific cohort
+cohort = Cohort.find(1)
+survey = cohort.create_survey(
+  title: "Cohort Satisfaction Survey",
+  description: "Please rate your experience with this cohort",
+  status: "draft"
+)
+
+# Or create manually with explicit association
+course = Course.find(1)
+survey = SurveyEngine::Survey.create(
+  title: "Course Evaluation",
+  description: "Help us improve this course",
+  surveyable: course,
+  status: "published",
+  is_active: true
+)
+```
+
+### 3. Query Surveys by Resource
+
+```ruby
+# Get all surveys for a specific resource
+cohort.surveys                    # All surveys
+cohort.active_surveys            # Only active surveys
+cohort.published_surveys         # Only published surveys
+cohort.current_surveys           # Non-expired surveys
+
+# Query across all surveys
+SurveyEngine::Survey.for_surveyable(cohort)           # Surveys for specific cohort
+SurveyEngine::Survey.for_surveyable_type("Cohort")    # All cohort surveys
+
+# Global surveys (not tied to any resource)
+SurveyEngine::Survey.global_surveys                   # Global surveys only
+SurveyEngine::Survey.where(surveyable: nil)          # Same as above
+```
+
+### 4. Available Methods on Surveyable Resources
+
+When you include `SurveyEngine::Surveyable`, your models gain these methods:
+
+```ruby
+# Survey management
+cohort.surveys                           # All surveys for this resource
+cohort.create_survey(attributes)         # Create new survey
+cohort.find_survey_by_uuid(uuid)        # Find survey by UUID
+
+# Survey filtering
+cohort.active_surveys                    # Only active surveys
+cohort.published_surveys                 # Only published surveys  
+cohort.current_surveys                   # Non-expired surveys
+
+# Analytics
+cohort.survey_responses_count            # Total responses across all surveys
+cohort.survey_participants_count         # Total participants across all surveys
+
+# Permission control
+cohort.can_have_surveys?                 # Override to control survey access
+```
+
+### 5. Global vs Resource-Specific Surveys
+
+```ruby
+# Global survey (available to all users)
+global_survey = SurveyEngine::Survey.create(
+  title: "Company-wide Satisfaction Survey",
+  global: true,
+  surveyable: nil,  # No specific resource
+  status: "published"
+)
+
+# Resource-specific survey
+cohort_survey = cohort.create_survey(
+  title: "Cohort-specific Feedback",
+  global: false,    # Default
+  status: "published"
+)
+
+# Query patterns
+SurveyEngine::Survey.global_surveys      # Only global surveys
+SurveyEngine::Survey.local_surveys       # Only resource-specific surveys
 ```
 
 ## Question Types
@@ -250,9 +359,13 @@ end
 
 ```
 Survey
+├── belongs_to :surveyable (polymorphic, optional)
 ├── has_many :questions
 ├── has_many :participants  
 └── has_many :responses
+
+Surveyable Resource (Cohort, Course, etc.)
+└── has_many :surveys (as :surveyable)
 
 Question
 ├── belongs_to :survey
@@ -276,7 +389,7 @@ Answer
 └── has_many :options (through answer_options)
 ```
 
-## Analytics Example
+## Analytics Examples
 
 ### Basic Survey Analytics
 ```ruby
@@ -285,11 +398,42 @@ def survey_analytics(survey_id)
   
   {
     survey_title: survey.title,
+    surveyable_type: survey.surveyable_type,
+    surveyable_id: survey.surveyable_id,
     total_participants: survey.participants_count,
     completed_responses: survey.participants.completed.count,
     completion_rate: (survey.participants.completed.count.to_f / survey.participants.count * 100).round(2),
     pending_participants: survey.participants.pending.count
   }
+end
+```
+
+### Resource-Specific Analytics
+```ruby
+# Analytics for all surveys belonging to a resource
+def cohort_survey_analytics(cohort)
+  surveys = cohort.surveys.published
+  
+  {
+    cohort_name: cohort.name,
+    total_surveys: surveys.count,
+    active_surveys: cohort.active_surveys.count,
+    total_participants: cohort.survey_participants_count,
+    total_responses: cohort.survey_responses_count,
+    average_completion_rate: calculate_average_completion_rate(surveys)
+  }
+end
+
+def calculate_average_completion_rate(surveys)
+  return 0 if surveys.empty?
+  
+  rates = surveys.map do |survey|
+    total = survey.participants.count
+    completed = survey.participants.completed.count
+    total > 0 ? (completed.to_f / total * 100) : 0
+  end
+  
+  (rates.sum / rates.size).round(2)
 end
 ```
 
