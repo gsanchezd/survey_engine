@@ -97,7 +97,7 @@ module SurveyEngine
     # - inline: false - Use asset pipeline (requires javascript_include_tag 'survey_engine/conditional_flow')
     def conditional_flow_javascript_tag(inline: true)
       if inline
-        content_tag(:script, conditional_flow_javascript, type: 'text/javascript')
+        content_tag(:script, raw(conditional_flow_javascript), type: 'text/javascript')
       else
         # Return instructions for asset pipeline usage
         content_tag(:noscript, 
@@ -122,7 +122,7 @@ module SurveyEngine
             }
           });
         JS
-      end
+      end.html_safe
     end
     
     # Enhanced scale input helper with conditional flow support
