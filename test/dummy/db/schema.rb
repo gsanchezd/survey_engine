@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_22_214044) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_24_191603) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
@@ -98,6 +98,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_214044) do
     t.text "help_text"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "conditional_parent_id"
+    t.string "conditional_operator"
+    t.decimal "conditional_value"
+    t.boolean "show_if_condition_met", default: true
+    t.index ["conditional_parent_id"], name: "index_survey_engine_questions_on_conditional_parent_id"
     t.index ["question_type_id"], name: "index_survey_engine_questions_on_question_type_id"
     t.index ["survey_id", "order_position"], name: "index_survey_engine_questions_on_survey_id_and_order_position", unique: true
     t.index ["survey_id"], name: "index_survey_engine_questions_on_survey_id"
@@ -125,9 +130,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_214044) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "uuid"
+    t.string "surveyable_type"
+    t.integer "surveyable_id"
     t.index ["global", "is_active"], name: "index_survey_engine_surveys_on_global_and_is_active"
     t.index ["is_active"], name: "index_survey_engine_surveys_on_is_active"
     t.index ["status"], name: "index_survey_engine_surveys_on_status"
+    t.index ["surveyable_type", "surveyable_id"], name: "idx_on_surveyable_type_surveyable_id_ffe4fd0636"
+    t.index ["surveyable_type", "surveyable_id"], name: "index_survey_engine_surveys_on_surveyable"
     t.index ["uuid"], name: "index_survey_engine_surveys_on_uuid", unique: true
   end
 
@@ -138,6 +147,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_214044) do
   add_foreign_key "survey_engine_options", "survey_engine_questions", column: "question_id"
   add_foreign_key "survey_engine_participants", "survey_engine_surveys", column: "survey_id"
   add_foreign_key "survey_engine_questions", "survey_engine_question_types", column: "question_type_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "conditional_parent_id"
   add_foreign_key "survey_engine_questions", "survey_engine_surveys", column: "survey_id"
   add_foreign_key "survey_engine_responses", "survey_engine_participants", column: "participant_id"
   add_foreign_key "survey_engine_responses", "survey_engine_surveys", column: "survey_id"

@@ -766,7 +766,12 @@ The engine uses the `survey_engine_` table prefix for all tables to avoid confli
 rails test
 ```
 
-## Rails Version Compatibility
+## Requirements
+
+### Ruby Version
+- Ruby 3.4.4+ required
+
+### Rails Version Compatibility
 
 Rails 7.1+ required. Uses modern Rails features:
 - UUID support for routing

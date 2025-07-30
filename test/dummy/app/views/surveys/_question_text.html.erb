@@ -1,0 +1,6 @@
+<%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
+    placeholder: question.placeholder_text || "Enter your answer here...",
+    maxlength: question.max_characters,
+    required: question.required?,
+    class: "se-text-input",
+    rows: 4 %>

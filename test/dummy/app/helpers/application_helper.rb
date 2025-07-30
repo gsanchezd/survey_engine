@@ -1,4 +1,6 @@
 module ApplicationHelper
+  include SurveyEngine::ConditionalFlowHelper
+  
   def time_duration_in_words(seconds)
     return "0 seconds" unless seconds&.positive?
     

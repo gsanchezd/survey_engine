@@ -1,0 +1,19 @@
+<div class="se-boolean-question">
+  <div class="se-choice-option">
+    <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', 
+        existing_answer&.boolean_answer == true,
+        required: question.required?,
+        class: "se-choice-input",
+        id: "question_#{question.id}_yes" %>
+    <%= label_tag "question_#{question.id}_yes", "Yes", class: "se-choice-label" %>
+  </div>
+  
+  <div class="se-choice-option">
+    <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', 
+        existing_answer&.boolean_answer == false,
+        required: question.required?,
+        class: "se-choice-input",
+        id: "question_#{question.id}_no" %>
+    <%= label_tag "question_#{question.id}_no", "No", class: "se-choice-label" %>
+  </div>
+</div>

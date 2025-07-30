@@ -1,0 +1,3 @@
+<%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
+    required: question.required?,
+    class: "se-number-input" %>
