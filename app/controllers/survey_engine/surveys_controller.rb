@@ -38,7 +38,7 @@ module SurveyEngine
       @email = resolve_participant_email
       
       if @email.blank?
-        redirect_to survey_path(@survey), alert: "User authentication required"
+        redirect_to survey_path(@survey), alert: t('survey_engine.flash.authentication_required')
         return
       end
       
@@ -147,13 +147,13 @@ module SurveyEngine
       # Check if this is a completion request
       if params[:complete_survey].present?
         if errors.any?
-          redirect_to answer_survey_path(@survey, email_params), alert: "Cannot complete survey due to errors: #{errors.join('; ')}"
+          redirect_to answer_survey_path(@survey, email_params), alert: "#{t('survey_engine.flash.completion_errors')} #{errors.join('; ')}"
         else
           # Validate required fields for completion
           missing_required = validate_required_fields_for_completion(@survey, @response)
           
           if missing_required.any?
-            error_message = "Please answer these required questions before completing: #{missing_required.join(', ')}"
+            error_message = "#{t('survey_engine.flash.missing_required')} #{missing_required.join(', ')}"
             redirect_to answer_survey_path(@survey, email_params), alert: error_message
           else
             # Complete the response and participant
@@ -168,9 +168,10 @@ module SurveyEngine
       else
         # Just saving answers
         if errors.any?
-          redirect_to answer_survey_path(@survey, email_params), alert: "Some answers couldn't be saved: #{errors.join('; ')}"
+          redirect_to answer_survey_path(@survey, email_params), alert: "#{t('survey_engine.flash.save_errors')} #{errors.join('; ')}"
         else
-          redirect_to answer_survey_path(@survey, email_params), notice: "#{saved_count} answer#{'s' if saved_count != 1} saved successfully!"
+          answer_key = saved_count == 1 ? 'survey_engine.flash.answers_saved' : 'survey_engine.flash.answers_saved_plural'
+          redirect_to answer_survey_path(@survey, email_params), notice: "#{saved_count} #{t(answer_key)}"
         end
       end
     end

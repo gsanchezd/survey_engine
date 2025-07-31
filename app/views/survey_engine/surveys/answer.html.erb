@@ -1,10 +1,10 @@
 <div class="survey-container">
   <nav class="survey-breadcrumb">
-    <%= link_to "← Back to Surveys", surveys_path %>
+    <%= link_to t('survey_engine.surveys.answer.back_to_surveys'), surveys_path %>
   </nav>
 
   <header class="survey-header">
-    <h1>Answering: <%= @survey.title %></h1>
+    <h1><%= t('survey_engine.surveys.answer.answering') %> <%= @survey.title %></h1>
     <p><%= @survey.description %></p>
   </header>
 
@@ -17,7 +17,7 @@
 
   <% if alert %>
     <div class="survey-alert survey-alert-danger">
-      <strong>⚠️ Error:</strong> <%= alert %>
+      <strong><%= t('survey_engine.surveys.answer.error') %></strong> <%= alert %>
     </div>
   <% end %>
 
@@ -28,7 +28,7 @@
           <h3>
             <span class="survey-question-number" data-original-order="<%= index + 1 %>"><%= index + 1 %></span>. <%= question.title %>
             <% if question.required? %>
-              <span class="survey-question-required">*required</span>
+              <span class="survey-question-required"><%= t('survey_engine.surveys.answer.required') %></span>
             <% end %>
           </h3>
           
@@ -42,7 +42,7 @@
             <% case question.question_type.name %>
             <% when 'text' %>
               <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
-                  placeholder: "Enter your answer here...",
+                  placeholder: t('survey_engine.surveys.answer.text_placeholder'),
                   class: "survey-textarea",
                   required: question.required? %>
             <% when 'number' %>
@@ -55,14 +55,14 @@
                   <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', 
                       existing_answer&.boolean_answer == true,
                       required: question.required? %>
-                  <span>Yes</span>
+                  <span><%= t('survey_engine.surveys.answer.yes') %></span>
                 </label>
                 
                 <label class="survey-question-option">
                   <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', 
                       existing_answer&.boolean_answer == false,
                       required: question.required? %>
-                  <span>No</span>
+                  <span><%= t('survey_engine.surveys.answer.no') %></span>
                 </label>
               </div>
             <% when 'single_choice' %>
@@ -78,7 +78,7 @@
                   <% if option.is_other? %>
                     <div class="survey-other-input" style="<%= existing_answer&.options&.include?(option) ? 'display: block;' : 'display: none;' %>">
                       <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
-                          placeholder: "Please specify...",
+                          placeholder: t('survey_engine.surveys.answer.other_placeholder'),
                           class: "survey-input" %>
                     </div>
                   <% end %>
@@ -97,7 +97,7 @@
                 <% if question.options.any?(&:is_other?) %>
                   <div class="survey-other-input" style="<%= existing_answer&.other_text.present? ? 'display: block;' : 'display: none;' %>">
                     <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
-                        placeholder: "Please specify other option...",
+                        placeholder: t('survey_engine.surveys.answer.other_multiple_placeholder'),
                         class: "survey-input" %>
                   </div>
                 <% end %>
@@ -126,7 +126,7 @@
           
           <% if existing_answer %>
             <div class="survey-current-answer">
-              <strong>Current answer:</strong> <%= existing_answer.display_value %>
+              <strong><%= t('survey_engine.surveys.answer.current_answer') %></strong> <%= existing_answer.display_value %>
             </div>
           <% end %>
         </div>
@@ -134,10 +134,10 @@
     </div>
 
     <div class="survey-completion-panel">
-      <h3>Ready to submit your survey?</h3>
-      <p>This will save all your answers and complete the survey.</p>
+      <h3><%= t('survey_engine.surveys.answer.ready_to_submit') %></h3>
+      <p><%= t('survey_engine.surveys.answer.submit_message') %></p>
       
-      <%= submit_tag "Complete Survey", 
+      <%= submit_tag t('survey_engine.surveys.answer.complete_survey'), 
           class: "survey-btn survey-btn-submit",
           name: "complete_survey" %>
     </div>

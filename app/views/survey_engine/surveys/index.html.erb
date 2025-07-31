@@ -1,11 +1,11 @@
 <div class="survey-container">
   <header class="survey-header">
-    <h1>Available Surveys</h1>
+    <h1><%= t('survey_engine.surveys.index.title') %></h1>
   </header>
 
   <% if @current_email.present? %>
     <div class="survey-alert survey-alert-success">
-      <strong>Signed in as:</strong> <%= @current_email %>
+      <strong><%= t('survey_engine.surveys.index.signed_in_as') %></strong> <%= @current_email %>
     </div>
   <% end %>
 
@@ -17,37 +17,37 @@
           <p><%= survey.description %></p>
           
           <div class="survey-meta">
-            <span><strong>Questions:</strong> <%= survey.questions_count %></span>
-            <span><strong>Participants:</strong> <%= survey.participants_count %></span>
-            <span><strong>Status:</strong> <span class="survey-status"><%= survey.status.capitalize %></span></span>
+            <span><strong><%= t('survey_engine.surveys.index.questions') %></strong> <%= survey.questions_count %></span>
+            <span><strong><%= t('survey_engine.surveys.index.participants') %></strong> <%= survey.participants_count %></span>
+            <span><strong><%= t('survey_engine.surveys.index.status') %></strong> <span class="survey-status"><%= t("survey_engine.statuses.#{survey.status}") %></span></span>
           </div>
           
           <div class="survey-actions">
             <% if survey.can_receive_responses? %>
               <% if @current_email.present? && @completed_surveys&.dig(survey.id) %>
                 <span class="survey-btn survey-btn-completed">
-                  ✓ Completed
+                  <%= t('survey_engine.surveys.index.completed') %>
                 </span>
-                <%= link_to "View My Results", completed_survey_path(survey), 
+                <%= link_to t('survey_engine.surveys.index.view_results'), completed_survey_path(survey), 
                     class: "survey-btn survey-btn-success" %>
               <% else %>
                 <% if @current_email.present? %>
-                  <%= link_to "Continue Survey", survey_path(survey), 
+                  <%= link_to t('survey_engine.surveys.index.continue_survey'), survey_path(survey), 
                       class: "survey-btn survey-btn-primary" %>
                 <% else %>
-                  <%= link_to "Take Survey", survey_path(survey), 
+                  <%= link_to t('survey_engine.surveys.index.take_survey'), survey_path(survey), 
                       class: "survey-btn survey-btn-primary" %>
                 <% end %>
               <% end %>
             <% else %>
-              <span class="survey-text-muted">Survey not available</span>
+              <span class="survey-text-muted"><%= t('survey_engine.surveys.index.survey_not_available') %></span>
             <% end %>
             
             <% if survey.participants_count > 0 %>
-              <%= link_to "📊 View Results", results_survey_path(survey), 
+              <%= link_to t('survey_engine.surveys.index.view_results_icon'), results_survey_path(survey), 
                   class: "survey-btn survey-btn-secondary" %>
             <% else %>
-              <span class="survey-btn survey-btn-disabled">📊 No results yet</span>
+              <span class="survey-btn survey-btn-disabled"><%= t('survey_engine.surveys.index.no_results_yet') %></span>
             <% end %>
           </div>
         </article>
@@ -55,9 +55,9 @@
     </div>
   <% else %>
     <div class="survey-empty-state">
-      <h3>No surveys available</h3>
-      <p>There are no published surveys at the moment.</p>
-      <p class="survey-helper-text">You can create surveys using the Rails console or seeds file.</p>
+      <h3><%= t('survey_engine.surveys.index.no_surveys') %></h3>
+      <p><%= t('survey_engine.surveys.index.no_surveys_message') %></p>
+      <p class="survey-helper-text"><%= t('survey_engine.surveys.index.helper_text') %></p>
     </div>
   <% end %>
 </div>
