@@ -28,11 +28,11 @@
                 <span class="survey-btn survey-btn-completed">
                   ✓ Completed
                 </span>
-                <%= link_to "View My Results", completed_survey_path(survey, email: @current_email), 
+                <%= link_to "View My Results", completed_survey_path(survey), 
                     class: "survey-btn survey-btn-success" %>
               <% else %>
                 <% if @current_email.present? %>
-                  <%= link_to "Continue Survey", survey_path(survey, email: @current_email), 
+                  <%= link_to "Continue Survey", survey_path(survey), 
                       class: "survey-btn survey-btn-primary" %>
                 <% else %>
                   <%= link_to "Take Survey", survey_path(survey), 
