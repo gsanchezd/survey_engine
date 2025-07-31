@@ -1,5 +1,6 @@
 module SurveyEngine
   module ApplicationHelper
+    include ConditionalFlowHelper
     def time_duration_in_words(seconds)
       return "0 seconds" if seconds.nil? || seconds <= 0
       

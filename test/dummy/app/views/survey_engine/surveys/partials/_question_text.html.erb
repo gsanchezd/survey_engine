@@ -1,6 +1,6 @@
 <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
     placeholder: question.placeholder_text || "Enter your answer here...",
-    class: "se-textarea #{'se-required-field' if question.required?}",
+    class: "survey-textarea #{'survey-required-field' if question.required?}",
     maxlength: question.max_characters,
     required: question.required?,
     data: { question_id: question.id, question_title: question.title } %>

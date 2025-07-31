@@ -1,127 +1,210 @@
 module SurveyEngine
   class SurveysController < ApplicationController
     def index
-      @surveys = Survey.published.active
+      @surveys = Survey.published.includes(:questions)
+      
+      # Handle email resolution for completion status
+      @current_email = resolve_participant_email_for_index
+      
+      # Get completion status for current user if email is available
+      if @current_email.present?
+        @completed_surveys = {}
+        @surveys.each do |survey|
+          participant = Participant.find_by(survey: survey, email: @current_email)
+          @completed_surveys[survey.id] = participant&.completed? || false
+        end
+      end
     end
 
     def show
       @survey = Survey.find_by!(uuid: params[:id])
-      redirect_to root_path unless @survey.can_receive_responses?
-      @questions = @survey.questions.includes(:question_type, :options).order(:order_position)
+      @email = resolve_participant_email
+      
+      if @email.present?
+        @participant = Participant.find_by(survey: @survey, email: @email)
+        @response = @participant&.response if @participant
+        
+        if @participant&.completed?
+          redirect_to completed_survey_path(@survey, email_params)
+          return
+        end
+      end
+      
+      @questions = @survey.questions.ordered.includes(:question_type, :options)
     end
 
     def start
       @survey = Survey.find_by!(uuid: params[:id])
-      redirect_to root_path unless @survey.can_receive_responses?
+      @email = resolve_participant_email
       
-      email = params[:email]
+      if @email.blank?
+        if SurveyEngine.config.require_manual_email
+          redirect_to survey_path(@survey), alert: "Email is required"
+        else
+          redirect_to survey_path(@survey), alert: "User authentication required"
+        end
+        return
+      end
       
-      # Check if participant already exists
-      @participant = Participant.find_by(survey: @survey, email: email)
-      
-      if @participant&.completed?
-        redirect_to survey_path(@survey), alert: "You have already completed this survey."
+      # Check if user already completed
+      participant = Participant.find_by(survey: @survey, email: @email)
+      if participant&.completed?
+        redirect_to completed_survey_path(@survey, email_params)
         return
       end
       
       # Create or find participant
-      @participant = Participant.find_or_create_by(survey: @survey, email: email) do |p|
+      @participant = Participant.find_or_create_by(
+        survey: @survey,
+        email: @email
+      ) do |p|
         p.status = 'invited'
       end
       
-      # Create response
-      @response = Response.find_or_create_by(survey: @survey, participant: @participant)
+      # Create response if not exists
+      @response = @participant.response || Response.create!(
+        survey: @survey,
+        participant: @participant
+      )
       
-      # Redirect to answer page
-      redirect_to answer_survey_path(@survey, email: email)
+      set_session_data(@email, @response.id)
+      
+      redirect_to answer_survey_path(@survey, email_params)
     end
 
     def answer
       @survey = Survey.find_by!(uuid: params[:id])
-      @questions = @survey.questions.includes(:question_type, :options).order(:order_position)
+      @response = find_current_response
+      @questions = @survey.questions.ordered.includes(:question_type, :options)
       
-      email = params[:email]
-      @participant = Participant.find_by(survey: @survey, email: email)
-      @response = Response.find_by(survey: @survey, participant: @participant)
-      
-      redirect_to survey_path(@survey), alert: "Survey session not found" unless @response
-      
-      # Load existing answers indexed by question_id
-      @answers = @response.answers.includes(:options).index_by(&:question_id)
-      @email = email
+      # Get existing answers
+      @answers = {}
+      @response.answers.includes(:options).each do |answer|
+        @answers[answer.question_id] = answer
+      end
     end
 
     def submit_answer
       @survey = Survey.find_by!(uuid: params[:id])
-      email = params[:email]
-      @participant = Participant.find_by(survey: @survey, email: email)
-      @response = Response.find_by(survey: @survey, participant: @participant)
+      @response = find_current_response
       
-      redirect_to survey_path(@survey), alert: "Survey session not found" and return unless @response
+      errors = []
+      saved_count = 0
       
-      # Process answers for each question
-      params[:answers]&.each do |question_id, answer_data|
-        question = Question.find(question_id)
-        next unless question.survey == @survey
-        
-        # Find or create answer
-        answer = Answer.find_or_initialize_by(response: @response, question: question)
-        
-        case question.question_type.name
-        when 'text'
-          answer.text_answer = answer_data[:text_answer]
-        when 'scale', 'number'
-          answer.numeric_answer = answer_data[:numeric_answer]
-        when 'boolean'
-          answer.boolean_answer = answer_data[:boolean_answer]
-        when 'single_choice'
-          answer.answer_options.destroy_all
-          if answer_data[:option_id].present?
-            option = Option.find(answer_data[:option_id])
-            answer.answer_options.build(option: option)
-            answer.other_text = answer_data[:other_text] if option.is_other?
-          end
-        when 'multiple_choice'
-          answer.answer_options.destroy_all
-          if answer_data[:option_ids].present?
-            answer_data[:option_ids].each do |option_id|
-              next if option_id.blank?
-              option = Option.find(option_id)
-              answer.answer_options.build(option: option)
+      # Process all submitted answers
+      if params[:answers].present?
+        params[:answers].each do |question_id, answer_data|
+          question = Question.find(question_id)
+          
+          # Skip if no data provided for this question
+          next if answer_data.values.all?(&:blank?)
+          
+          # Find or create answer
+          answer = Answer.find_or_initialize_by(
+            response: @response,
+            question: question
+          )
+          
+          # Clear existing data
+          answer.text_answer = nil
+          answer.numeric_answer = nil
+          answer.decimal_answer = nil
+          answer.boolean_answer = nil
+          answer.other_text = nil
+          answer.answer_options.destroy_all if answer.persisted?
+          
+          # Set answer based on question type
+          case question.question_type.name
+          when 'text'
+            answer.text_answer = answer_data[:text_answer] if answer_data[:text_answer].present?
+          when 'scale', 'number'
+            answer.numeric_answer = answer_data[:numeric_answer] if answer_data[:numeric_answer].present?
+          when 'boolean'
+            answer.boolean_answer = answer_data[:boolean_answer] == '1' if answer_data[:boolean_answer].present?
+          when 'single_choice'
+            if answer_data[:option_id].present?
+              option = Option.find(answer_data[:option_id])
+              if answer.new_record?
+                answer.answer_options.build(option: option)
+              else
+                answer.save! # Save first if existing record
+                AnswerOption.create!(answer: answer, option: option)
+              end
+              answer.other_text = answer_data[:other_text] if option.is_other? && answer_data[:other_text].present?
             end
-            answer.other_text = answer_data[:other_text]
+          when 'multiple_choice'
+            if answer_data[:option_ids].present?
+              answer_data[:option_ids].reject(&:blank?).each do |option_id|
+                option = Option.find(option_id)
+                if answer.new_record?
+                  answer.answer_options.build(option: option)
+                else
+                  answer.save! # Save first if existing record
+                  AnswerOption.create!(answer: answer, option: option)
+                end
+              end
+              answer.other_text = answer_data[:other_text] if answer_data[:other_text].present?
+            end
+          end
+          
+          if answer.save
+            saved_count += 1
+          else
+            errors << "#{question.title}: #{answer.errors.full_messages.join(', ')}"
           end
         end
-        
-        answer.save!
       end
       
-      # Mark response and participant as completed
-      @response.update!(completed_at: Time.current)
-      @participant.update!(status: 'completed', completed_at: Time.current)
-      
-      redirect_to completed_survey_path(@survey, email: email)
+      # Check if this is a completion request
+      if params[:complete_survey].present?
+        if errors.any?
+          redirect_to answer_survey_path(@survey, email_params), alert: "Cannot complete survey due to errors: #{errors.join('; ')}"
+        else
+          # Validate required fields for completion
+          missing_required = validate_required_fields_for_completion(@survey, @response)
+          
+          if missing_required.any?
+            error_message = "Please answer these required questions before completing: #{missing_required.join(', ')}"
+            redirect_to answer_survey_path(@survey, email_params), alert: error_message
+          else
+            # Complete the response and participant
+            @response.complete!
+            @response.participant.complete!
+            
+            clear_session_data
+            
+            redirect_to completed_survey_path(@survey, email_params)
+          end
+        end
+      else
+        # Just saving answers
+        if errors.any?
+          redirect_to answer_survey_path(@survey, email_params), alert: "Some answers couldn't be saved: #{errors.join('; ')}"
+        else
+          redirect_to answer_survey_path(@survey, email_params), notice: "#{saved_count} answer#{'s' if saved_count != 1} saved successfully!"
+        end
+      end
     end
 
     def completed
       @survey = Survey.find_by!(uuid: params[:id])
-      @email = params[:email]
+      @email = resolve_participant_email
       @participant = Participant.find_by(survey: @survey, email: @email)
-      
-      redirect_to survey_path(@survey), alert: "Survey not completed" unless @participant&.completed?
+      @response = @participant&.response
     end
 
     def results
       @survey = Survey.find_by!(uuid: params[:id])
-      @responses = @survey.responses.where.not(completed_at: nil).includes(:participant, answers: [:question, :options])
-      @questions = @survey.questions.order(:order_position).includes(:question_type, :options)
+      @responses = @survey.responses.completed.includes(:participant, answers: [:question, :options])
+      @questions = @survey.questions.ordered.includes(:question_type, :options)
       
       # Calculate general statistics
       @stats = {
         total_participants: @survey.participants.count,
         completed_responses: @responses.count,
         completion_rate: @survey.participants.any? ? 
-          (@responses.count.to_f / @survey.participants.count * 100).round(1) : 0
+          (@responses.count.to_f / @survey.participants.count * 100).round(1) : 0,
+        average_completion_time: calculate_average_completion_time(@responses)
       }
       
       # Calculate question-specific analytics
@@ -139,6 +222,108 @@ module SurveyEngine
     end
 
     private
+
+    def resolve_participant_email
+      if SurveyEngine.config.require_manual_email
+        # Manual email input mode (dummy app)
+        params[:email] || session[:email]
+      else
+        # Authentication mode (production app)
+        begin
+          instance_eval(&SurveyEngine.config.current_user_email_callable)
+        rescue => e
+          Rails.logger.error "SurveyEngine: Error getting current user email: #{e.message}"
+          nil
+        end
+      end
+    end
+
+    def resolve_participant_email_for_index
+      if SurveyEngine.config.require_manual_email
+        # For index, set email from params or session for manual mode
+        if params[:email].present?
+          session[:email] = params[:email]
+          params[:email]
+        else
+          session[:email]
+        end
+      else
+        # For authenticated mode, get from current user
+        resolve_participant_email
+      end
+    end
+
+    def email_params
+      if SurveyEngine.config.require_manual_email && resolve_participant_email.present?
+        { email: resolve_participant_email }
+      else
+        {}
+      end
+    end
+
+    def set_session_data(email, response_id)
+      if SurveyEngine.config.require_manual_email
+        session[:email] = email
+      end
+      session[:response_id] = response_id
+    end
+
+    def clear_session_data
+      session.delete(:response_id)
+      # Don't clear email in manual mode as it's used across surveys
+    end
+
+    def find_current_response
+      if session[:response_id]
+        Response.find(session[:response_id])
+      else
+        email = resolve_participant_email
+        participant = Participant.find_by(survey: @survey, email: email)
+        participant&.response
+      end
+    end
+
+    def validate_required_fields_for_completion(survey, response)
+      missing_required = []
+      
+      survey.questions.required.each do |question|
+        answer = response.answers.find_by(question: question)
+        
+        # Check if answer exists and has content
+        if answer.nil? || !answer_has_content?(answer)
+          missing_required << question.title
+        end
+      end
+      
+      missing_required
+    end
+
+    def answer_has_content?(answer)
+      return false if answer.nil?
+      
+      case answer.question.question_type.name
+      when 'text'
+        answer.text_answer.present?
+      when 'scale', 'number'
+        answer.numeric_answer.present?
+      when 'boolean'
+        !answer.boolean_answer.nil?
+      when 'single_choice', 'multiple_choice'
+        answer.answer_options.any?
+      else
+        false
+      end
+    end
+
+    def calculate_average_completion_time(responses)
+      return 0 if responses.empty?
+      
+      completion_times = responses.map(&:completion_time).compact
+      return 0 if completion_times.empty?
+      
+      average_seconds = completion_times.sum / completion_times.count
+      average_seconds.round(1)
+    end
 
     def analyze_question_responses(question, responses)
       answers = responses.map { |r| r.answer_for_question(question) }.compact
@@ -198,7 +383,7 @@ module SurveyEngine
       
       CSV.generate do |csv|
         # Header row
-        headers = ['Participant Email', 'Completed At']
+        headers = ['Participant Email', 'Completed At', 'Completion Time (seconds)']
         @questions.each { |q| headers << q.title }
         csv << headers
         
@@ -206,7 +391,8 @@ module SurveyEngine
         @responses.each do |response|
           row = [
             response.participant.email,
-            response.completed_at&.strftime("%Y-%m-%d %H:%M:%S")
+            response.completed_at&.strftime("%Y-%m-%d %H:%M:%S"),
+            response.completion_time&.round(1)
           ]
           
           @questions.each do |question|
@@ -240,6 +426,7 @@ module SurveyEngine
           {
             participant_email: response.participant.email,
             completed_at: response.completed_at,
+            completion_time: response.completion_time,
             answers: @questions.map do |question|
               answer = response.answer_for_question(question)
               {

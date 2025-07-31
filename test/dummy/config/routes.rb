@@ -1,17 +1,6 @@
 Rails.application.routes.draw do
-  mount SurveyEngine::Engine => "/survey_engine"
-  
-  # Survey routes
-  resources :surveys, only: [:index, :show] do
-    member do
-      post :start
-      get :answer
-      post :submit_answer
-      get :completed
-      get :results
-    end
-  end
+  mount SurveyEngine::Engine => "/"
   
   # Root route
-  root "surveys#index"
+  root "survey_engine/surveys#index"
 end

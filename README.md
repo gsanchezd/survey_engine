@@ -758,6 +758,127 @@ end
 
 ## Configuration
 
+### Email Source Configuration
+
+SurveyEngine supports two modes for participant email resolution:
+
+#### 1. Authentication Mode (Production)
+
+For applications with user authentication (e.g., Devise):
+
+```ruby
+# config/initializers/survey_engine.rb
+SurveyEngine.configure do |config|
+  # Default: gets email from current_user.email
+  config.current_user_email_method = :current_user_email
+  config.require_manual_email = false
+end
+```
+
+#### 2. Manual Email Mode (Demo/Testing)
+
+For testing or applications without authentication:
+
+```ruby
+# config/initializers/survey_engine.rb
+SurveyEngine.configure do |config|
+  config.require_manual_email = true
+end
+```
+
+### Devise Integration
+
+For apps using Devise, configure SurveyEngine to get the email from your User model:
+
+```ruby
+# config/initializers/survey_engine.rb
+SurveyEngine.configure do |config|
+  # Option 1: Simple method call
+  config.current_user_email_method = :current_user_email
+  
+  # Option 2: Custom callable for more complex logic
+  config.current_user_email_method = -> { current_user&.email }
+  
+  # Ensure manual email is disabled (default)
+  config.require_manual_email = false
+end
+```
+
+Then add a helper method to your ApplicationController:
+
+```ruby
+# app/controllers/application_controller.rb
+class ApplicationController < ActionController::Base
+  private
+  
+  def current_user_email
+    current_user&.email
+  end
+end
+```
+
+Or for more complex scenarios:
+
+```ruby
+# config/initializers/survey_engine.rb
+SurveyEngine.configure do |config|
+  config.current_user_email_method = -> { 
+    if current_user.present?
+      # Use work email if available, otherwise personal email
+      current_user.work_email.presence || current_user.email
+    else
+      nil
+    end
+  }
+end
+```
+
+### Custom Authentication Systems
+
+For custom authentication systems, configure accordingly:
+
+```ruby
+# config/initializers/survey_engine.rb
+SurveyEngine.configure do |config|
+  # Example with custom session-based auth
+  config.current_user_email_method = -> { 
+    user_id = session[:user_id]
+    user_id ? User.find(user_id).email : nil
+  }
+  
+  # Example with JWT token
+  config.current_user_email_method = -> {
+    token = request.headers['Authorization']
+    if token
+      decoded = JwtService.decode(token)
+      decoded['email']
+    else
+      nil
+    end
+  }
+end
+```
+
+### Configuration Options
+
+```ruby
+SurveyEngine.configure do |config|
+  # Email resolution method (symbol or callable)
+  config.current_user_email_method = :current_user_email
+  
+  # Require manual email input (disables authentication mode)
+  config.require_manual_email = false
+end
+```
+
+**How it works:**
+
+- **Authentication Mode** (`require_manual_email: false`): The engine automatically gets the participant's email from your authentication system using the configured method.
+
+- **Manual Email Mode** (`require_manual_email: true`): The engine requires users to input their email address via forms. Perfect for demos or unauthenticated surveys.
+
+### Database Configuration
+
 The engine uses the `survey_engine_` table prefix for all tables to avoid conflicts.
 
 ## Testing

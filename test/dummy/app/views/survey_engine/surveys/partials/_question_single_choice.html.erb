@@ -1,22 +1,22 @@
-<div class="se-single-choice-question #{'se-required-field' if question.required?}" 
+<div class="survey-single-choice-question #{'survey-required-field' if question.required?}" 
      data-question-id="<%= question.id %>" 
      data-question-title="<%= question.title %>">
   <% question.options.ordered.each do |option| %>
-    <label class="se-radio-label">
+    <label class="survey-radio-label">
       <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
           existing_answer&.options&.include?(option),
           required: question.required?,
-          class: "se-radio",
+          class: "survey-radio",
           data: { other: option.is_other? } %>
       <span><%= option.option_text %></span>
     </label>
     
     <% if option.is_other? %>
-      <div class="se-other-input" data-other-for="<%= option.id %>" 
+      <div class="survey-other-input" data-other-for="<%= option.id %>" 
            style="<%= existing_answer&.options&.include?(option) ? 'display: block;' : 'display: none;' %>">
         <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
             placeholder: "Please specify...",
-            class: "se-input" %>
+            class: "survey-input" %>
       </div>
     <% end %>
   <% end %>

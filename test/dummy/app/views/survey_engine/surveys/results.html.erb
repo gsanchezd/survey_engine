@@ -1,106 +1,106 @@
-<div class="se-container">
-  <nav class="se-breadcrumb">
-    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+<div class="survey-container">
+  <nav class="survey-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path, class: "survey-link" %>
   </nav>
 
-  <header class="se-header">
+  <header class="survey-header">
     <h1>📊 Survey Results: <%= @survey.title %></h1>
-    <p class="se-description"><%= @survey.description %></p>
+    <p class="survey-description"><%= @survey.description %></p>
   </header>
 
-  <section class="se-stats-panel">
+  <section class="survey-stats-panel">
     <h2>📈 Overall Statistics</h2>
     
-    <div class="se-stats-grid">
-      <div class="se-stat-card">
-        <div class="se-stat-value se-stat-primary"><%= @stats[:total_participants] %></div>
-        <div class="se-stat-label">Total Participants</div>
+    <div class="survey-stats-grid">
+      <div class="survey-stat-card">
+        <div class="survey-stat-value survey-stat-primary"><%= @stats[:total_participants] %></div>
+        <div class="survey-stat-label">Total Participants</div>
       </div>
       
-      <div class="se-stat-card">
-        <div class="se-stat-value se-stat-success"><%= @stats[:completed_responses] %></div>
-        <div class="se-stat-label">Completed Responses</div>
+      <div class="survey-stat-card">
+        <div class="survey-stat-value survey-stat-success"><%= @stats[:completed_responses] %></div>
+        <div class="survey-stat-label">Completed Responses</div>
       </div>
       
-      <div class="se-stat-card">
-        <div class="se-stat-value se-stat-info"><%= @stats[:completion_rate] %>%</div>
-        <div class="se-stat-label">Completion Rate</div>
+      <div class="survey-stat-card">
+        <div class="survey-stat-value survey-stat-info"><%= @stats[:completion_rate] %>%</div>
+        <div class="survey-stat-label">Completion Rate</div>
       </div>
       
-      <div class="se-stat-card">
-        <div class="se-stat-value se-stat-warning"><%= time_duration_in_words(@stats[:average_completion_time].to_i) %></div>
-        <div class="se-stat-label">Avg. Completion Time</div>
+      <div class="survey-stat-card">
+        <div class="survey-stat-value survey-stat-warning"><%= time_duration_in_words(@stats[:average_completion_time].to_i) %></div>
+        <div class="survey-stat-label">Avg. Completion Time</div>
       </div>
     </div>
   </section>
 
   <% if @responses.any? %>
-    <section class="se-analytics-section">
+    <section class="survey-analytics-section">
       <h2>📋 Question Analysis</h2>
       
       <% @questions.each_with_index do |question, index| %>
         <% analytics = @question_analytics[question.id] %>
-        <article class="se-analytics-card">
-          <h3 class="se-analytics-title">
+        <article class="survey-analytics-card">
+          <h3 class="survey-analytics-title">
             <%= index + 1 %>. <%= question.title %>
-            <span class="se-response-count">(<%= analytics[:response_count] %> responses)</span>
+            <span class="survey-responsurvey-count">(<%= analytics[:response_count] %> responses)</span>
           </h3>
           
           <% if question.description.present? %>
-            <p class="se-analytics-description"><%= question.description %></p>
+            <p class="survey-analytics-description"><%= question.description %></p>
           <% end %>
           
-          <div class="se-analytics-content">
+          <div class="survey-analytics-content">
             <% case analytics[:type] %>
             <% when 'text' %>
-              <div class="se-text-analytics">
+              <div class="survey-text-analytics">
                 <strong>Text Responses (<%= analytics[:responses].count %>):</strong>
                 <% if analytics[:responses].any? %>
-                  <ul class="se-text-responses">
+                  <ul class="survey-text-responses">
                     <% analytics[:responses].first(10).each do |response| %>
-                      <li class="se-text-response">
+                      <li class="survey-text-response">
                         "<%= response %>"
                       </li>
                     <% end %>
                     <% if analytics[:responses].count > 10 %>
-                      <li class="se-text-more">
+                      <li class="survey-text-more">
                         ... and <%= analytics[:responses].count - 10 %> more responses
                       </li>
                     <% end %>
                   </ul>
                 <% else %>
-                  <p class="se-no-responses">No text responses yet.</p>
+                  <p class="survey-no-responses">No text responses yet.</p>
                 <% end %>
               </div>
               
             <% when 'numeric' %>
-              <div class="se-numeric-analytics">
-                <div class="se-numeric-stats">
-                  <div class="se-numeric-stat se-stat-success">
-                    <div class="se-numeric-value"><%= analytics[:average] %></div>
-                    <div class="se-numeric-label">Average</div>
+              <div class="survey-numeric-analytics">
+                <div class="survey-numeric-stats">
+                  <div class="survey-numeric-stat survey-stat-success">
+                    <div class="survey-numeric-value"><%= analytics[:average] %></div>
+                    <div class="survey-numeric-label">Average</div>
                   </div>
-                  <div class="se-numeric-stat se-stat-danger">
-                    <div class="se-numeric-value"><%= analytics[:min] %></div>
-                    <div class="se-numeric-label">Minimum</div>
+                  <div class="survey-numeric-stat survey-stat-danger">
+                    <div class="survey-numeric-value"><%= analytics[:min] %></div>
+                    <div class="survey-numeric-label">Minimum</div>
                   </div>
-                  <div class="se-numeric-stat se-stat-primary">
-                    <div class="se-numeric-value"><%= analytics[:max] %></div>
-                    <div class="se-numeric-label">Maximum</div>
+                  <div class="survey-numeric-stat survey-stat-primary">
+                    <div class="survey-numeric-value"><%= analytics[:max] %></div>
+                    <div class="survey-numeric-label">Maximum</div>
                   </div>
                 </div>
                 
                 <% if analytics[:distribution].any? %>
-                  <div class="se-distribution">
+                  <div class="survey-distribution">
                     <strong>Response Distribution:</strong>
-                    <div class="se-distribution-bars">
+                    <div class="survey-distribution-bars">
                       <% analytics[:distribution].sort.each do |value, count| %>
-                        <div class="se-distribution-item">
-                          <span class="se-distribution-label"><%= value %>:</span>
-                          <div class="se-distribution-bar">
-                            <div class="se-distribution-fill" style="width: <%= (count.to_f / analytics[:response_count] * 100).round(1) %>%"></div>
+                        <div class="survey-distribution-item">
+                          <span class="survey-distribution-label"><%= value %>:</span>
+                          <div class="survey-distribution-bar">
+                            <div class="survey-distribution-fill" style="width: <%= (count.to_f / analytics[:response_count] * 100).round(1) %>%"></div>
                           </div>
-                          <span class="se-distribution-count"><%= count %> (<%= (count.to_f / analytics[:response_count] * 100).round(1) %>%)</span>
+                          <span class="survey-distribution-count"><%= count %> (<%= (count.to_f / analytics[:response_count] * 100).round(1) %>%)</span>
                         </div>
                       <% end %>
                     </div>
@@ -109,47 +109,47 @@
               </div>
               
             <% when 'boolean' %>
-              <div class="se-boolean-analytics">
-                <div class="se-boolean-stats">
-                  <div class="se-boolean-stat se-stat-success">
-                    <div class="se-boolean-value"><%= analytics[:yes_count] %></div>
-                    <div class="se-boolean-label">Yes (<%= analytics[:yes_percentage] %>%)</div>
+              <div class="survey-boolean-analytics">
+                <div class="survey-boolean-stats">
+                  <div class="survey-boolean-stat survey-stat-success">
+                    <div class="survey-boolean-value"><%= analytics[:yes_count] %></div>
+                    <div class="survey-boolean-label">Yes (<%= analytics[:yes_percentage] %>%)</div>
                   </div>
-                  <div class="se-boolean-stat se-stat-danger">
-                    <div class="se-boolean-value"><%= analytics[:no_count] %></div>
-                    <div class="se-boolean-label">No (<%= (100 - analytics[:yes_percentage]).round(1) %>%)</div>
+                  <div class="survey-boolean-stat survey-stat-danger">
+                    <div class="survey-boolean-value"><%= analytics[:no_count] %></div>
+                    <div class="survey-boolean-label">No (<%= (100 - analytics[:yes_percentage]).round(1) %>%)</div>
                   </div>
                 </div>
               </div>
               
             <% when 'choice' %>
-              <div class="se-choice-analytics">
+              <div class="survey-choice-analytics">
                 <% if analytics[:option_counts].any? %>
                   <strong>Option Selection:</strong>
-                  <div class="se-option-bars">
+                  <div class="survey-option-bars">
                     <% analytics[:option_counts].sort_by { |_, count| -count }.each do |option_text, count| %>
-                      <div class="se-option-item">
-                        <span class="se-option-label"><%= option_text %>:</span>
-                        <div class="se-option-bar">
-                          <div class="se-option-fill" style="width: <%= (count.to_f / analytics[:response_count] * 100).round(1) %>%"></div>
+                      <div class="survey-option-item">
+                        <span class="survey-option-label"><%= option_text %>:</span>
+                        <div class="survey-option-bar">
+                          <div class="survey-option-fill" style="width: <%= (count.to_f / analytics[:response_count] * 100).round(1) %>%"></div>
                         </div>
-                        <span class="se-option-count"><%= count %> (<%= (count.to_f / analytics[:response_count] * 100).round(1) %>%)</span>
+                        <span class="survey-option-count"><%= count %> (<%= (count.to_f / analytics[:response_count] * 100).round(1) %>%)</span>
                       </div>
                     <% end %>
                   </div>
                 <% end %>
                 
                 <% if analytics[:other_responses].any? %>
-                  <div class="se-other-responses">
+                  <div class="survey-other-responses">
                     <strong>"Other" Responses:</strong>
-                    <ul class="se-other-list">
+                    <ul class="survey-other-list">
                       <% analytics[:other_responses].first(5).each do |other_response| %>
-                        <li class="se-other-response">
+                        <li class="survey-other-response">
                           "<%= other_response %>"
                         </li>
                       <% end %>
                       <% if analytics[:other_responses].count > 5 %>
-                        <li class="se-other-more">
+                        <li class="survey-other-more">
                           ... and <%= analytics[:other_responses].count - 5 %> more "other" responses
                         </li>
                       <% end %>
@@ -163,23 +163,23 @@
       <% end %>
     </section>
     
-    <section class="se-export-section">
+    <section class="survey-export-section">
       <h3>📥 Export Results</h3>
       <p>Download survey data for further analysis</p>
       
-      <div class="se-export-buttons">
+      <div class="survey-export-buttons">
         <%= link_to "Download CSV", results_survey_path(@survey, format: :csv), 
-            class: "se-btn se-btn-success" %>
+            class: "survey-btn survey-btn-success" %>
         <%= link_to "Download JSON", results_survey_path(@survey, format: :json), 
-            class: "se-btn se-btn-primary" %>
+            class: "survey-btn survey-btn-primary" %>
       </div>
     </section>
     
   <% else %>
-    <div class="se-empty-state">
+    <div class="survey-empty-state">
       <h3>📭 No Responses Yet</h3>
       <p>This survey hasn't received any completed responses yet.</p>
-      <p class="se-helper-text">Once participants start completing the survey, their results will appear here.</p>
+      <p class="survey-helper-text">Once participants start completing the survey, their results will appear here.</p>
     </div>
   <% end %>
 </div>

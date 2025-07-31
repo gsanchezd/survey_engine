@@ -1,70 +1,70 @@
-<div class="se-container">
-  <nav class="se-breadcrumb">
-    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+<div class="survey-container">
+  <nav class="survey-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path, class: "survey-link" %>
   </nav>
 
-  <header class="se-header">
+  <header class="survey-header">
     <h1>Answering: <%= @survey.title %></h1>
     <p><%= @survey.description %></p>
   </header>
 
-  <div class="se-progress-bar">
-    <div class="se-progress-info">
+  <div class="survey-progress-bar">
+    <div class="survey-progress-info">
       <strong>Progress:</strong> 
       <%= @response.answers.count %> of <%= @questions.count %> questions answered
       (<%= @response.completion_percentage %>% complete)
     </div>
-    <div class="se-progress">
-      <div class="se-progress-fill" style="width: <%= @response.completion_percentage %>%"></div>
+    <div class="survey-progress">
+      <div class="survey-progress-fill" style="width: <%= @response.completion_percentage %>%"></div>
     </div>
-    <div class="se-progress-conditional">
+    <div class="survey-progress-conditional">
       <em>Progress will update automatically as conditional questions appear</em>
     </div>
   </div>
 
   <% if notice %>
-    <div class="se-alert se-alert-success">
+    <div class="survey-alert survey-alert-success">
       <%= notice %>
     </div>
   <% end %>
 
   <% if alert %>
-    <div class="se-alert se-alert-error">
+    <div class="survey-alert survey-alert-error">
       <strong>⚠️ Validation Error:</strong> <%= alert %>
     </div>
   <% end %>
 
-  <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "se-survey-form", local: true do %>
-    <div class="se-questions-container" id="survey-questions">
+  <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "survey-survey-form", local: true do %>
+    <div class="survey-questions-container" id="survey-questions">
       <% @questions.each_with_index do |question, index| %>
         <%= conditional_question_container(question) do %>
-          <h3 class="se-question-title">
+          <h3 class="survey-question-title">
             <%= index + 1 %>. <%= question.title %>
             <% if question.required? %>
-              <span class="se-required">*required</span>
+              <span class="survey-required">*required</span>
             <% end %>
             <% if question.is_conditional? %>
-              <span class="se-conditional-indicator">↳ Conditional</span>
+              <span class="survey-conditional-indicator">↳ Conditional</span>
             <% end %>
           </h3>
           
           <% if question.description.present? %>
-            <p class="se-question-description"><%= question.description %></p>
+            <p class="survey-question-description"><%= question.description %></p>
           <% end %>
           
           <% existing_answer = @answers[question.id] %>
           
-          <div class="se-question-input">
+          <div class="survey-question-input">
             <% if question.question_type.name == 'scale' %>
               <%= conditional_scale_input(question, existing_answer) %>
             <% else %>
-              <%= render partial: "surveys/partials/question_#{question.question_type.name}", 
+              <%= render partial: "survey_engine/surveys/partials/question_#{question.question_type.name}", 
                   locals: { question: question, existing_answer: existing_answer } %>
             <% end %>
           </div>
           
           <% if existing_answer %>
-            <div class="se-current-answer">
+            <div class="survey-current-answer">
               <strong>Current answer:</strong> <%= existing_answer.display_value %>
             </div>
           <% end %>
@@ -72,12 +72,12 @@
       <% end %>
     </div>
 
-    <div class="se-submit-section">
+    <div class="survey-submit-section">
       <h3>Ready to submit your survey?</h3>
       <p>This will save all your answers and complete the survey. You won't be able to change your answers after this.</p>
       
       <%= submit_tag "Complete Survey", 
-          class: "se-btn se-btn-success se-btn-large",
+          class: "survey-btn survey-btn-success survey-btn-large",
           name: "complete_survey" %>
     </div>
   <% end %>

@@ -1,21 +1,21 @@
-<div class="se-container">
-  <nav class="se-breadcrumb">
-    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+<div class="survey-container">
+  <nav class="survey-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path, class: "survey-link" %>
   </nav>
 
-  <div class="se-completion-page">
-    <header class="se-completion-header">
-      <h1 class="se-success-title">🎉 Survey Completed!</h1>
+  <div class="survey-completion-page">
+    <header class="survey-completion-header">
+      <h1 class="survey-success-title">🎉 Survey Completed!</h1>
     </header>
     
-    <div class="se-completion-card">
+    <div class="survey-completion-card">
       <h2><%= @survey.title %></h2>
-      <p class="se-thank-you">Thank you for completing the survey!</p>
+      <p class="survey-thank-you">Thank you for completing the survey!</p>
       
       <% if @response %>
-        <div class="se-response-summary">
+        <div class="survey-responsurvey-summary">
           <h3>Your Response Summary</h3>
-          <dl class="se-summary-list">
+          <dl class="survey-summary-list">
             <dt>Participant:</dt>
             <dd><%= @participant.email %></dd>
             
@@ -36,21 +36,21 @@
     </div>
     
     <% if @response&.answers&.any? %>
-      <section class="se-answers-review">
+      <section class="survey-answers-review">
         <h3>Your Answers</h3>
         
         <% @survey.questions.ordered.each_with_index do |question, index| %>
           <% answer = @response.answer_for_question(question) %>
-          <article class="se-answer-card">
-            <h4 class="se-question-title">
+          <article class="survey-answer-card">
+            <h4 class="survey-question-title">
               <%= index + 1 %>. <%= question.title %>
             </h4>
             
-            <div class="se-answer-display">
+            <div class="survey-answer-display">
               <% if answer %>
                 <strong>Your answer:</strong> <%= answer.complete_answer %>
               <% else %>
-                <em class="se-text-muted">Not answered</em>
+                <em class="survey-text-muted">Not answered</em>
               <% end %>
             </div>
           </article>
@@ -58,9 +58,9 @@
       </section>
     <% end %>
     
-    <footer class="se-completion-footer">
+    <footer class="survey-completion-footer">
       <%= link_to "Take Another Survey", surveys_path, 
-          class: "se-btn se-btn-primary" %>
+          class: "survey-btn survey-btn-primary" %>
     </footer>
   </div>
 </div>

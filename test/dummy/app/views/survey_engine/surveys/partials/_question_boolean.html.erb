@@ -1,19 +1,19 @@
-<div class="se-boolean-question #{'se-required-field' if question.required?}" 
+<div class="survey-boolean-question #{'survey-required-field' if question.required?}" 
      data-question-id="<%= question.id %>" 
      data-question-title="<%= question.title %>">
-  <label class="se-radio-label">
+  <label class="survey-radio-label">
     <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', 
         existing_answer&.boolean_answer == true,
         required: question.required?, 
-        class: "se-radio" %>
+        class: "survey-radio" %>
     <span>Yes</span>
   </label>
   
-  <label class="se-radio-label">
+  <label class="survey-radio-label">
     <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', 
         existing_answer&.boolean_answer == false,
         required: question.required?, 
-        class: "se-radio" %>
+        class: "survey-radio" %>
     <span>No</span>
   </label>
 </div>
