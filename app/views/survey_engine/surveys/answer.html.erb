@@ -8,11 +8,6 @@
     <p><%= @survey.description %></p>
   </header>
 
-  <div class="survey-progress">
-    <strong>Progress:</strong> 
-    <%= @response.answers.count %> of <%= @questions.count %> questions answered
-    (<%= @response.completion_percentage %>% complete)
-  </div>
 
   <% if notice %>
     <div class="survey-alert survey-alert-success">
