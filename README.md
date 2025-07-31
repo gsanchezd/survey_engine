@@ -21,44 +21,153 @@ gem 'survey_engine'
 
 And then execute:
 ```bash
-$ bundle install
-$ rails survey_engine:install:migrations
-$ rails db:migrate
+$ bundle
 ```
+
+Or install it yourself as:
+```bash
+$ gem install survey_engine
+```
+
+### Setup
+
+1. Run the install generator:
+```bash
+rails generate survey_engine:install
+```
+
+2. Run migrations:
+```bash
+rails survey_engine:install:migrations
+rails db:migrate
+```
+
+3. Add the engine route to your `config/routes.rb`:
+```ruby
+mount SurveyEngine::Engine => "/surveys"
+```
+
+### Generator Options
+
+```bash
+# Basic installation (Spanish default)
+rails generate survey_engine:install
+
+# Install with English as default locale
+rails generate survey_engine:install --locale=en
+
+# Install with custom controller (for advanced customization)
+rails generate survey_engine:install --controller
+
+# Install with both options
+rails generate survey_engine:install --locale=en --controller
+```
+
+**What the generator creates:**
+
+| File | Purpose |
+|------|---------|
+| `config/initializers/survey_engine.rb` | Authentication configuration |
+| `config/initializers/locale.rb` | i18n locale settings |
+| `config/locales/survey_engine.es.yml` | Spanish translations |
+| `config/locales/survey_engine.en.yml` | English translations |
+| `app/controllers/surveys_controller.rb` | Custom controller (if --controller) |
+
+**Generator Features:**
+- ✅ **Zero Configuration**: Works out of the box with Devise
+- ✅ **Bilingual Ready**: Spanish and English translations included
+- ✅ **Performance Optimized**: N+1 query prevention built-in
+- ✅ **Modern Features**: Conditional questions, dynamic numbering
+- ✅ **Export Ready**: CSV/JSON export functionality
+- ✅ **Mobile Responsive**: Works on all device sizes
 
 ## Quick Start
 
-### 1. Mount the Engine
+### 1. Configuration
 
-Add SurveyEngine routes to your `config/routes.rb`:
+The install generator creates `config/initializers/survey_engine.rb` with authentication setup:
 
 ```ruby
-Rails.application.routes.draw do
-  mount SurveyEngine::Engine => "/surveys"
-  # Your other routes...
+SurveyEngine.configure do |config|
+  # For Devise authentication:
+  config.current_user_email_method = lambda { current_user&.email }
+  
+  # For other authentication systems:
+  # config.current_user_email_method = lambda { session[:user_email] }
 end
 ```
 
-### 2. Generate Components (Optional)
+### 2. Language Configuration
 
-Generate customizable templates:
+SurveyEngine supports Spanish (default) and English. The locale is configured in `config/initializers/locale.rb`:
 
-```bash
-# Copy views for customization
-$ rails generate survey_engine:views
-
-# Copy controllers for customization  
-$ rails generate survey_engine:controllers
+```ruby
+Rails.application.config.after_initialize do
+  I18n.default_locale = :es  # Change to :en for English
+  I18n.available_locales = [:es, :en]
+end
 ```
 
-The views generator will automatically copy:
-- All survey view templates to `app/views/survey_engine/`
-- CSS file to `app/assets/stylesheets/survey_engine.css`
+### 3. Advanced Customization (Optional)
 
-Add the stylesheet to your application layout:
+Generate custom controller for advanced modifications:
+```bash
+rails generate survey_engine:install --controller
+```
 
-```erb
-<%= stylesheet_link_tag 'survey_engine/application' %>
+This creates:
+- `app/controllers/surveys_controller.rb` - Custom surveys controller
+- Full control over authentication, routing, and behavior
+- All latest features: i18n support, conditional questions, N+1 optimizations
+
+**Custom Controller Features:**
+- Pre-configured with proper authentication (`before_action :authenticate_user!`)
+- Complete i18n integration with Spanish/English translations
+- Conditional questions with dynamic numbering
+- Performance optimized (includes prevent N+1 queries)
+- Export functionality (CSV/JSON)
+- Comprehensive analytics
+
+**When to use custom controller:**
+- Need custom authentication logic
+- Want to modify survey behavior
+- Require additional before/after actions
+- Need custom routing or URL patterns
+
+**Exported Controller Features:**
+```ruby
+class SurveysController < ApplicationController
+  before_action :authenticate_user!  # Pre-configured authentication
+  
+  # All standard survey actions with latest optimizations:
+  def index    # Survey listing with completion status
+  def show     # Survey preview
+  def answer   # Survey form with conditional questions
+  def submit_answer  # Form processing with validation
+  def completed      # Completion confirmation
+  def results        # Analytics and exports (CSV/JSON)
+  
+  private
+  
+  # Optimized query methods (N+1 prevention)
+  # i18n-ready error handling
+  # Export functionality built-in
+  # Conditional question support
+end
+```
+
+**Custom Routes Setup:**
+If using custom controller, add these routes to `config/routes.rb`:
+```ruby
+# Replace engine routes with custom controller
+resources :surveys, only: [:index, :show] do
+  member do
+    get :answer
+    post :submit_answer
+    get :completed  
+    get :results
+  end
+end
 ```
 
 #### Styling System
@@ -125,6 +234,77 @@ SurveyEngine::Question.create!(
 )
 
 puts "Survey created! Visit /surveys/#{survey.uuid}"
+```
+
+## Internationalization (i18n)
+
+SurveyEngine includes comprehensive internationalization support with Spanish and English translations.
+
+### Supported Languages
+
+- **Spanish (es)** - Default locale
+- **English (en)** - Alternative locale
+
+### Configuration
+
+Set your preferred locale in `config/initializers/locale.rb`:
+
+```ruby
+Rails.application.config.after_initialize do
+  I18n.default_locale = :es  # or :en for English
+  I18n.available_locales = [:es, :en]
+end
+```
+
+### What's Translated
+
+**All user-facing content is localized:**
+- Survey interface (titles, buttons, navigation)
+- Form elements (placeholders, labels, validation messages)
+- Flash messages and alerts
+- Question types and survey statuses
+- Error messages and help text
+- Export functionality labels
+
+### Translation Files
+
+The generator creates complete translation files:
+
+- `config/locales/survey_engine.es.yml` - Spanish translations
+- `config/locales/survey_engine.en.yml` - English translations
+
+### Key Translation Examples
+
+| English | Spanish |
+|---------|---------|
+| "Available Surveys" | "Encuestas Disponibles" |
+| "Continue Survey" | "Continuar Encuesta" |
+| "Complete Survey" | "Completar Encuesta" |
+| "Required field" | "Campo obligatorio" |
+| "Please specify..." | "Por favor especifique..." |
+
+### Custom Translations
+
+Add your own translations by extending the existing files:
+
+```yaml
+# config/locales/survey_engine.es.yml
+es:
+  survey_engine:
+    custom:
+      welcome_message: "Bienvenido a nuestras encuestas"
+      company_name: "Mi Empresa"
+```
+
+### Runtime Locale Switching
+
+Change locale dynamically in your application:
+
+```ruby
+# In a controller
+def set_locale
+  I18n.locale = params[:locale] if params[:locale].in?(['es', 'en'])
+end
 ```
 
 ## Making Resources Surveyable
