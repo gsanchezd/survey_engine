@@ -1,4 +1,4 @@
-class CreateSurveyEngineResponses < ActiveRecord::Migration[8.0]
+class CreateSurveyEngineResponses < ActiveRecord::Migration[7.1]
   def change
     create_table :survey_engine_responses do |t|
       t.references :survey, null: false, foreign_key: { to_table: :survey_engine_surveys }

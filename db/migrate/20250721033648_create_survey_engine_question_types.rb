@@ -1,4 +1,4 @@
-class CreateSurveyEngineQuestionTypes < ActiveRecord::Migration[8.0]
+class CreateSurveyEngineQuestionTypes < ActiveRecord::Migration[7.1]
   def change
     create_table :survey_engine_question_types do |t|
       t.string :name, null: false

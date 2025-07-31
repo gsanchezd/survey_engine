@@ -1,4 +1,4 @@
-class AddConditionalFlowToQuestions < ActiveRecord::Migration[8.0]
+class AddConditionalFlowToQuestions < ActiveRecord::Migration[7.1]
   def change
     add_column :survey_engine_questions, :conditional_parent_id, :integer
     add_column :survey_engine_questions, :conditional_operator, :string
