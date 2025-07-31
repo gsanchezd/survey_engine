@@ -75,7 +75,7 @@ module SurveyEngine
     def answer
       @survey = Survey.find_by!(uuid: params[:id])
       @response = find_current_response
-      @questions = @survey.questions.ordered.includes(:question_type, :options)
+      @questions = @survey.questions.ordered.includes(:question_type, :options, :conditional_questions)
       
       # Get existing answers
       @answers = {}
