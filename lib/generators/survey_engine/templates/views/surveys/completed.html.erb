@@ -1,52 +1,66 @@
-<div class="survey-breadcrumb">
-  <%= link_to "← Back to Surveys", surveys_path %>
-</div>
+<div class="se-container">
+  <nav class="se-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+  </nav>
 
-<div class="survey-completed-container">
-  <h1 class="survey-completed-title">🎉 Survey Completed!</h1>
-  
-  <div class="survey-completed-card">
-    <h2><%= @survey.title %></h2>
-    <p class="survey-completed-thank-you">Thank you for completing the survey!</p>
-    
-    <% if @response %>
-      <div class="survey-response-summary">
-        <h3>Your Response Summary</h3>
-        <ul>
-          <li><strong>Participant:</strong> <%= @participant.email %></li>
-          <li><strong>Completed:</strong> <%= @response.completed_at.strftime("%B %d, %Y at %I:%M %p") %></li>
-          <li><strong>Time taken:</strong> <%= time_duration_in_words(@response.completion_time.to_i) %></li>
-          <li><strong>Questions answered:</strong> <%= @response.answers.count %> of <%= @survey.questions.count %></li>
-          <li><strong>Completion rate:</strong> <%= @response.completion_percentage %>%</li>
-        </ul>
+  <div class="se-success-header">
+    <div class="se-success-icon">✅</div>
+    <h1>Survey Completed!</h1>
+    <p>Thank you for completing "<strong><%= @survey.title %></strong>"</p>
+  </div>
+
+  <div class="se-completion-details">
+    <div class="se-detail-card">
+      <h3>Your Response Summary</h3>
+      <div class="se-completion-stats">
+        <div class="se-stat">
+          <strong><%= @response.answers.count %></strong>
+          <span>questions answered</span>
+        </div>
+        <div class="se-stat">
+          <strong><%= @response.completion_percentage %>%</strong>
+          <span>completed</span>
+        </div>
+        <div class="se-stat">
+          <strong><%= time_ago_in_words(@response.completed_at) %> ago</strong>
+          <span>submitted</span>
+        </div>
+      </div>
+    </div>
+
+    <% if @response.answers.any? %>
+      <div class="se-detail-card">
+        <h3>Your Answers</h3>
+        <div class="se-answers-summary">
+          <% @response.answers.includes(:question).each_with_index do |answer, index| %>
+            <div class="se-answer-item">
+              <div class="se-answer-question">
+                <strong><%= index + 1 %>.</strong> <%= answer.question.title %>
+              </div>
+              <div class="se-answer-value">
+                <%= answer.display_value %>
+              </div>
+            </div>
+          <% end %>
+        </div>
       </div>
     <% end %>
   </div>
-  
-  <% if @response&.answers&.any? %>
-    <div class="survey-answers-review">
-      <h3>Your Answers</h3>
-      
-      <% @survey.questions.ordered.each_with_index do |question, index| %>
-        <% answer = @response.answer_for_question(question) %>
-        <div class="survey-answer-card">
-          <h4>
-            <%= index + 1 %>. <%= question.title %>
-          </h4>
-          
-          <div class="survey-answer-display">
-            <% if answer %>
-              <strong>Your answer:</strong> <%= answer.complete_answer %>
-            <% else %>
-              <em class="survey-text-muted">Not answered</em>
-            <% end %>
-          </div>
-        </div>
-      <% end %>
-    </div>
-  <% end %>
-  
-  <div class="survey-completed-footer">
-    <%= link_to "Take Another Survey", surveys_path, class: "survey-btn survey-btn-primary survey-btn-large" %>
+
+  <div class="se-completion-actions">
+    <% if @survey.participants.completed.count > 1 %>
+      <%= link_to "📊 View Survey Results", results_survey_path(@survey), 
+          class: "se-btn se-btn-secondary" %>
+    <% end %>
+    
+    <%= link_to "Take Another Survey", surveys_path(email: @participant.email), 
+        class: "se-btn se-btn-primary" %>
+  </div>
+
+  <div class="se-completion-footer">
+    <p class="se-helper-text">
+      Your response has been securely saved and cannot be modified. 
+      If you have any questions about this survey, please contact the survey administrator.
+    </p>
   </div>
 </div>

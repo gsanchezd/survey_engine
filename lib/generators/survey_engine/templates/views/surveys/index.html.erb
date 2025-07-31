@@ -1,97 +1,82 @@
-<div class="survey-container">
-  <div class="survey-header">
+<div class="se-container">
+  <header class="se-header">
     <h1>Available Surveys</h1>
-  </div>
+  </header>
 
   <% unless @current_email.present? %>
-    <div class="survey-alert survey-alert-info">
+    <div class="se-info-panel">
       <h3>Welcome!</h3>
       <p>To see your survey completion status and continue any in-progress surveys, please enter your email address:</p>
       
-      <%= form_tag surveys_path, method: :get, class: "survey-form" do %>
-        <div class="survey-form-row">
+      <%= form_tag surveys_path, method: :get, class: "se-email-form" do %>
+        <div class="se-form-row">
           <%= email_field_tag :email, params[:email], 
               placeholder: "your.email@example.com",
-              class: "survey-email-input" %>
-          <%= submit_tag "Set Email", class: "survey-btn survey-btn-primary" %>
+              class: "se-email-input" %>
+          <%= submit_tag "Set Email", class: "se-btn se-btn-primary" %>
         </div>
       <% end %>
       
-      <p class="survey-helper-text">
+      <p class="se-helper-text">
         <em>This helps us track your survey progress and prevent duplicate submissions.</em>
       </p>
     </div>
   <% else %>
-    <div class="survey-alert survey-alert-success">
+    <div class="se-success-panel">
       <strong>Signed in as:</strong> <%= @current_email %>
-      <%= link_to "Change Email", surveys_path, class: "survey-breadcrumb" %>
+      <%= link_to "Change Email", surveys_path, class: "se-link" %>
     </div>
   <% end %>
 
   <% if @surveys.any? %>
-    <div class="survey-list">
+    <div class="se-surveys-list">
       <% @surveys.each do |survey| %>
-        <div class="survey-card">
+        <article class="se-survey-card">
           <h2><%= survey.title %></h2>
           <p><%= survey.description %></p>
           
-          <div class="survey-meta">
-            <strong>Questions:</strong> <%= survey.questions.count %> |
-            <strong>Participants:</strong> <%= survey.participants.count %> |
-            <strong>Status:</strong> <span class="survey-status"><%= survey.status.capitalize %></span>
+          <div class="se-survey-meta">
+            <span><strong>Questions:</strong> <%= survey.questions.count %></span>
+            <span><strong>Participants:</strong> <%= survey.participants.count %></span>
+            <span><strong>Status:</strong> <span class="se-status se-status-<%= survey.status %>"><%= survey.status.capitalize %></span></span>
           </div>
           
-          <div class="survey-actions">
+          <div class="se-survey-actions">
             <% if survey.can_receive_responses? %>
               <% if @current_email.present? && @completed_surveys&.dig(survey.id) %>
-                <!-- Already completed -->
-                <span class="survey-btn survey-btn-completed">
+                <span class="se-btn se-btn-completed">
                   ✓ Completed
                 </span>
                 <%= link_to "View My Results", completed_survey_path(survey, email: @current_email), 
-                    class: "survey-btn survey-btn-success" %>
+                    class: "se-btn se-btn-success" %>
               <% else %>
-                <!-- Can take survey -->
                 <% if @current_email.present? %>
                   <%= link_to "Continue Survey", survey_path(survey, email: @current_email), 
-                      class: "survey-btn survey-btn-primary" %>
+                      class: "se-btn se-btn-primary" %>
                 <% else %>
                   <%= link_to "Take Survey", survey_path(survey), 
-                      class: "survey-btn survey-btn-primary" %>
+                      class: "se-btn se-btn-primary" %>
                 <% end %>
               <% end %>
             <% else %>
-              <span class="survey-text-muted survey-font-italic">Survey not available</span>
+              <span class="se-text-muted">Survey not available</span>
             <% end %>
             
-            <!-- Survey Analytics Button -->
             <% if survey.participants.any? %>
-              <%= link_to "📊 View Survey Results", results_survey_path(survey), 
-                  class: "survey-btn survey-btn-secondary" %>
+              <%= link_to "📊 View Results", results_survey_path(survey), 
+                  class: "se-btn se-btn-secondary" %>
             <% else %>
-              <span class="survey-btn survey-btn-disabled">
-                📊 No results yet
-              </span>
+              <span class="se-btn se-btn-disabled">📊 No results yet</span>
             <% end %>
           </div>
-        </div>
+        </article>
       <% end %>
     </div>
   <% else %>
-    <div class="survey-empty-state">
+    <div class="se-empty-state">
       <h3>No surveys available</h3>
       <p>There are no published surveys at the moment.</p>
-      <p><small>You can create surveys using the Rails console or seeds file.</small></p>
+      <p class="se-helper-text">You can create surveys using the Rails console or seeds file.</p>
     </div>
   <% end %>
-
-  <div class="survey-developer-info">
-    <h3>For Developers</h3>
-    <p>This is a demo interface for the SurveyEngine Rails Engine.</p>
-    <ul>
-      <li>Survey data is populated from <code>db/seeds.rb</code></li>
-      <li>All survey responses are stored in the engine's database tables</li>
-      <li>Check the console for debugging information</li>
-    </ul>
-  </div>
 </div>
