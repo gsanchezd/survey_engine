@@ -214,7 +214,7 @@ module SurveyEngine
 
     def resolve_participant_email
       begin
-        instance_eval(&SurveyEngine.config.current_user_email_callable)
+        instance_exec(&SurveyEngine.config.current_user_email_method)
       rescue => e
         Rails.logger.error "SurveyEngine: Error getting current user email: #{e.message}"
         nil
