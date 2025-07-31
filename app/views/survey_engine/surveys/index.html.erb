@@ -28,14 +28,14 @@
                 <span class="survey-btn survey-btn-completed">
                   <%= t('survey_engine.surveys.index.completed') %>
                 </span>
-                <%= link_to t('survey_engine.surveys.index.view_results'), completed_survey_path(survey), 
+                <%= link_to t('survey_engine.surveys.index.view_results'), completed_survey_path(survey.uuid), 
                     class: "survey-btn survey-btn-success" %>
               <% else %>
                 <% if @current_email.present? %>
-                  <%= link_to t('survey_engine.surveys.index.continue_survey'), survey_path(survey), 
+                  <%= link_to t('survey_engine.surveys.index.continue_survey'), survey_path(survey.uuid), 
                       class: "survey-btn survey-btn-primary" %>
                 <% else %>
-                  <%= link_to t('survey_engine.surveys.index.take_survey'), survey_path(survey), 
+                  <%= link_to t('survey_engine.surveys.index.take_survey'), survey_path(survey.uuid), 
                       class: "survey-btn survey-btn-primary" %>
                 <% end %>
               <% end %>
@@ -44,7 +44,7 @@
             <% end %>
             
             <% if survey.participants_count > 0 %>
-              <%= link_to t('survey_engine.surveys.index.view_results_icon'), results_survey_path(survey), 
+              <%= link_to t('survey_engine.surveys.index.view_results_icon'), results_survey_path(survey.uuid), 
                   class: "survey-btn survey-btn-secondary" %>
             <% else %>
               <span class="survey-btn survey-btn-disabled"><%= t('survey_engine.surveys.index.no_results_yet') %></span>

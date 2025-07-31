@@ -329,8 +329,8 @@ module SurveyEngine
           }
 
           showQuestion(element) {
-            element.classList.remove('se-conditional-hidden');
-            element.classList.add('se-conditional-showing');
+            element.classList.remove('survey-conditional-hidden');
+            element.classList.add('survey-conditional-showing');
             element.style.display = 'block';
             
             // Re-enable form validation
@@ -341,13 +341,13 @@ module SurveyEngine
             
             // Remove animation class after animation completes
             setTimeout(() => {
-              element.classList.remove('se-conditional-showing');
+              element.classList.remove('survey-conditional-showing');
             }, 400);
           }
 
           hideQuestion(element) {
-            element.classList.add('se-conditional-hidden');
-            element.classList.remove('se-conditional-showing');
+            element.classList.add('survey-conditional-hidden');
+            element.classList.remove('survey-conditional-showing');
             
             // Clear answers and disable validation
             this.clearQuestionAnswers(element);
@@ -357,7 +357,7 @@ module SurveyEngine
             this.updateQuestionNumbers();
             
             setTimeout(() => {
-              if (element.classList.contains('se-conditional-hidden')) {
+              if (element.classList.contains('survey-conditional-hidden')) {
                 element.style.display = 'none';
               }
             }, 300);
@@ -411,7 +411,7 @@ module SurveyEngine
           }
 
           updateQuestionNumbers() {
-            const visibleQuestions = document.querySelectorAll('.survey-question:not([style*="display: none"]):not(.se-conditional-hidden)');
+            const visibleQuestions = document.querySelectorAll('.survey-question:not([style*="display: none"]):not(.survey-conditional-hidden)');
             visibleQuestions.forEach((questionElement, index) => {
               const numberSpan = questionElement.querySelector('.survey-question-number');
               if (numberSpan) {
@@ -433,7 +433,7 @@ module SurveyEngine
           getVisibleQuestions() {
             return Array.from(this.questions.values()).filter(questionData => {
               const element = this.getQuestionElement(questionData);
-              return element && !element.classList.contains('se-conditional-hidden') && element.style.display !== 'none';
+              return element && !element.classList.contains('survey-conditional-hidden') && element.style.display !== 'none';
             });
           }
 
