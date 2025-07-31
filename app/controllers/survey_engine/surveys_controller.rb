@@ -1,7 +1,7 @@
 module SurveyEngine
   class SurveysController < ApplicationController
     def index
-      @surveys = Survey.published.includes(:questions)
+      @surveys = Survey.published
       
       # Handle email resolution for completion status
       @current_email = resolve_participant_email_for_index

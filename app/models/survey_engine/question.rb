@@ -4,7 +4,7 @@ module SurveyEngine
       "survey_engine_"
     end
 
-    belongs_to :survey
+    belongs_to :survey, counter_cache: true
     belongs_to :question_type
     belongs_to :conditional_parent, class_name: 'Question', optional: true
     has_many :conditional_questions, class_name: 'Question', foreign_key: 'conditional_parent_id', dependent: :destroy

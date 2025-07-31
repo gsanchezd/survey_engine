@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_24_191603) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_31_171011) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
@@ -132,6 +132,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_24_191603) do
     t.string "uuid"
     t.string "surveyable_type"
     t.integer "surveyable_id"
+    t.integer "questions_count", default: 0, null: false
+    t.integer "participants_count", default: 0, null: false
     t.index ["global", "is_active"], name: "index_survey_engine_surveys_on_global_and_is_active"
     t.index ["is_active"], name: "index_survey_engine_surveys_on_is_active"
     t.index ["status"], name: "index_survey_engine_surveys_on_status"

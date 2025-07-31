@@ -4,7 +4,7 @@ module SurveyEngine
       "survey_engine_"
     end
 
-    belongs_to :survey
+    belongs_to :survey, counter_cache: true
     has_one :response, dependent: :destroy
 
     validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }

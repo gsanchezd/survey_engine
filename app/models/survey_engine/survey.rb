@@ -13,8 +13,8 @@ module SurveyEngine
     validates :title, presence: true, length: { maximum: 255 }
     validates :description, length: { maximum: 2000 }
     validates :status, presence: true, inclusion: { in: %w[draft published paused archived] }
-    validates :is_active, inclusion: { in: [true, false] }
-    validates :global, inclusion: { in: [true, false] }
+    validates :is_active, inclusion: { in: [ true, false ] }
+    validates :global, inclusion: { in: [ true, false ] }
     validates :uuid, presence: true, uniqueness: true
 
     validate :published_at_before_expires_at
@@ -22,19 +22,19 @@ module SurveyEngine
     before_validation :generate_uuid, on: :create
 
     enum :status, {
-      draft: 'draft',
-      published: 'published', 
-      paused: 'paused',
-      archived: 'archived'
+      draft: "draft",
+      published: "published",
+      paused: "paused",
+      archived: "archived"
     }
 
     scope :active, -> { where(is_active: true) }
     scope :inactive, -> { where(is_active: false) }
     scope :global_surveys, -> { where(global: true) }
     scope :local_surveys, -> { where(global: false) }
-    scope :published, -> { where(status: 'published') }
-    scope :current, -> { where('expires_at IS NULL OR expires_at > ?', Time.current) }
-    scope :expired, -> { where('expires_at < ?', Time.current) }
+    scope :published, -> { where(status: "published") }
+    scope :current, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
+    scope :expired, -> { where("expires_at < ?", Time.current) }
     scope :for_surveyable, ->(surveyable) { where(surveyable: surveyable) }
     scope :for_surveyable_type, ->(type) { where(surveyable_type: type) }
 
@@ -44,7 +44,7 @@ module SurveyEngine
     end
 
     def active?
-      is_active && (status == 'published')
+      is_active && (status == "published")
     end
 
     def expired?
@@ -56,35 +56,27 @@ module SurveyEngine
     end
 
     def published?
-      status == 'published'
+      status == "published"
     end
 
     def can_receive_responses?
       active? && current?
     end
 
-    def questions_count
-      questions.count
-    end
-
     def responses_count
       responses.count
     end
 
-    def participants_count
-      participants.count
-    end
-
     def publish!
-      update!(status: 'published', is_active: true, published_at: Time.current)
+      update!(status: "published", is_active: true, published_at: Time.current)
     end
 
     def pause!
-      update!(status: 'paused', is_active: false)
+      update!(status: "paused", is_active: false)
     end
 
     def archive!
-      update!(status: 'archived', is_active: false)
+      update!(status: "archived", is_active: false)
     end
 
     # def setting(key)
@@ -105,8 +97,8 @@ module SurveyEngine
 
     def published_at_before_expires_at
       return unless published_at.present? && expires_at.present?
-      
-      errors.add(:expires_at, 'must be after publication date') if expires_at <= published_at
+
+      errors.add(:expires_at, "must be after publication date") if expires_at <= published_at
     end
   end
 end
