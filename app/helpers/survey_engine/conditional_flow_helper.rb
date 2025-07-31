@@ -67,8 +67,9 @@ module SurveyEngine
     end
     
     # Generate JavaScript configuration for the entire survey
-    def conditional_flow_config(survey)
-      questions_data = survey.questions.includes(:conditional_parent, :conditional_questions).map do |question|
+    def conditional_flow_config(survey, questions = nil)
+      questions_to_use = questions || survey.questions.includes(:conditional_parent, :conditional_questions)
+      questions_data = questions_to_use.map do |question|
         {
           id: question.id,
           type: question.question_type.name,
@@ -106,12 +107,12 @@ module SurveyEngine
     end
     
     # Initialize conditional flow JavaScript
-    def initialize_conditional_flow(survey)
+    def initialize_conditional_flow(survey, questions = nil)
       javascript_tag do
         raw <<~JS
           document.addEventListener('DOMContentLoaded', function() {
             if (typeof SurveyConditionalFlow !== 'undefined') {
-              const config = #{conditional_flow_config(survey)};
+              const config = #{conditional_flow_config(survey, questions)};
               const conditionalFlow = new SurveyConditionalFlow(config);
               conditionalFlow.initialize();
               

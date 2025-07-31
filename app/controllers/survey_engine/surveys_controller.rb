@@ -64,7 +64,7 @@ module SurveyEngine
       )
       
       set_session_data(@email, @response.id)
-      @questions = @survey.questions.ordered.includes(:question_type, :options, :conditional_questions)
+      @questions = @survey.questions.ordered.includes(:question_type, :options, :conditional_questions, :conditional_parent)
       
       # Get existing answers
       @answers = {}
