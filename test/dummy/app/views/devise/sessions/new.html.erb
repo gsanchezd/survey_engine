@@ -1,0 +1,32 @@
+<h2>Log in</h2>
+
+<div style="background-color: #e8f4fd; border: 1px solid #bee5eb; border-radius: 4px; padding: 15px; margin-bottom: 20px;">
+  <h4 style="margin-top: 0; color: #0c5460;">Demo Credentials</h4>
+  <p style="margin-bottom: 5px;"><strong>Email:</strong> <code>user@survey.com</code></p>
+  <p style="margin-bottom: 0;"><strong>Password:</strong> <code>12345678</code></p>
+</div>
+
+<%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
+  <div class="field">
+    <%= f.label :email %><br />
+    <%= f.email_field :email, autofocus: true, autocomplete: "email" %>
+  </div>
+
+  <div class="field">
+    <%= f.label :password %><br />
+    <%= f.password_field :password, autocomplete: "current-password" %>
+  </div>
+
+  <% if devise_mapping.rememberable? %>
+    <div class="field">
+      <%= f.check_box :remember_me %>
+      <%= f.label :remember_me %>
+    </div>
+  <% end %>
+
+  <div class="actions">
+    <%= f.submit "Log in" %>
+  </div>
+<% end %>
+
+<%= render "devise/shared/links" %>

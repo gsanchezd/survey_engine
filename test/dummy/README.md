@@ -9,7 +9,10 @@ Demo application for testing SurveyEngine with Devise authentication.
 
 ## Usage
 
-1. Start the server: `rails s`
-2. Visit: `http://localhost:3000`
-3. Login with the credentials above
-4. Test survey functionality
+**Important:** The dummy app must be run from its own directory (`test/dummy`).
+
+1. Navigate to the dummy app directory: `cd test/dummy`
+2. Start the server: `rails s`
+3. Visit: `http://localhost:3000`
+4. Login with the credentials above
+5. Test survey functionality
