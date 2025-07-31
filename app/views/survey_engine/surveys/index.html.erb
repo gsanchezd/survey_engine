@@ -3,28 +3,9 @@
     <h1>Available Surveys</h1>
   </header>
 
-  <% unless @current_email.present? %>
-    <div class="survey-alert survey-alert-info">
-      <h3>Welcome!</h3>
-      <p>To see your survey completion status and continue any in-progress surveys, please enter your email address:</p>
-      
-      <%= form_tag surveys_path, method: :get, class: "survey-form" do %>
-        <div class="survey-form-row">
-          <%= email_field_tag :email, params[:email], 
-              placeholder: "your.email@example.com",
-              class: "survey-email-input" %>
-          <%= submit_tag "Set Email", class: "survey-btn survey-btn-primary" %>
-        </div>
-      <% end %>
-      
-      <p class="survey-helper-text">
-        <em>This helps us track your survey progress and prevent duplicate submissions.</em>
-      </p>
-    </div>
-  <% else %>
+  <% if @current_email.present? %>
     <div class="survey-alert survey-alert-success">
       <strong>Signed in as:</strong> <%= @current_email %>
-      <%= link_to "Change Email", surveys_path, class: "survey-btn survey-btn-secondary" %>
     </div>
   <% end %>
 

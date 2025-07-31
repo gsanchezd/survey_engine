@@ -1,10 +1,9 @@
 module SurveyEngine
   class Configuration
-    attr_accessor :current_user_email_method, :require_manual_email
+    attr_accessor :current_user_email_method
     
     def initialize
-      @current_user_email_method = :current_user_email
-      @require_manual_email = false
+      @current_user_email_method = -> { current_user&.email }
     end
     
     # Allow callable objects for more complex email resolution

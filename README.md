@@ -1,6 +1,6 @@
 # SurveyEngine
 
-A Rails Engine for building comprehensive survey functionality with email-based duplicate prevention.
+A Rails Engine for building comprehensive survey functionality with authentication-based participant tracking.
 
 ## Overview
 
@@ -758,66 +758,23 @@ end
 
 ## Configuration
 
-### Email Source Configuration
+### Authentication Configuration
 
-SurveyEngine supports two modes for participant email resolution:
-
-#### 1. Authentication Mode (Production)
-
-For applications with user authentication (e.g., Devise):
-
-```ruby
-# config/initializers/survey_engine.rb
-SurveyEngine.configure do |config|
-  # Default: gets email from current_user.email
-  config.current_user_email_method = :current_user_email
-  config.require_manual_email = false
-end
-```
-
-#### 2. Manual Email Mode (Demo/Testing)
-
-For testing or applications without authentication:
-
-```ruby
-# config/initializers/survey_engine.rb
-SurveyEngine.configure do |config|
-  config.require_manual_email = true
-end
-```
+SurveyEngine requires user authentication to track participants by email. Configure how the engine resolves the current user's email:
 
 ### Devise Integration
 
-For apps using Devise, configure SurveyEngine to get the email from your User model:
+For apps using Devise (recommended):
 
 ```ruby
 # config/initializers/survey_engine.rb
 SurveyEngine.configure do |config|
-  # Option 1: Simple method call
-  config.current_user_email_method = :current_user_email
-  
-  # Option 2: Custom callable for more complex logic
+  # Default: uses current_user&.email
   config.current_user_email_method = -> { current_user&.email }
-  
-  # Ensure manual email is disabled (default)
-  config.require_manual_email = false
 end
 ```
 
-Then add a helper method to your ApplicationController:
-
-```ruby
-# app/controllers/application_controller.rb
-class ApplicationController < ActionController::Base
-  private
-  
-  def current_user_email
-    current_user&.email
-  end
-end
-```
-
-Or for more complex scenarios:
+For more complex email resolution scenarios:
 
 ```ruby
 # config/initializers/survey_engine.rb
@@ -863,19 +820,14 @@ end
 
 ```ruby
 SurveyEngine.configure do |config|
-  # Email resolution method (symbol or callable)
-  config.current_user_email_method = :current_user_email
-  
-  # Require manual email input (disables authentication mode)
-  config.require_manual_email = false
+  # Email resolution method (callable object)
+  config.current_user_email_method = -> { current_user&.email }
 end
 ```
 
 **How it works:**
 
-- **Authentication Mode** (`require_manual_email: false`): The engine automatically gets the participant's email from your authentication system using the configured method.
-
-- **Manual Email Mode** (`require_manual_email: true`): The engine requires users to input their email address via forms. Perfect for demos or unauthenticated surveys.
+The engine automatically gets the participant's email from your authentication system using the configured method.
 
 ### Database Configuration
 

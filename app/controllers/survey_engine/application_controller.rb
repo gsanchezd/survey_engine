@@ -1,4 +1,4 @@
 module SurveyEngine
-  class ApplicationController < ActionController::Base
+  class ApplicationController < (defined?(::ApplicationController) ? ::ApplicationController : ActionController::Base)
   end
 end

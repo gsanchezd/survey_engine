@@ -30,21 +30,10 @@
   <% elsif @survey.can_receive_responses? %>
     <div class="survey-start-panel">
       <h3>Start Survey</h3>
-      <p>Please enter your email address to begin:</p>
+      <p>Click the button below to begin the survey:</p>
       
-      <%= form_tag start_survey_path(@survey), method: :post, class: "survey-form", local: true do %>
-        <div class="survey-form-group">
-          <%= label_tag :email, "Email Address:", class: "survey-label" %>
-          <%= email_field_tag :email, @email, 
-              placeholder: "your.email@example.com",
-              required: true,
-              class: "survey-input" %>
-        </div>
-        
-        <div class="survey-form-group">
-          <%= submit_tag "Start Survey", class: "survey-btn survey-btn-success survey-btn-large" %>
-        </div>
-      <% end %>
+      <%= link_to "Start Survey", answer_survey_path(@survey), 
+          class: "survey-btn survey-btn-success survey-btn-large" %>
     </div>
   <% end %>
 

@@ -1,7 +1,7 @@
-module SurveyEngine
-  class SurveysController < ApplicationController
-    def index
-      @surveys = Survey.published
+class SurveysController < ApplicationController
+
+  def index
+      @surveys = SurveyEngine::Survey.published
       
       # Handle email resolution for completion status
       @current_email = resolve_participant_email
@@ -10,18 +10,18 @@ module SurveyEngine
       if @current_email.present?
         @completed_surveys = {}
         @surveys.each do |survey|
-          participant = Participant.find_by(survey: survey, email: @current_email)
+          participant = SurveyEngine::Participant.find_by(survey: survey, email: @current_email)
           @completed_surveys[survey.id] = participant&.completed? || false
         end
       end
     end
 
     def show
-      @survey = Survey.find_by!(uuid: params[:id])
+      @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
       @email = resolve_participant_email
       
       if @email.present?
-        @participant = Participant.find_by(survey: @survey, email: @email)
+        @participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
         @response = @participant&.response if @participant
         
         if @participant&.completed?
@@ -34,7 +34,7 @@ module SurveyEngine
     end
 
     def answer
-      @survey = Survey.find_by!(uuid: params[:id])
+      @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
       @email = resolve_participant_email
       
       if @email.blank?
@@ -43,14 +43,14 @@ module SurveyEngine
       end
       
       # Check if user already completed
-      participant = Participant.find_by(survey: @survey, email: @email)
+      participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
       if participant&.completed?
         redirect_to completed_survey_path(@survey)
         return
       end
       
       # Create or find participant
-      @participant = Participant.find_or_create_by(
+      @participant = SurveyEngine::Participant.find_or_create_by(
         survey: @survey,
         email: @email
       ) do |p|
@@ -58,7 +58,7 @@ module SurveyEngine
       end
       
       # Create response if not exists
-      @response = @participant.response || Response.create!(
+      @response = @participant.response || SurveyEngine::Response.create!(
         survey: @survey,
         participant: @participant
       )
@@ -74,7 +74,7 @@ module SurveyEngine
     end
 
     def submit_answer
-      @survey = Survey.find_by!(uuid: params[:id])
+      @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
       @response = find_current_response
       
       errors = []
@@ -83,13 +83,13 @@ module SurveyEngine
       # Process all submitted answers
       if params[:answers].present?
         params[:answers].each do |question_id, answer_data|
-          question = Question.find(question_id)
+          question = SurveyEngine::Question.find(question_id)
           
           # Skip if no data provided for this question
           next if answer_data.values.all?(&:blank?)
           
           # Find or create answer
-          answer = Answer.find_or_initialize_by(
+          answer = SurveyEngine::Answer.find_or_initialize_by(
             response: @response,
             question: question
           )
@@ -112,24 +112,24 @@ module SurveyEngine
             answer.boolean_answer = answer_data[:boolean_answer] == '1' if answer_data[:boolean_answer].present?
           when 'single_choice'
             if answer_data[:option_id].present?
-              option = Option.find(answer_data[:option_id])
+              option = SurveyEngine::Option.find(answer_data[:option_id])
               if answer.new_record?
                 answer.answer_options.build(option: option)
               else
                 answer.save! # Save first if existing record
-                AnswerOption.create!(answer: answer, option: option)
+                SurveyEngine::AnswerOption.create!(answer: answer, option: option)
               end
               answer.other_text = answer_data[:other_text] if option.is_other? && answer_data[:other_text].present?
             end
           when 'multiple_choice'
             if answer_data[:option_ids].present?
               answer_data[:option_ids].reject(&:blank?).each do |option_id|
-                option = Option.find(option_id)
+                option = SurveyEngine::Option.find(option_id)
                 if answer.new_record?
                   answer.answer_options.build(option: option)
                 else
                   answer.save! # Save first if existing record
-                  AnswerOption.create!(answer: answer, option: option)
+                  SurveyEngine::AnswerOption.create!(answer: answer, option: option)
                 end
               end
               answer.other_text = answer_data[:other_text] if answer_data[:other_text].present?
@@ -176,14 +176,14 @@ module SurveyEngine
     end
 
     def completed
-      @survey = Survey.find_by!(uuid: params[:id])
+      @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
       @email = resolve_participant_email
-      @participant = Participant.find_by(survey: @survey, email: @email)
+      @participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
       @response = @participant&.response
     end
 
     def results
-      @survey = Survey.find_by!(uuid: params[:id])
+      @survey = SurveyEngine::Survey.find_by!(uuid: params[:id])
       @responses = @survey.responses.completed.includes(:participant, answers: [:question, :options])
       @questions = @survey.questions.ordered.includes(:question_type, :options)
       
@@ -214,7 +214,7 @@ module SurveyEngine
 
     def resolve_participant_email
       begin
-        instance_eval(&SurveyEngine.config.current_user_email_callable)
+        instance_eval(&SurveyEngine.config.current_user_email_method)
       rescue => e
         Rails.logger.error "SurveyEngine: Error getting current user email: #{e.message}"
         nil
@@ -236,10 +236,10 @@ module SurveyEngine
 
     def find_current_response
       if session[:response_id]
-        Response.find(session[:response_id])
+        SurveyEngine::Response.find(session[:response_id])
       else
         email = resolve_participant_email
-        participant = Participant.find_by(survey: @survey, email: email)
+        participant = SurveyEngine::Participant.find_by(survey: @survey, email: email)
         participant&.response
       end
     end
