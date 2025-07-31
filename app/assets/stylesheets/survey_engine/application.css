@@ -679,9 +679,20 @@
     align-items: stretch;
   }
   
-  .survey-btn {
+  .survey-actions .survey-btn {
     margin: 5px 0;
     width: 100%;
+  }
+  
+  /* Keep submit buttons full width on mobile */
+  .survey-btn-submit {
+    width: 100%;
+  }
+  
+  /* Keep inline buttons at auto width */
+  .survey-btn:not(.survey-btn-submit) {
+    width: auto;
+    display: inline-block;
   }
   
   .survey-scale-options {
