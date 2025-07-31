@@ -1,0 +1,22 @@
+source "https://rubygems.org"
+
+# Include the engine from the parent directory
+gem "survey_engine", path: "../.."
+
+# Rails dependencies
+gem "rails", "~> 8.0.2"
+
+gem "puma"
+
+gem "sqlite3", "~> 2.0"
+
+gem "propshaft"
+
+# Authentication for dummy app
+gem "devise"
+
+# Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
+gem "rubocop-rails-omakase", require: false
+
+# Start debugger with binding.b [https://github.com/ruby/debug]
+# gem "debug", ">= 1.0.0"
