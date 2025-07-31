@@ -447,7 +447,7 @@ module SurveyEngine
 
           updateFormValidation() {
             // Update form validation state
-            const form = document.querySelector('.se-survey-form');
+            const form = document.querySelector('.survey-form');
             if (form && typeof form.checkValidity === 'function') {
               form.checkValidity();
             }

@@ -29,7 +29,7 @@
   <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "survey-form", local: true do %>
     <div class="survey-questions-container">
       <% @questions.each_with_index do |question, index| %>
-        <div class="survey-question" data-question-id="<%= question.id %>">
+        <div class="survey-question" <%= conditional_flow_attributes(question).map { |k, v| "#{k}=\"#{v}\"" }.join(' ').html_safe %> id="question-<%= question.id %>">
           <h3>
             <%= index + 1 %>. <%= question.title %>
             <% if question.required? %>
@@ -119,7 +119,8 @@
                     <label class="survey-scale-option">
                       <%= radio_button_tag "answers[#{question.id}][numeric_answer]", value, 
                           existing_answer&.numeric_answer == value,
-                          required: question.required? %>
+                          required: question.required?,
+                          **conditional_trigger_attributes(question, "answers[#{question.id}][numeric_answer]") %>
                       <span><%= value %></span>
                     </label>
                   <% end %>
@@ -147,3 +148,6 @@
     </div>
   <% end %>
 </div>
+
+<%= conditional_flow_javascript_tag %>
+<%= initialize_conditional_flow(@survey) %>
