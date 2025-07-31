@@ -31,7 +31,7 @@
       <% @questions.each_with_index do |question, index| %>
         <div class="survey-question" <%= conditional_flow_attributes(question).map { |k, v| "#{k}=\"#{v}\"" }.join(' ').html_safe %> id="question-<%= question.id %>">
           <h3>
-            <%= index + 1 %>. <%= question.title %>
+            <span class="survey-question-number" data-original-order="<%= index + 1 %>"><%= index + 1 %></span>. <%= question.title %>
             <% if question.required? %>
               <span class="survey-question-required">*required</span>
             <% end %>

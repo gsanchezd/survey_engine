@@ -335,6 +335,9 @@ module SurveyEngine
             // Re-enable form validation
             this.updateQuestionValidation(element, true);
             
+            // Update question numbers
+            this.updateQuestionNumbers();
+            
             // Remove animation class after animation completes
             setTimeout(() => {
               element.classList.remove('se-conditional-showing');
@@ -348,6 +351,9 @@ module SurveyEngine
             // Clear answers and disable validation
             this.clearQuestionAnswers(element);
             this.updateQuestionValidation(element, false);
+            
+            // Update question numbers
+            this.updateQuestionNumbers();
             
             setTimeout(() => {
               if (element.classList.contains('se-conditional-hidden')) {
@@ -396,6 +402,19 @@ module SurveyEngine
                   const selectedValue = parseFloat(input.value);
                   this.handleQuestionChange(questionData.id, selectedValue);
                 });
+              }
+            });
+            
+            // Update question numbers after initial evaluation
+            this.updateQuestionNumbers();
+          }
+
+          updateQuestionNumbers() {
+            const visibleQuestions = document.querySelectorAll('.survey-question:not([style*="display: none"]):not(.se-conditional-hidden)');
+            visibleQuestions.forEach((questionElement, index) => {
+              const numberSpan = questionElement.querySelector('.survey-question-number');
+              if (numberSpan) {
+                numberSpan.textContent = index + 1;
               }
             });
           }
