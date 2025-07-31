@@ -1,50 +1,38 @@
-<div class="se-container">
-  <nav class="se-breadcrumb">
-    <%= link_to "← Back to Surveys", surveys_path, class: "se-link" %>
+<div class="survey-container">
+  <nav class="survey-breadcrumb">
+    <%= link_to t('survey_engine.surveys.show.back_to_surveys'), surveys_path %>
   </nav>
 
-  <header class="se-header">
+  <header class="survey-header">
     <h1><%= @survey.title %></h1>
     <p><%= @survey.description %></p>
   </header>
 
-  <div class="se-survey-details">
-    <strong>Survey Details:</strong>
-    <%= @survey.questions.count %> questions | 
-    <%= @survey.participants.count %> participants |
-    Status: <span class="se-status se-status-<%= @survey.status %>"><%= @survey.status.capitalize %></span>
+  <div class="survey-details">
+    <span><strong><%= t('survey_engine.surveys.show.questions') %></strong> <%= @survey.questions.count %></span>
+    <span><strong><%= t('survey_engine.surveys.show.participants') %></strong> <%= @survey.participants.count %></span>
+    <span><strong><%= t('survey_engine.surveys.show.status') %></strong> <span class="survey-status"><%= t("survey_engine.statuses.#{@survey.status}") %></span></span>
   </div>
 
   <% unless @survey.can_receive_responses? %>
-    <div class="se-warning-panel">
-      <strong>Notice:</strong> This survey is not currently accepting responses.
+    <div class="survey-alert survey-alert-warning">
+      <strong>Notice:</strong> <%= t('survey_engine.surveys.show.survey_not_available') %>
     </div>
   <% end %>
 
   <% if @participant&.completed? %>
-    <div class="se-success-panel">
+    <div class="survey-alert survey-alert-success">
       <strong>Already Completed!</strong> You have already completed this survey.
       <%= link_to "View Results", completed_survey_path(@survey, email: @email), 
-          class: "se-btn se-btn-success" %>
+          class: "survey-btn survey-btn-success" %>
     </div>
   <% elsif @survey.can_receive_responses? %>
-    <div class="se-start-panel">
-      <h3>Start Survey</h3>
-      <p>Please enter your email address to begin:</p>
+    <div class="survey-start-panel">
+      <h3><%= t('survey_engine.surveys.show.start_survey') %></h3>
       
-      <%= form_tag start_survey_path(@survey), method: :post, class: "se-start-form", local: true do %>
-        <div class="se-form-group">
-          <%= label_tag :email, "Email Address:", class: "se-label" %>
-          <%= email_field_tag :email, @email, 
-              placeholder: "your.email@example.com",
-              required: true,
-              class: "se-input" %>
-        </div>
-        
-        <div class="se-form-group">
-          <%= submit_tag "Start Survey", class: "se-btn se-btn-success se-btn-large" %>
-        </div>
-      <% end %>
+      <%= link_to t('survey_engine.surveys.show.start_survey'), 
+          answer_survey_path(@survey), 
+          class: "survey-btn survey-btn-success survey-btn-large" %>
     </div>
   <% end %>
 
