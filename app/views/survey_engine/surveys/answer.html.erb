@@ -1,0 +1,149 @@
+<div class="survey-container">
+  <nav class="survey-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path %>
+  </nav>
+
+  <header class="survey-header">
+    <h1>Answering: <%= @survey.title %></h1>
+    <p><%= @survey.description %></p>
+  </header>
+
+  <div class="survey-progress">
+    <strong>Progress:</strong> 
+    <%= @response.answers.count %> of <%= @questions.count %> questions answered
+    (<%= @response.completion_percentage %>% complete)
+  </div>
+
+  <% if notice %>
+    <div class="survey-alert survey-alert-success">
+      <%= notice %>
+    </div>
+  <% end %>
+
+  <% if alert %>
+    <div class="survey-alert survey-alert-danger">
+      <strong>⚠️ Error:</strong> <%= alert %>
+    </div>
+  <% end %>
+
+  <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "survey-form", local: true do %>
+    <div class="survey-questions-container">
+      <% @questions.each_with_index do |question, index| %>
+        <div class="survey-question" data-question-id="<%= question.id %>">
+          <h3>
+            <%= index + 1 %>. <%= question.title %>
+            <% if question.required? %>
+              <span class="survey-question-required">*required</span>
+            <% end %>
+          </h3>
+          
+          <% if question.description.present? %>
+            <p class="survey-question-description"><%= question.description %></p>
+          <% end %>
+          
+          <% existing_answer = @answers[question.id] %>
+          
+          <div class="survey-question-input">
+            <% case question.question_type.name %>
+            <% when 'text' %>
+              <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
+                  placeholder: "Enter your answer here...",
+                  class: "survey-textarea",
+                  required: question.required? %>
+            <% when 'number' %>
+              <%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
+                  class: "survey-input survey-number-input",
+                  required: question.required? %>
+            <% when 'boolean' %>
+              <div class="survey-question-options">
+                <label class="survey-question-option">
+                  <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', 
+                      existing_answer&.boolean_answer == true,
+                      required: question.required? %>
+                  <span>Yes</span>
+                </label>
+                
+                <label class="survey-question-option">
+                  <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '0', 
+                      existing_answer&.boolean_answer == false,
+                      required: question.required? %>
+                  <span>No</span>
+                </label>
+              </div>
+            <% when 'single_choice' %>
+              <div class="survey-question-options">
+                <% question.options.ordered.each do |option| %>
+                  <label class="survey-question-option">
+                    <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
+                        existing_answer&.options&.include?(option),
+                        required: question.required? %>
+                    <span><%= option.option_text %></span>
+                  </label>
+                  
+                  <% if option.is_other? %>
+                    <div class="survey-other-input" style="<%= existing_answer&.options&.include?(option) ? 'display: block;' : 'display: none;' %>">
+                      <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
+                          placeholder: "Please specify...",
+                          class: "survey-input" %>
+                    </div>
+                  <% end %>
+                <% end %>
+              </div>
+            <% when 'multiple_choice' %>
+              <div class="survey-question-options">
+                <% question.options.ordered.each do |option| %>
+                  <label class="survey-question-option">
+                    <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
+                        existing_answer&.options&.include?(option) %>
+                    <span><%= option.option_text %></span>
+                  </label>
+                <% end %>
+                
+                <% if question.options.any?(&:is_other?) %>
+                  <div class="survey-other-input" style="<%= existing_answer&.other_text.present? ? 'display: block;' : 'display: none;' %>">
+                    <%= text_field_tag "answers[#{question.id}][other_text]", existing_answer&.other_text,
+                        placeholder: "Please specify other option...",
+                        class: "survey-input" %>
+                  </div>
+                <% end %>
+              </div>
+            <% when 'scale' %>
+              <div class="survey-scale-container">
+                <div class="survey-scale-labels">
+                  <span><%= question.scale_min_label %></span>
+                  <span><%= question.scale_max_label %></span>
+                </div>
+                
+                <div class="survey-scale-options">
+                  <% (question.scale_min..question.scale_max).each do |value| %>
+                    <label class="survey-scale-option">
+                      <%= radio_button_tag "answers[#{question.id}][numeric_answer]", value, 
+                          existing_answer&.numeric_answer == value,
+                          required: question.required? %>
+                      <span><%= value %></span>
+                    </label>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+          
+          <% if existing_answer %>
+            <div class="survey-current-answer">
+              <strong>Current answer:</strong> <%= existing_answer.display_value %>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="survey-completion-panel">
+      <h3>Ready to submit your survey?</h3>
+      <p>This will save all your answers and complete the survey.</p>
+      
+      <%= submit_tag "Complete Survey", 
+          class: "survey-btn survey-btn-submit",
+          name: "complete_survey" %>
+    </div>
+  <% end %>
+</div>

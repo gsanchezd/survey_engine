@@ -1,4 +1,0 @@
-<%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
-    class: "survey-input survey-number-input #{'survey-required-field' if question.required?}",
-    required: question.required?,
-    data: { question_id: question.id, question_title: question.title } %>

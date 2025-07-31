@@ -4,11 +4,11 @@
   </header>
 
   <% unless @current_email.present? %>
-    <div class="survey-info-panel">
+    <div class="survey-alert survey-alert-info">
       <h3>Welcome!</h3>
       <p>To see your survey completion status and continue any in-progress surveys, please enter your email address:</p>
       
-      <%= form_tag surveys_path, method: :get, class: "survey-email-form" do %>
+      <%= form_tag surveys_path, method: :get, class: "survey-form" do %>
         <div class="survey-form-row">
           <%= email_field_tag :email, params[:email], 
               placeholder: "your.email@example.com",
@@ -22,26 +22,26 @@
       </p>
     </div>
   <% else %>
-    <div class="survey-success-panel">
+    <div class="survey-alert survey-alert-success">
       <strong>Signed in as:</strong> <%= @current_email %>
-      <%= link_to "Change Email", surveys_path, class: "survey-link" %>
+      <%= link_to "Change Email", surveys_path, class: "survey-btn survey-btn-secondary" %>
     </div>
   <% end %>
 
   <% if @surveys.any? %>
-    <div class="survey-surveys-list">
+    <div class="survey-list">
       <% @surveys.each do |survey| %>
-        <article class="survey-survey-card">
+        <article class="survey-card">
           <h2><%= survey.title %></h2>
           <p><%= survey.description %></p>
           
-          <div class="survey-survey-meta">
+          <div class="survey-meta">
             <span><strong>Questions:</strong> <%= survey.questions_count %></span>
             <span><strong>Participants:</strong> <%= survey.participants_count %></span>
-            <span><strong>Status:</strong> <span class="survey-status survey-status-<%= survey.status %>"><%= survey.status.capitalize %></span></span>
+            <span><strong>Status:</strong> <span class="survey-status"><%= survey.status.capitalize %></span></span>
           </div>
           
-          <div class="survey-survey-actions">
+          <div class="survey-actions">
             <% if survey.can_receive_responses? %>
               <% if @current_email.present? && @completed_surveys&.dig(survey.id) %>
                 <span class="survey-btn survey-btn-completed">

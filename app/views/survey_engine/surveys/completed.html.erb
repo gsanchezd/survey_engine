@@ -1,0 +1,56 @@
+<div class="survey-container">
+  <nav class="survey-breadcrumb">
+    <%= link_to "← Back to Surveys", surveys_path %>
+  </nav>
+
+  <div class="survey-completed-container">
+    <header class="survey-completion-panel">
+      <h1 class="survey-completed-title">🎉 Survey Completed!</h1>
+    </header>
+    
+    <div class="survey-completed-card">
+      <h2><%= @survey.title %></h2>
+      <p class="survey-completed-thank-you">Thank you for completing the survey!</p>
+      
+      <% if @response %>
+        <div class="survey-response-summary">
+          <h3>Your Response Summary</h3>
+          <ul>
+            <li><strong>Participant:</strong> <%= @participant.email %></li>
+            <li><strong>Completed:</strong> <%= @response.completed_at.strftime("%B %d, %Y at %I:%M %p") %></li>
+            <li><strong>Questions answered:</strong> <%= @response.answers.count %> of <%= @survey.questions_count %></li>
+            <li><strong>Completion rate:</strong> <%= @response.completion_percentage %>%</li>
+          </ul>
+        </div>
+      <% end %>
+    </div>
+    
+    <% if @response&.answers&.any? %>
+      <section class="survey-answers-review">
+        <h3>Your Answers</h3>
+        
+        <% @survey.questions.ordered.each_with_index do |question, index| %>
+          <% answer = @response.answer_for_question(question) %>
+          <article class="survey-answer-card">
+            <h4>
+              <%= index + 1 %>. <%= question.title %>
+            </h4>
+            
+            <div class="survey-answer-display">
+              <% if answer %>
+                <strong>Your answer:</strong> <%= answer.display_value %>
+              <% else %>
+                <em class="survey-text-muted">Not answered</em>
+              <% end %>
+            </div>
+          </article>
+        <% end %>
+      </section>
+    <% end %>
+    
+    <footer class="survey-completed-footer">
+      <%= link_to "Take Another Survey", surveys_path, 
+          class: "survey-btn survey-btn-primary" %>
+    </footer>
+  </div>
+</div>
