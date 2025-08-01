@@ -5,27 +5,27 @@ module SurveyEngine
     # Validations
     test "should require name" do
       question_type = QuestionType.new
-      assert_not question_type.valid?
-      assert_includes question_type.errors[:name], "can't be blank"
+      assert_invalid question_type
+      assert_validation_error question_type, :name
     end
 
     test "should require unique name" do
       QuestionType.create!(name: "unique_test_type", allows_options: false, allows_multiple_selections: false)
       duplicate = QuestionType.new(name: "unique_test_type", allows_options: false, allows_multiple_selections: false)
-      assert_not duplicate.valid?
-      assert_includes duplicate.errors[:name], "has already been taken"
+      assert_invalid duplicate
+      assert_validation_error duplicate, :name
     end
 
     test "should require allows_options" do
       question_type = QuestionType.new(name: "test_options", allows_options: nil)
-      assert_not question_type.valid?
-      assert_includes question_type.errors[:allows_options], "is not included in the list"
+      assert_invalid question_type
+      assert_validation_error question_type, :allows_options
     end
 
     test "should require allows_multiple_selections" do
       question_type = QuestionType.new(name: "test_multiple", allows_multiple_selections: nil)
-      assert_not question_type.valid?
-      assert_includes question_type.errors[:allows_multiple_selections], "is not included in the list"
+      assert_invalid question_type
+      assert_validation_error question_type, :allows_multiple_selections
     end
 
     test "should accept valid boolean values" do

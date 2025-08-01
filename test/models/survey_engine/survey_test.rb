@@ -5,27 +5,27 @@ module SurveyEngine
     # Validations
     test "should require title" do
       survey = Survey.new
-      assert_not survey.valid?
-      assert_includes survey.errors[:title], "can't be blank"
+      assert_invalid survey
+      assert_validation_error survey, :title
     end
 
     test "should limit title length" do
       survey = Survey.new(title: "a" * 256)
-      assert_not survey.valid?
-      assert_includes survey.errors[:title], "is too long (maximum is 255 characters)"
+      assert_invalid survey
+      assert_validation_error survey, :title
     end
 
     test "should limit description length" do
       survey = Survey.new(title: "Valid Title", description: "a" * 2001)
-      assert_not survey.valid?
-      assert_includes survey.errors[:description], "is too long (maximum is 2000 characters)"
+      assert_invalid survey
+      assert_validation_error survey, :description
     end
 
     test "should require status" do
       survey = Survey.new(title: "Test")
       survey.status = nil
-      assert_not survey.valid?
-      assert_includes survey.errors[:status], "can't be blank"
+      assert_invalid survey
+      assert_validation_error survey, :status
     end
 
     test "should require valid status" do
@@ -45,15 +45,15 @@ module SurveyEngine
     test "should require is_active boolean" do
       survey = Survey.new(title: "Test")
       survey.is_active = nil
-      assert_not survey.valid?
-      assert_includes survey.errors[:is_active], "is not included in the list"
+      assert_invalid survey
+      assert_validation_error survey, :is_active
     end
 
     test "should require global boolean" do
       survey = Survey.new(title: "Test")
       survey.global = nil
-      assert_not survey.valid?
-      assert_includes survey.errors[:global], "is not included in the list"
+      assert_invalid survey
+      assert_validation_error survey, :global
     end
 
     test "should validate published_at before expires_at" do

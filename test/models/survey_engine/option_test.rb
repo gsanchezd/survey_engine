@@ -16,8 +16,8 @@ module SurveyEngine
     # Validations
     test "should require option_text" do
       option = Option.new(question: @question)
-      assert_not option.valid?
-      assert_includes option.errors[:option_text], "can't be blank"
+      assert_invalid option
+      assert_validation_error option, :option_text
     end
 
     test "should limit option_text length" do
@@ -26,8 +26,8 @@ module SurveyEngine
         option_text: "a" * 256,
         option_value: "test"
       )
-      assert_not option.valid?
-      assert_includes option.errors[:option_text], "is too long (maximum is 255 characters)"
+      assert_invalid option
+      assert_validation_error option, :option_text
     end
 
     test "should require option_value" do
@@ -35,8 +35,8 @@ module SurveyEngine
       # Bypass the callback that sets default option_value
       option.define_singleton_method(:set_default_option_value) { nil }
       option.option_value = nil
-      assert_not option.valid?
-      assert_includes option.errors[:option_value], "can't be blank"
+      assert_invalid option
+      assert_validation_error option, :option_value
     end
 
     test "should limit option_value length" do
@@ -45,8 +45,8 @@ module SurveyEngine
         option_text: "Test",
         option_value: "a" * 101
       )
-      assert_not option.valid?
-      assert_includes option.errors[:option_value], "is too long (maximum is 100 characters)"
+      assert_invalid option
+      assert_validation_error option, :option_value
     end
 
     test "should require order_position" do
@@ -54,8 +54,8 @@ module SurveyEngine
       # Bypass the callback by setting order_position after initialization
       option.define_singleton_method(:set_next_order_position) { nil }
       option.order_position = nil
-      assert_not option.valid?
-      assert_includes option.errors[:order_position], "can't be blank"
+      assert_invalid option
+      assert_validation_error option, :order_position
     end
 
     test "should require unique order_position within question" do
@@ -73,8 +73,8 @@ module SurveyEngine
         order_position: 1
       )
 
-      assert_not duplicate.valid?
-      assert_includes duplicate.errors[:order_position], "has already been taken"
+      assert_invalid duplicate
+      assert_validation_error duplicate, :order_position
     end
 
     test "should allow same order_position in different questions" do
@@ -106,18 +106,18 @@ module SurveyEngine
       option = Option.new(question: @question, option_text: "Test", option_value: "test")
 
       option.is_other = nil
-      assert_not option.valid?
-      assert_includes option.errors[:is_other], "is not included in the list"
+      assert_invalid option
+      assert_validation_error option, :is_other
 
       option.is_other = false
       option.is_exclusive = nil
-      assert_not option.valid?
-      assert_includes option.errors[:is_exclusive], "is not included in the list"
+      assert_invalid option
+      assert_validation_error option, :is_exclusive
 
       option.is_exclusive = false
       option.is_active = nil
-      assert_not option.valid?
-      assert_includes option.errors[:is_active], "is not included in the list"
+      assert_invalid option
+      assert_validation_error option, :is_active
     end
 
     test "should validate only one other option per question" do

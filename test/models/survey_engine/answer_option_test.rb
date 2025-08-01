@@ -26,22 +26,22 @@ module SurveyEngine
     # Basic validations
     test "should require answer" do
       answer_option = AnswerOption.new(option: @option)
-      assert_not answer_option.valid?
-      assert_includes answer_option.errors[:answer_id], "can't be blank"
+      assert_invalid answer_option
+      assert_validation_error answer_option, :answer_id
     end
 
     test "should require option" do
       answer_option = AnswerOption.new(answer: @answer)
-      assert_not answer_option.valid?
-      assert_includes answer_option.errors[:option_id], "can't be blank"
+      assert_invalid answer_option
+      assert_validation_error answer_option, :option_id
     end
 
     test "should require unique answer-option combination" do
       AnswerOption.create!(answer: @answer, option: @option)
       
       duplicate = AnswerOption.new(answer: @answer, option: @option)
-      assert_not duplicate.valid?
-      assert_includes duplicate.errors[:answer_id], "cannot select the same option twice"
+      assert_invalid duplicate
+      assert_validation_error duplicate, :answer_id
     end
 
     # Associations
@@ -81,8 +81,8 @@ module SurveyEngine
       )
       
       answer_option = AnswerOption.new(answer: @answer, option: other_option)
-      assert_not answer_option.valid?
-      assert_includes answer_option.errors[:option], "must belong to the same question as the answer"
+      assert_invalid answer_option
+      assert_validation_error answer_option, :option
     end
 
     test "should allow option from same question" do

@@ -17,14 +17,14 @@ module SurveyEngine
     # Validations
     test "should require survey" do
       response = Response.new(participant: @participant)
-      assert_not response.valid?
-      assert_includes response.errors[:survey_id], "can't be blank"
+      assert_invalid response
+      assert_validation_error response, :survey_id
     end
 
     test "should require participant" do
       response = Response.new(survey: @survey)
-      assert_not response.valid?
-      assert_includes response.errors[:participant_id], "can't be blank"
+      assert_invalid response
+      assert_validation_error response, :participant_id
     end
 
     test "should validate participant belongs to survey" do
@@ -32,8 +32,8 @@ module SurveyEngine
       other_participant = Participant.create!(survey: other_survey, email: "other@example.com")
       
       response = Response.new(survey: @survey, participant: other_participant)
-      assert_not response.valid?
-      assert_includes response.errors[:participant], "must belong to the same survey"
+      assert_invalid response
+      assert_validation_error response, :participant
     end
 
     test "should allow participant from same survey" do

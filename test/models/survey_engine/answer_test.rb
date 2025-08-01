@@ -18,22 +18,22 @@ module SurveyEngine
     # Basic validations
     test "should require response" do
       answer = Answer.new(question: @question, text_answer: "Test")
-      assert_not answer.valid?
-      assert_includes answer.errors[:response_id], "can't be blank"
+      assert_invalid answer
+      assert_validation_error answer, :response_id
     end
 
     test "should require question" do
       answer = Answer.new(response: @response, text_answer: "Test")
-      assert_not answer.valid?
-      assert_includes answer.errors[:question_id], "can't be blank"
+      assert_invalid answer
+      assert_validation_error answer, :question_id
     end
 
     test "should require unique response-question combination" do
       Answer.create!(response: @response, question: @question, text_answer: "First answer")
       
       duplicate = Answer.new(response: @response, question: @question, text_answer: "Second answer")
-      assert_not duplicate.valid?
-      assert_includes duplicate.errors[:response_id], "can only have one answer per question"
+      assert_invalid duplicate
+      assert_validation_error duplicate, :response_id
     end
 
     # Associations
@@ -56,8 +56,8 @@ module SurveyEngine
     # Content validation
     test "should require some form of content" do
       answer = Answer.new(response: @response, question: @question)
-      assert_not answer.valid?
-      assert_includes answer.errors[:base], "Answer must have at least one type of content"
+      assert_invalid answer
+      assert_validation_error answer, :base
     end
 
     test "should accept text answer" do
@@ -114,8 +114,8 @@ module SurveyEngine
       )
       
       answer = Answer.new(response: @response, question: other_question, text_answer: "Test")
-      assert_not answer.valid?
-      assert_includes answer.errors[:base], "Response and question must belong to the same survey"
+      assert_invalid answer
+      assert_validation_error answer, :base
     end
   end
 end

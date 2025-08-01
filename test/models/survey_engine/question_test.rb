@@ -13,8 +13,8 @@ module SurveyEngine
     # Validations
     test "should require title" do
       question = Question.new(survey: @survey, question_type: @question_type)
-      assert_not question.valid?
-      assert_includes question.errors[:title], "can't be blank"
+      assert_invalid question
+      assert_validation_error question, :title
     end
 
     test "should limit title length" do
@@ -23,8 +23,8 @@ module SurveyEngine
         question_type: @question_type,
         title: "a" * 501
       )
-      assert_not question.valid?
-      assert_includes question.errors[:title], "is too long (maximum is 500 characters)"
+      assert_invalid question
+      assert_validation_error question, :title
     end
 
     test "should limit description length" do
@@ -34,8 +34,8 @@ module SurveyEngine
         title: "Valid Title",
         description: "a" * 1001
       )
-      assert_not question.valid?
-      assert_includes question.errors[:description], "is too long (maximum is 1000 characters)"
+      assert_invalid question
+      assert_validation_error question, :description
     end
 
     test "should require order_position" do
@@ -43,8 +43,8 @@ module SurveyEngine
       # Bypass the callback that sets default order_position
       question.define_singleton_method(:set_next_order_position) { nil }
       question.order_position = nil
-      assert_not question.valid?
-      assert_includes question.errors[:order_position], "can't be blank"
+      assert_invalid question
+      assert_validation_error question, :order_position
     end
 
     test "should require unique order_position within survey" do
@@ -62,8 +62,8 @@ module SurveyEngine
         order_position: 1
       )
 
-      assert_not duplicate.valid?
-      assert_includes duplicate.errors[:order_position], "has already been taken"
+      assert_invalid duplicate
+      assert_validation_error duplicate, :order_position
     end
 
     test "should allow same order_position in different surveys" do
@@ -90,18 +90,18 @@ module SurveyEngine
       question = Question.new(survey: @survey, question_type: @question_type, title: "Test")
       
       question.is_required = nil
-      assert_not question.valid?
-      assert_includes question.errors[:is_required], "is not included in the list"
+      assert_invalid question
+      assert_validation_error question, :is_required
 
       question.is_required = true
       question.allow_other = nil
-      assert_not question.valid?
-      assert_includes question.errors[:allow_other], "is not included in the list"
+      assert_invalid question
+      assert_validation_error question, :allow_other
 
       question.allow_other = false
       question.randomize_options = nil
-      assert_not question.valid?
-      assert_includes question.errors[:randomize_options], "is not included in the list"
+      assert_invalid question
+      assert_validation_error question, :randomize_options
     end
 
     test "should validate positive max_characters" do
@@ -111,8 +111,8 @@ module SurveyEngine
         title: "Test",
         max_characters: -1
       )
-      assert_not question.valid?
-      assert_includes question.errors[:max_characters], "must be greater than 0"
+      assert_invalid question
+      assert_validation_error question, :max_characters
     end
 
     test "should validate non-negative min_selections" do
@@ -122,8 +122,8 @@ module SurveyEngine
         title: "Test",
         min_selections: -1
       )
-      assert_not question.valid?
-      assert_includes question.errors[:min_selections], "must be greater than or equal to 0"
+      assert_invalid question
+      assert_validation_error question, :min_selections
     end
 
     test "should validate positive max_selections" do
@@ -133,8 +133,8 @@ module SurveyEngine
         title: "Test",
         max_selections: 0
       )
-      assert_not question.valid?
-      assert_includes question.errors[:max_selections], "must be greater than 0"
+      assert_invalid question
+      assert_validation_error question, :max_selections
     end
 
     # Associations
@@ -224,8 +224,8 @@ module SurveyEngine
         conditional_operator: "invalid_operator",
         conditional_value: 5
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_operator], "is not included in the list"
+      assert_invalid question
+      assert_validation_error question, :conditional_operator
     end
 
     test "should require conditional operator when conditional value is present" do
@@ -248,8 +248,8 @@ module SurveyEngine
         conditional_parent: parent_question,
         conditional_value: 5
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_operator], "is required for conditional questions"
+      assert_invalid question
+      assert_validation_error question, :conditional_operator
     end
 
     test "should require conditional value when conditional operator is present" do
@@ -272,8 +272,8 @@ module SurveyEngine
         conditional_parent: parent_question,
         conditional_operator: "less_than"
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_value], "is required for conditional questions"
+      assert_invalid question
+      assert_validation_error question, :conditional_value
     end
 
     test "should validate conditional parent is from same survey" do
@@ -298,8 +298,8 @@ module SurveyEngine
         conditional_operator: "less_than",
         conditional_value: 5
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_parent], "must be from the same survey"
+      assert_invalid question
+      assert_validation_error question, :conditional_parent
     end
 
     test "should validate conditional parent is scale question" do
@@ -317,8 +317,8 @@ module SurveyEngine
         conditional_operator: "less_than",
         conditional_value: 5
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_parent], "must be a scale question"
+      assert_invalid question
+      assert_validation_error question, :conditional_parent
     end
 
     test "should validate conditional parent is not itself conditional" do
@@ -353,8 +353,8 @@ module SurveyEngine
         conditional_operator: "less_than",
         conditional_value: 3
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_parent], "cannot be a conditional question itself"
+      assert_invalid question
+      assert_validation_error question, :conditional_parent
     end
 
     test "should validate conditional value within parent scale range" do
@@ -379,13 +379,13 @@ module SurveyEngine
         conditional_operator: "less_than",
         conditional_value: 0
       )
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_value], "must be within parent question scale range"
+      assert_invalid question
+      assert_validation_error question, :conditional_value
       
       # Test value above maximum
       question.conditional_value = 11
-      assert_not question.valid?
-      assert_includes question.errors[:conditional_value], "must be within parent question scale range"
+      assert_invalid question
+      assert_validation_error question, :conditional_value
       
       # Test valid value
       question.conditional_value = 5

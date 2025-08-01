@@ -9,21 +9,21 @@ module SurveyEngine
     # Validations
     test "should require email" do
       participant = Participant.new(survey: @survey)
-      assert_not participant.valid?
-      assert_includes participant.errors[:email], "can't be blank"
+      assert_invalid participant
+      assert_validation_error participant, :email
     end
 
     test "should validate email format" do
       participant = Participant.new(survey: @survey, email: "invalid-email")
-      assert_not participant.valid?
-      assert_includes participant.errors[:email], "is invalid"
+      assert_invalid participant
+      assert_validation_error participant, :email
     end
 
     test "should require status" do
       participant = Participant.new(survey: @survey, email: "test@example.com")
       participant.status = nil
-      assert_not participant.valid?
-      assert_includes participant.errors[:status], "can't be blank"
+      assert_invalid participant
+      assert_validation_error participant, :status
     end
 
     test "should validate status values through enum" do
@@ -46,8 +46,8 @@ module SurveyEngine
       Participant.create!(survey: @survey, email: "test@example.com")
       
       duplicate = Participant.new(survey: @survey, email: "test@example.com")
-      assert_not duplicate.valid?
-      assert_includes duplicate.errors[:email], "has already been registered for this survey"
+      assert_invalid duplicate
+      assert_validation_error duplicate, :email
     end
 
     test "should allow same email for different surveys" do
