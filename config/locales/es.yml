@@ -1,4 +1,31 @@
 es:
+  activerecord:
+    errors:
+      messages:
+        record_invalid: "Error de validación: %{errors}"
+        blank: "no puede estar en blanco"
+        taken: "ya está en uso"
+        invalid: "no es válido"
+        inclusion: "no está incluido en la lista"
+        exclusion: "está reservado"
+        confirmation: "no coincide"
+        accepted: "debe ser aceptado"
+        empty: "no puede estar vacío"
+        present: "debe estar en blanco"
+        too_long: "es demasiado largo (máximo %{count} caracteres)"
+        too_short: "es demasiado corto (mínimo %{count} caracteres)"
+        wrong_length: "longitud incorrecta (debe ser %{count} caracteres)"
+        not_a_number: "no es un número"
+        not_an_integer: "debe ser un entero"
+        greater_than: "debe ser mayor que %{count}"
+        greater_than_or_equal_to: "debe ser mayor o igual que %{count}"
+        equal_to: "debe ser igual a %{count}"
+        less_than: "debe ser menor que %{count}"
+        less_than_or_equal_to: "debe ser menor o igual que %{count}"
+        other_than: "debe ser distinto de %{count}"
+        odd: "debe ser impar" 
+        even: "debe ser par"
+        required: "es obligatorio"
   survey_engine:
     surveys:
       index:

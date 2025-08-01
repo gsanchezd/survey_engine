@@ -2,24 +2,18 @@
 
 basic_survey:
   title: "Encuesta Básica"
-  description: "Una encuesta de prueba básica"
+  survey_template: basic_template
   is_active: true
   global: false
-  status: draft
 
 published_survey:
   title: "Encuesta Publicada"
-  description: "Una encuesta ya publicada"
+  survey_template: customer_satisfaction_template
   is_active: true
   global: true
-  status: published
-  published_at: <%= 1.week.ago %>
 
 expired_survey:
   title: "Encuesta Expirada"
-  description: "Una encuesta que ya expiró"
+  survey_template: feedback_template
   is_active: false
   global: false
-  status: archived
-  published_at: <%= 2.weeks.ago %>
-  expires_at: <%= 1.week.ago %>

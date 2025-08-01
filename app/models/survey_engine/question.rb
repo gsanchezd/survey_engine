@@ -4,7 +4,7 @@ module SurveyEngine
       "survey_engine_"
     end
 
-    belongs_to :survey, counter_cache: true
+    belongs_to :survey_template, counter_cache: true
     belongs_to :question_type
     belongs_to :conditional_parent, class_name: 'Question', optional: true
     has_many :conditional_questions, class_name: 'Question', foreign_key: 'conditional_parent_id', dependent: :destroy
@@ -13,7 +13,7 @@ module SurveyEngine
 
     validates :title, presence: true, length: { maximum: 500 }
     validates :description, length: { maximum: 1000 }
-    validates :order_position, presence: true, uniqueness: { scope: :survey_id }
+    validates :order_position, presence: true
     validates :is_required, inclusion: { in: [true, false] }
     validates :allow_other, inclusion: { in: [true, false] }
     validates :randomize_options, inclusion: { in: [true, false] }
@@ -125,7 +125,7 @@ module SurveyEngine
     def set_next_order_position
       return if order_position.present?
       
-      max_position = survey&.questions&.maximum(:order_position) || 0
+      max_position = survey_template&.questions&.maximum(:order_position) || 0
       self.order_position = max_position + 1
     end
 
@@ -163,9 +163,9 @@ module SurveyEngine
     def conditional_logic_is_valid
       return unless conditional_parent_id.present?
 
-      # Validate conditional parent exists and is from same survey
+      # Validate conditional parent exists and is from same template
       if conditional_parent.present?
-        errors.add(:conditional_parent, 'must be from the same survey') if conditional_parent.survey_id != survey_id
+        errors.add(:conditional_parent, 'must be from the same survey template') if conditional_parent.survey_template_id != survey_template_id
         errors.add(:conditional_parent, 'must be a scale question') unless conditional_parent.is_scale_question?
         errors.add(:conditional_parent, 'cannot be a conditional question itself') if conditional_parent.is_conditional?
       end

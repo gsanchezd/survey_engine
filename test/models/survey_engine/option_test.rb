@@ -3,10 +3,14 @@ require "test_helper"
 module SurveyEngine
   class OptionTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      @survey_template = SurveyTemplate.create!(name: "Test Template #{SecureRandom.hex(4)}")
+      @survey = Survey.create!(
+        title: "Test Survey #{SecureRandom.hex(4)}",
+        survey_template: @survey_template
+      )
       @question_type = QuestionType.create!(name: "single_choice_#{SecureRandom.hex(4)}", allows_options: true, allows_multiple_selections: false)
       @question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test Question",
         order_position: 1
@@ -79,7 +83,7 @@ module SurveyEngine
 
     test "should allow same order_position in different questions" do
       other_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Other Question",
         order_position: 2

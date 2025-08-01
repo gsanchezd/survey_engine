@@ -1,7 +1,7 @@
 # SurveyEngine Questions Fixtures
 
 text_question:
-  survey: basic_survey
+  survey_template: basic_template
   question_type: text
   title: "¿Cuál es tu nombre?"
   description: "Ingresa tu nombre completo"
@@ -9,7 +9,7 @@ text_question:
   order_position: 1
 
 choice_question:
-  survey: basic_survey
+  survey_template: basic_template
   question_type: single_choice
   title: "¿Cuál es tu color favorito?"
   description: "Selecciona una opción"
@@ -17,7 +17,7 @@ choice_question:
   order_position: 2
 
 scale_question:
-  survey: published_survey
+  survey_template: customer_satisfaction_template
   question_type: scale
   title: "¿Qué tan satisfecho estás?"
   description: "Califica del 1 al 5"
@@ -27,3 +27,11 @@ scale_question:
   scale_max: 5
   scale_min_label: "Muy insatisfecho"
   scale_max_label: "Muy satisfecho"
+
+feedback_question:
+  survey_template: feedback_template
+  question_type: text
+  title: "¿Qué comentarios tienes?"
+  description: "Comparte tus comentarios"
+  is_required: false
+  order_position: 1

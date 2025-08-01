@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_01_192218) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
@@ -37,6 +37,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
     t.index ["question_id"], name: "index_survey_engine_answers_on_question_id"
     t.index ["response_id", "question_id"], name: "index_answers_on_response_question", unique: true
     t.index ["response_id"], name: "index_survey_engine_answers_on_response_id"
+  end
+
+  create_table "survey_engine_groups", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_survey_engine_groups_on_name"
   end
 
   create_table "survey_engine_options", force: :cascade do |t|
@@ -78,7 +86,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
   end
 
   create_table "survey_engine_questions", force: :cascade do |t|
-    t.integer "survey_id", null: false
     t.integer "question_type_id", null: false
     t.string "title", null: false
     t.text "description"
@@ -102,10 +109,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
     t.string "conditional_operator"
     t.decimal "conditional_value"
     t.boolean "show_if_condition_met", default: true
+    t.integer "survey_template_id", null: false
     t.index ["conditional_parent_id"], name: "index_survey_engine_questions_on_conditional_parent_id"
     t.index ["question_type_id"], name: "index_survey_engine_questions_on_question_type_id"
-    t.index ["survey_id", "order_position"], name: "index_survey_engine_questions_on_survey_id_and_order_position", unique: true
-    t.index ["survey_id"], name: "index_survey_engine_questions_on_survey_id"
+    t.index ["survey_template_id"], name: "index_survey_engine_questions_on_survey_template_id"
   end
 
   create_table "survey_engine_responses", force: :cascade do |t|
@@ -119,14 +126,20 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
     t.index ["survey_id"], name: "index_survey_engine_responses_on_survey_id"
   end
 
+  create_table "survey_engine_survey_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "questions_count", default: 0, null: false
+    t.index ["is_active"], name: "index_survey_engine_survey_templates_on_is_active"
+    t.index ["name"], name: "index_survey_engine_survey_templates_on_name"
+  end
+
   create_table "survey_engine_surveys", force: :cascade do |t|
     t.string "title", null: false
-    t.text "description"
     t.boolean "is_active", default: false, null: false
     t.boolean "global", default: false, null: false
-    t.datetime "published_at"
-    t.datetime "expires_at"
-    t.string "status", default: "draft", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "uuid"
@@ -134,9 +147,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
     t.integer "surveyable_id"
     t.integer "questions_count", default: 0, null: false
     t.integer "participants_count", default: 0, null: false
+    t.integer "group_id"
+    t.integer "survey_template_id", null: false
     t.index ["global", "is_active"], name: "index_survey_engine_surveys_on_global_and_is_active"
+    t.index ["group_id"], name: "index_survey_engine_surveys_on_group_id"
     t.index ["is_active"], name: "index_survey_engine_surveys_on_is_active"
-    t.index ["status"], name: "index_survey_engine_surveys_on_status"
+    t.index ["survey_template_id"], name: "index_survey_engine_surveys_on_survey_template_id"
     t.index ["surveyable_type", "surveyable_id"], name: "idx_on_surveyable_type_surveyable_id_ffe4fd0636"
     t.index ["surveyable_type", "surveyable_id"], name: "index_survey_engine_surveys_on_surveyable"
     t.index ["uuid"], name: "index_survey_engine_surveys_on_uuid", unique: true
@@ -162,7 +178,9 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_183555) do
   add_foreign_key "survey_engine_participants", "survey_engine_surveys", column: "survey_id"
   add_foreign_key "survey_engine_questions", "survey_engine_question_types", column: "question_type_id"
   add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "conditional_parent_id"
-  add_foreign_key "survey_engine_questions", "survey_engine_surveys", column: "survey_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_survey_templates", column: "survey_template_id"
   add_foreign_key "survey_engine_responses", "survey_engine_participants", column: "participant_id"
   add_foreign_key "survey_engine_responses", "survey_engine_surveys", column: "survey_id"
+  add_foreign_key "survey_engine_surveys", "survey_engine_groups", column: "group_id"
+  add_foreign_key "survey_engine_surveys", "survey_engine_survey_templates", column: "survey_template_id"
 end

@@ -3,12 +3,16 @@ require "test_helper"
 module SurveyEngine
   class AnswerOptionTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      @survey_template = SurveyTemplate.create!(name: "Test Template #{SecureRandom.hex(4)}")
+      @survey = Survey.create!(
+        title: "Test Survey #{SecureRandom.hex(4)}",
+        survey_template: @survey_template
+      )
       @participant = Participant.create!(survey: @survey, email: "test@example.com")
       @response = Response.create!(survey: @survey, participant: @participant)
       @question_type = QuestionType.create!(name: "single_choice_#{SecureRandom.hex(4)}", allows_options: true, allows_multiple_selections: false)
       @question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test Question",
         order_position: 1
@@ -68,7 +72,7 @@ module SurveyEngine
     # Cross-validation
     test "should validate option belongs to same question" do
       other_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Other Question",
         order_position: 2

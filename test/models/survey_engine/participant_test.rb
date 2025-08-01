@@ -3,7 +3,11 @@ require "test_helper"
 module SurveyEngine
   class ParticipantTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      @survey_template = SurveyTemplate.create!(name: "Test Template #{SecureRandom.hex(4)}")
+      @survey = Survey.create!(
+        title: "Test Survey #{SecureRandom.hex(4)}",
+        survey_template: @survey_template
+      )
     end
 
     # Validations
@@ -51,7 +55,11 @@ module SurveyEngine
     end
 
     test "should allow same email for different surveys" do
-      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}")
+      other_template = SurveyTemplate.create!(name: "Other Template #{SecureRandom.hex(4)}")
+      other_survey = Survey.create!(
+        title: "Other Survey #{SecureRandom.hex(4)}",
+        survey_template: other_template
+      )
       
       Participant.create!(survey: @survey, email: "test@example.com")
       
@@ -160,7 +168,11 @@ module SurveyEngine
     end
 
     test "completion_rate_for_survey should return 0 for no participants" do
-      empty_survey = Survey.create!(title: "Empty Survey #{SecureRandom.hex(4)}")
+      empty_template = SurveyTemplate.create!(name: "Empty Template #{SecureRandom.hex(4)}")
+      empty_survey = Survey.create!(
+        title: "Empty Survey #{SecureRandom.hex(4)}",
+        survey_template: empty_template
+      )
       rate = Participant.completion_rate_for_survey(empty_survey)
       assert_equal 0, rate
     end

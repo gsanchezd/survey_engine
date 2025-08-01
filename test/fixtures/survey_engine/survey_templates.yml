@@ -1,0 +1,17 @@
+# SurveyEngine Survey Templates Fixtures
+
+basic_template:
+  name: "Plantilla Básica"
+  is_active: true
+
+customer_satisfaction_template:
+  name: "Plantilla de Satisfacción del Cliente"
+  is_active: true
+
+feedback_template:
+  name: "Plantilla de Retroalimentación"
+  is_active: true
+
+inactive_template:
+  name: "Plantilla Inactiva"
+  is_active: false

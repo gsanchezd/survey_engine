@@ -3,12 +3,13 @@ require "test_helper"
 module SurveyEngine
   class AnswerTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      @survey_template = SurveyTemplate.create!(name: "Test Template #{SecureRandom.hex(4)}", is_active: true)
+      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}", survey_template: @survey_template)
       @participant = Participant.create!(survey: @survey, email: "test@example.com")
       @response = Response.create!(survey: @survey, participant: @participant)
       @question_type = QuestionType.create!(name: "text_#{SecureRandom.hex(4)}", allows_options: false, allows_multiple_selections: false)
       @question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test Question",
         order_position: 1
@@ -105,9 +106,10 @@ module SurveyEngine
 
     # Survey consistency validation
     test "should validate response and question belong to same survey" do
-      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}")
+      other_template = SurveyTemplate.create!(name: "Other Template #{SecureRandom.hex(4)}", is_active: true)
+      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}", survey_template: other_template)
       other_question = Question.create!(
-        survey: other_survey,
+        survey_template: other_template,
         question_type: @question_type,
         title: "Other Question",
         order_position: 1

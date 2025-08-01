@@ -3,14 +3,18 @@ require "test_helper"
 module SurveyEngine
   class ResponseTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      @template = SurveyTemplate.create!(name: "Test Template #{SecureRandom.hex(4)}")
+      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}", survey_template: @template)
       @participant = Participant.create!(survey: @survey, email: "test@example.com")
       @question_type = QuestionType.create!(name: "text_#{SecureRandom.hex(4)}", allows_options: false, allows_multiple_selections: false)
       @question = Question.create!(
-        survey: @survey,
+        survey_template: @template,
         question_type: @question_type,
         title: "Test Question",
-        order_position: 1
+        order_position: 1,
+        is_required: false,
+        allow_other: false,
+        randomize_options: false
       )
     end
 
@@ -28,7 +32,8 @@ module SurveyEngine
     end
 
     test "should validate participant belongs to survey" do
-      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}")
+      other_template = SurveyTemplate.create!(name: "Other Template #{SecureRandom.hex(4)}")
+      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}", survey_template: other_template)
       other_participant = Participant.create!(survey: other_survey, email: "other@example.com")
       
       response = Response.new(survey: @survey, participant: other_participant)

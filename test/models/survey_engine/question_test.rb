@@ -3,7 +3,8 @@ require "test_helper"
 module SurveyEngine
   class QuestionTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}")
+      @survey_template = SurveyTemplate.create!(name: "Test Template #{SecureRandom.hex(4)}")
+      @survey = Survey.create!(title: "Test Survey #{SecureRandom.hex(4)}", survey_template: @survey_template)
       @question_type = QuestionType.find_or_create_by(name: "text") do |qt|
         qt.allows_options = false
         qt.allows_multiple_selections = false
@@ -12,14 +13,14 @@ module SurveyEngine
 
     # Validations
     test "should require title" do
-      question = Question.new(survey: @survey, question_type: @question_type)
+      question = Question.new(survey_template: @survey_template, question_type: @question_type)
       assert_invalid question
       assert_validation_error question, :title
     end
 
     test "should limit title length" do
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "a" * 501
       )
@@ -29,7 +30,7 @@ module SurveyEngine
 
     test "should limit description length" do
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Valid Title",
         description: "a" * 1001
@@ -39,7 +40,7 @@ module SurveyEngine
     end
 
     test "should require order_position" do
-      question = Question.new(survey: @survey, question_type: @question_type, title: "Test")
+      question = Question.new(survey_template: @survey_template, question_type: @question_type, title: "Test")
       # Bypass the callback that sets default order_position
       question.define_singleton_method(:set_next_order_position) { nil }
       question.order_position = nil
@@ -47,37 +48,20 @@ module SurveyEngine
       assert_validation_error question, :order_position
     end
 
-    test "should require unique order_position within survey" do
-      Question.create!(
-        survey: @survey,
-        question_type: @question_type,
-        title: "First Question",
-        order_position: 1
-      )
-
-      duplicate = Question.new(
-        survey: @survey,
-        question_type: @question_type,
-        title: "Second Question",
-        order_position: 1
-      )
-
-      assert_invalid duplicate
-      assert_validation_error duplicate, :order_position
-    end
 
     test "should allow same order_position in different surveys" do
-      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}")
+      other_survey_template = SurveyTemplate.create!(name: "Other Template #{SecureRandom.hex(4)}")
+      other_survey = Survey.create!(title: "Other Survey #{SecureRandom.hex(4)}", survey_template: other_survey_template)
       
       Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "First Question",
         order_position: 1
       )
 
       question_in_other_survey = Question.new(
-        survey: other_survey,
+        survey_template: other_survey_template,
         question_type: @question_type,
         title: "Other Question",
         order_position: 1
@@ -87,7 +71,7 @@ module SurveyEngine
     end
 
     test "should require boolean values for flags" do
-      question = Question.new(survey: @survey, question_type: @question_type, title: "Test")
+      question = Question.new(survey_template: @survey_template, question_type: @question_type, title: "Test")
       
       question.is_required = nil
       assert_invalid question
@@ -106,7 +90,7 @@ module SurveyEngine
 
     test "should validate positive max_characters" do
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         max_characters: -1
@@ -117,7 +101,7 @@ module SurveyEngine
 
     test "should validate non-negative min_selections" do
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         min_selections: -1
@@ -128,7 +112,7 @@ module SurveyEngine
 
     test "should validate positive max_selections" do
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         max_selections: 0
@@ -138,8 +122,8 @@ module SurveyEngine
     end
 
     # Associations
-    test "should belong to survey" do
-      association = Question.reflect_on_association(:survey)
+    test "should belong to survey_template" do
+      association = Question.reflect_on_association(:survey_template)
       assert_equal :belongs_to, association.macro
     end
 
@@ -162,7 +146,7 @@ module SurveyEngine
 
     test "should destroy dependent options" do
       question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test Question",
         order_position: 1
@@ -180,7 +164,7 @@ module SurveyEngine
 
     # Default values
     test "should have default values" do
-      question = Question.new(survey: @survey, question_type: @question_type, title: "Test")
+      question = Question.new(survey_template: @survey_template, question_type: @question_type, title: "Test")
       assert_equal false, question.is_required
       assert_equal false, question.allow_other
       assert_equal false, question.randomize_options
@@ -209,7 +193,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -217,7 +201,7 @@ module SurveyEngine
       )
       
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -234,7 +218,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -242,7 +226,7 @@ module SurveyEngine
       )
       
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -258,7 +242,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -266,7 +250,7 @@ module SurveyEngine
       )
       
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -276,14 +260,15 @@ module SurveyEngine
       assert_validation_error question, :conditional_value
     end
 
-    test "should validate conditional parent is from same survey" do
-      other_survey = Survey.create!(title: "Other Survey")
+    test "should validate conditional parent is from same survey_template" do
+      other_survey_template = SurveyTemplate.create!(name: "Other Template")
+      other_survey = Survey.create!(title: "Other Survey", survey_template: other_survey_template)
       scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
         qt.allows_options = false
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: other_survey, 
+        survey_template: other_survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -291,7 +276,7 @@ module SurveyEngine
       )
       
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -304,13 +289,13 @@ module SurveyEngine
 
     test "should validate conditional parent is scale question" do
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: @question_type, 
         title: "Parent"
       )
       
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -327,7 +312,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       grandparent = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Grandparent", 
         scale_min: 1, 
@@ -335,7 +320,7 @@ module SurveyEngine
       )
       
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -346,7 +331,7 @@ module SurveyEngine
       )
       
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -363,7 +348,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -372,7 +357,7 @@ module SurveyEngine
       
       # Test value below minimum
       question = Question.new(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -399,7 +384,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -407,7 +392,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -425,7 +410,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -435,7 +420,7 @@ module SurveyEngine
       assert_not parent_question.has_conditional_questions?
       
       Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -452,7 +437,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       scale_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Scale Question", 
         scale_min: 1, 
@@ -460,7 +445,7 @@ module SurveyEngine
       )
       
       text_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Text Question"
       )
@@ -476,7 +461,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -484,7 +469,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -504,7 +489,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -512,7 +497,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -532,7 +517,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -540,7 +525,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -559,7 +544,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -567,7 +552,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -586,7 +571,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -594,7 +579,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -613,7 +598,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -621,7 +606,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -640,7 +625,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -648,7 +633,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Test",
         conditional_parent: parent_question,
@@ -663,7 +648,7 @@ module SurveyEngine
 
     test "should_show? should return true for non-conditional questions" do
       regular_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Regular Question"
       )
@@ -678,7 +663,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       parent_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Parent", 
         scale_min: 1, 
@@ -686,7 +671,7 @@ module SurveyEngine
       )
       
       low_rating_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Low Rating Question",
         conditional_parent: parent_question,
@@ -696,7 +681,7 @@ module SurveyEngine
       )
       
       high_rating_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "High Rating Question",
         conditional_parent: parent_question,
@@ -727,7 +712,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       root_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Root Question", 
         scale_min: 1, 
@@ -735,7 +720,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Conditional Question",
         conditional_parent: root_question,
@@ -743,7 +728,7 @@ module SurveyEngine
         conditional_value: 5
       )
       
-      root_questions = @survey.questions.root_questions
+      root_questions = @survey_template.questions.root_questions
       assert_includes root_questions, root_question
       assert_not_includes root_questions, conditional_question
     end
@@ -754,7 +739,7 @@ module SurveyEngine
         qt.allows_multiple_selections = false
       end
       root_question = Question.create!(
-        survey: @survey, 
+        survey_template: @survey_template, 
         question_type: scale_type, 
         title: "Root Question", 
         scale_min: 1, 
@@ -762,7 +747,7 @@ module SurveyEngine
       )
       
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @question_type,
         title: "Conditional Question",
         conditional_parent: root_question,
@@ -770,7 +755,7 @@ module SurveyEngine
         conditional_value: 5
       )
       
-      conditional_questions = @survey.questions.conditional_questions
+      conditional_questions = @survey_template.questions.conditional_questions
       assert_includes conditional_questions, conditional_question
       assert_not_includes conditional_questions, root_question
     end

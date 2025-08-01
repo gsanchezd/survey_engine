@@ -3,7 +3,11 @@ require "test_helper"
 module SurveyEngine
   class ConditionalFlowTest < ActiveSupport::TestCase
     def setup
-      @survey = Survey.create!(title: "Conditional Flow Survey #{SecureRandom.hex(4)}")
+      @survey_template = SurveyTemplate.create!(name: "Conditional Flow Template #{SecureRandom.hex(4)}")
+      @survey = Survey.create!(
+        title: "Conditional Flow Survey #{SecureRandom.hex(4)}",
+        survey_template: @survey_template
+      )
       @scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
         qt.allows_options = false
         qt.allows_multiple_selections = false
@@ -17,7 +21,7 @@ module SurveyEngine
     test "should create complete satisfaction survey flow" do
       # Main satisfaction question (1-10 scale)
       satisfaction_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "How satisfied are you with our service?",
         scale_min: 1,
@@ -27,7 +31,7 @@ module SurveyEngine
 
       # Low satisfaction follow-up (< 5)
       improvement_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "What specific areas need improvement?",
         conditional_parent: satisfaction_question,
@@ -39,7 +43,7 @@ module SurveyEngine
 
       # High satisfaction follow-up (>= 8)
       praise_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "What did we do particularly well?",
         conditional_parent: satisfaction_question,
@@ -86,7 +90,7 @@ module SurveyEngine
     test "should handle multiple conditional questions from same parent" do
       # Main rating question
       rating_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "Rate your experience (1-10)",
         scale_min: 1,
@@ -96,7 +100,7 @@ module SurveyEngine
 
       # Very low rating (1-2)
       very_low_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "We're sorry to hear that. What went wrong?",
         conditional_parent: rating_question,
@@ -108,7 +112,7 @@ module SurveyEngine
 
       # Low rating (3-5)
       low_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "How can we improve?",
         conditional_parent: rating_question,
@@ -120,7 +124,7 @@ module SurveyEngine
 
       # High rating (8-10)
       high_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "What made your experience great?",
         conditional_parent: rating_question,
@@ -152,7 +156,7 @@ module SurveyEngine
     test "should handle inverted conditional logic with show_if_condition_met false" do
       # Main question
       main_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "How likely are you to recommend us? (1-10)",
         scale_min: 1,
@@ -162,7 +166,7 @@ module SurveyEngine
 
       # This question shows when score is NOT high (opposite of typical promoter logic)
       not_promoter_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "What would make you more likely to recommend us?",
         conditional_parent: main_question,
@@ -189,7 +193,7 @@ module SurveyEngine
     test "should properly validate complex conditional survey structure" do
       # Main demographic question
       age_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "What is your age?",
         scale_min: 18,
@@ -199,7 +203,7 @@ module SurveyEngine
 
       # Student-specific question (age < 25)
       student_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "What is your field of study?",
         conditional_parent: age_question,
@@ -211,7 +215,7 @@ module SurveyEngine
 
       # Senior-specific question (age >= 65)
       senior_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "Are you retired?",
         conditional_parent: age_question,
@@ -249,7 +253,7 @@ module SurveyEngine
     test "should maintain proper question ordering with conditional questions" do
       # Create questions with specific order positions
       q1 = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "Main Question",
         scale_min: 1,
@@ -258,7 +262,7 @@ module SurveyEngine
       )
 
       q2 = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "Regular Question 2",
         order_position: 2
@@ -266,7 +270,7 @@ module SurveyEngine
 
       # Conditional question with order position 3
       q3_conditional = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "Conditional Question",
         conditional_parent: q1,
@@ -277,22 +281,22 @@ module SurveyEngine
       )
 
       q4 = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "Regular Question 4",
         order_position: 4
       )
 
       # Verify all questions have correct order positions
-      ordered_questions = @survey.questions.ordered
+      ordered_questions = @survey_template.questions.ordered
       assert_equal [1, 2, 3, 4], ordered_questions.map(&:order_position)
 
       # Verify conditional question is in the right position
       assert_equal q3_conditional, ordered_questions[2]
 
       # Verify scopes work correctly
-      root_questions = @survey.questions.root_questions.ordered
-      conditional_questions = @survey.questions.conditional_questions.ordered
+      root_questions = @survey_template.questions.root_questions.ordered
+      conditional_questions = @survey_template.questions.conditional_questions.ordered
 
       assert_equal [q1, q2, q4], root_questions
       assert_equal [q3_conditional], conditional_questions
@@ -300,7 +304,7 @@ module SurveyEngine
 
     test "should handle edge cases in conditional evaluation" do
       main_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "Rate from 1 to 10",
         scale_min: 1,
@@ -310,7 +314,7 @@ module SurveyEngine
 
       # Edge case: equal_to boundary
       boundary_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "Exactly 5 question",
         conditional_parent: main_question,
@@ -333,7 +337,7 @@ module SurveyEngine
 
     test "conditional questions should be destroyed when parent is destroyed" do
       parent_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @scale_type,
         title: "Parent Question",
         scale_min: 1,
@@ -342,7 +346,7 @@ module SurveyEngine
       )
 
       conditional_question = Question.create!(
-        survey: @survey,
+        survey_template: @survey_template,
         question_type: @text_type,
         title: "Conditional Question",
         conditional_parent: parent_question,

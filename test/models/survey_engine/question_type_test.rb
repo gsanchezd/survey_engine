@@ -45,8 +45,8 @@ module SurveyEngine
 
     test "should restrict deletion when questions exist" do
       qt = QuestionType.create!(name: "restricted_type", allows_options: false, allows_multiple_selections: false)
-      survey = Survey.create!(title: "Test Survey For Restriction")
-      survey.questions.create!(question_type: qt, title: "Test Question", order_position: 1)
+      template = SurveyTemplate.create!(name: "Test Template For Restriction")
+      template.questions.create!(question_type: qt, title: "Test Question", order_position: 1, is_required: false, allow_other: false, randomize_options: false)
       
       assert_raises(ActiveRecord::RecordNotDestroyed) do
         qt.destroy!

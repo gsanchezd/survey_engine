@@ -4,37 +4,27 @@ module SurveyEngine
       "survey_engine_"
     end
 
+    belongs_to :survey_template
     belongs_to :surveyable, polymorphic: true, optional: true
-    has_many :questions, dependent: :destroy
     has_many :participants, dependent: :destroy
     has_many :responses, dependent: :destroy
     # has_many :settings, dependent: :destroy  # Will be added when Settings model is created
 
+    # Delegate to template
+    has_many :questions, through: :survey_template
+    has_many :options, through: :questions
+
     validates :title, presence: true, length: { maximum: 255 }
-    validates :description, length: { maximum: 2000 }
-    validates :status, presence: true, inclusion: { in: %w[draft published paused archived] }
     validates :is_active, inclusion: { in: [ true, false ] }
     validates :global, inclusion: { in: [ true, false ] }
     validates :uuid, presence: true, uniqueness: true
 
-    validate :published_at_before_expires_at
-
     before_validation :generate_uuid, on: :create
-
-    enum :status, {
-      draft: "draft",
-      published: "published",
-      paused: "paused",
-      archived: "archived"
-    }
 
     scope :active, -> { where(is_active: true) }
     scope :inactive, -> { where(is_active: false) }
     scope :global_surveys, -> { where(global: true) }
     scope :local_surveys, -> { where(global: false) }
-    scope :published, -> { where(status: "published") }
-    scope :current, -> { where("expires_at IS NULL OR expires_at > ?", Time.current) }
-    scope :expired, -> { where("expires_at < ?", Time.current) }
     scope :for_surveyable, ->(surveyable) { where(surveyable: surveyable) }
     scope :for_surveyable_type, ->(type) { where(surveyable_type: type) }
 
@@ -44,45 +34,36 @@ module SurveyEngine
     end
 
     def active?
-      is_active && (status == "published")
+      is_active
     end
 
-    def expired?
-      expires_at.present? && expires_at < Time.current
+    def questions_count
+      questions.count
     end
 
-    def current?
-      !expired?
-    end
-
-    def published?
-      status == "published"
-    end
-
-    def can_receive_responses?
-      active? && current?
+    def participants_count
+      participants.count
     end
 
     def responses_count
       responses.count
     end
 
-    def publish!
-      update!(status: "published", is_active: true, published_at: Time.current)
+    def completed_responses_count
+      responses.completed.count
     end
 
-    def pause!
-      update!(status: "paused", is_active: false)
+    def can_receive_responses?
+      is_active
     end
 
-    def archive!
-      update!(status: "archived", is_active: false)
-    end
-
-    # def setting(key)
-    #   settings.find_by(setting_key: key)&.setting_value
+    # Get setting value (when Settings model is implemented)
+    # def get_setting(key, default = nil)
+    #   setting = settings.find_by(setting_key: key)
+    #   setting&.setting_value || default
     # end
 
+    # Set setting value (when Settings model is implemented)
     # def set_setting(key, value)
     #   setting_record = settings.find_or_initialize_by(setting_key: key)
     #   setting_record.setting_value = value.to_s
@@ -93,12 +74,6 @@ module SurveyEngine
 
     def generate_uuid
       self.uuid ||= SecureRandom.uuid
-    end
-
-    def published_at_before_expires_at
-      return unless published_at.present? && expires_at.present?
-
-      errors.add(:expires_at, "must be after publication date") if expires_at <= published_at
     end
   end
 end
