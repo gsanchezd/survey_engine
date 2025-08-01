@@ -5,14 +5,13 @@
 
   <header class="survey-header">
     <h1><%= @survey.title %></h1>
-    <p><%= @survey.description %></p>
   </header>
 
   <div class="survey-details">
     <strong>Survey Details:</strong>
+    Template: <%= @survey.survey_template&.name || 'No template' %> |
     <%= @survey.questions_count %> questions | 
-    <%= @survey.participants_count %> participants |
-    Status: <span class="survey-status"><%= @survey.status.capitalize %></span>
+    <%= @survey.participants_count %> participants
   </div>
 
   <% unless @survey.can_receive_responses? %>

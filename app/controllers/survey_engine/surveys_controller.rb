@@ -1,7 +1,7 @@
 module SurveyEngine
   class SurveysController < ApplicationController
     def index
-      @surveys = Survey.published
+      @surveys = Survey.all
       
       # Handle email resolution for completion status
       @current_email = resolve_participant_email
@@ -372,7 +372,7 @@ module SurveyEngine
         survey: {
           id: @survey.id,
           title: @survey.title,
-          description: @survey.description,
+          template_name: @survey.survey_template&.name,
           created_at: @survey.created_at
         },
         statistics: @stats,

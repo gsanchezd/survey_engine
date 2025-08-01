@@ -14,12 +14,11 @@
       <% @surveys.each do |survey| %>
         <article class="survey-card">
           <h2><%= survey.title %></h2>
-          <p><%= survey.description %></p>
           
           <div class="survey-meta">
+            <span><strong><%= t('survey_engine.surveys.index.template') %></strong> <%= survey.survey_template&.name || t('survey_engine.surveys.index.no_template') %></span>
             <span><strong><%= t('survey_engine.surveys.index.questions') %></strong> <%= survey.questions_count %></span>
             <span><strong><%= t('survey_engine.surveys.index.participants') %></strong> <%= survey.participants_count %></span>
-            <span><strong><%= t('survey_engine.surveys.index.status') %></strong> <span class="survey-status"><%= t("survey_engine.statuses.#{survey.status}") %></span></span>
           </div>
           
           <div class="survey-actions">

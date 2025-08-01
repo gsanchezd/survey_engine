@@ -5,7 +5,9 @@
 
   <div class="survey-header">
     <h1>📊 Survey Results: <%= @survey.title %></h1>
-    <p><%= @survey.description %></p>
+    <% if @survey.survey_template %>
+      <p>Template: <%= @survey.survey_template.name %></p>
+    <% end %>
   </div>
 
   <div class="survey-alert survey-alert-info">
