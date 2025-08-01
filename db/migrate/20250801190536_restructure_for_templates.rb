@@ -1,4 +1,4 @@
-class RestructureForTemplates < ActiveRecord::Migration[8.0]
+class RestructureForTemplates < ActiveRecord::Migration[7.1]
   def up
     # Clear all existing data - clean slate approach (SQLite compatible)
     execute "DELETE FROM survey_engine_answer_options"
@@ -8,9 +8,6 @@ class RestructureForTemplates < ActiveRecord::Migration[8.0]
     execute "DELETE FROM survey_engine_options"
     execute "DELETE FROM survey_engine_questions"
     execute "DELETE FROM survey_engine_surveys"
-
-    # Reset auto-increment sequences
-    execute "DELETE FROM sqlite_sequence WHERE name LIKE 'survey_engine_%'"
 
     # Remove unwanted columns from surveys
     remove_column :survey_engine_surveys, :description, :text if column_exists?(:survey_engine_surveys, :description)
