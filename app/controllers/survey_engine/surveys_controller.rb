@@ -264,7 +264,7 @@ module SurveyEngine
       return false if answer.nil?
       
       case answer.question.question_type.name
-      when 'text'
+      when 'text', 'textarea', 'email'
         answer.text_answer.present?
       when 'scale', 'number'
         answer.numeric_answer.present?

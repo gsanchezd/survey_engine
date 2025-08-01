@@ -43,9 +43,17 @@
           <div class="survey-question-input">
             <% case question.question_type.name %>
             <% when 'text' %>
+              <%= text_field_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
+                  placeholder: question.placeholder_text || t('survey_engine.surveys.answer.text_placeholder'),
+                  class: "survey-input",
+                  maxlength: question.max_characters,
+                  required: question.required? %>
+            <% when 'textarea' %>
               <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
-                  placeholder: t('survey_engine.surveys.answer.text_placeholder'),
+                  placeholder: question.placeholder_text || t('survey_engine.surveys.answer.textarea_placeholder'),
                   class: "survey-textarea",
+                  maxlength: question.max_characters,
+                  rows: 4,
                   required: question.required? %>
             <% when 'number' %>
               <%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
@@ -123,6 +131,11 @@
                   <% end %>
                 </div>
               </div>
+            <% when 'email' %>
+              <%= email_field_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer,
+                  placeholder: question.placeholder_text || t('survey_engine.surveys.answer.email_placeholder'),
+                  class: "survey-input",
+                  required: question.required? %>
             <% end %>
           </div>
           

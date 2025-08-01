@@ -92,13 +92,17 @@ module SurveyEngine
       question_type = question.question_type.name
       
       case question_type
-      when 'text'
+      when 'text', 'textarea', 'email'
         unless text_answer.present?
           errors.add(:text_answer, "is required for text questions")
         end
-      when 'scale'
+      when 'scale', 'number'
         unless numeric_answer.present?
           errors.add(:numeric_answer, "is required for scale questions")
+        end
+      when 'boolean'
+        if boolean_answer.nil?
+          errors.add(:boolean_answer, "is required for boolean questions")
         end
       when 'single_choice', 'multiple_choice'
         # Check both persisted and built associations
