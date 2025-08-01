@@ -75,7 +75,7 @@ module SurveyEngine
     def response_and_question_belong_to_same_survey
       return unless response.present? && question.present?
       
-      unless response.survey.survey_template_id == question.survey_template_id
+      unless response.survey.survey_template == question.survey_template
         errors.add(:base, "Response and question must belong to the same survey")
       end
     end

@@ -104,26 +104,26 @@ module SurveyEngine
           
           # Set answer based on question type
           case question.question_type.name
-          when 'text'
-            answer.text_answer = answer_data[:text_answer] if answer_data[:text_answer].present?
+          when 'text', 'textarea', 'email'
+            answer.text_answer = answer_data['text_answer'] if answer_data['text_answer'].present?
           when 'scale', 'number'
-            answer.numeric_answer = answer_data[:numeric_answer] if answer_data[:numeric_answer].present?
+            answer.numeric_answer = answer_data['numeric_answer'] if answer_data['numeric_answer'].present?
           when 'boolean'
-            answer.boolean_answer = answer_data[:boolean_answer] == '1' if answer_data[:boolean_answer].present?
+            answer.boolean_answer = answer_data['boolean_answer'] == '1' if answer_data['boolean_answer'].present?
           when 'single_choice'
-            if answer_data[:option_id].present?
-              option = Option.find(answer_data[:option_id])
+            if answer_data['option_id'].present?
+              option = Option.find(answer_data['option_id'])
               if answer.new_record?
                 answer.answer_options.build(option: option)
               else
                 answer.save! # Save first if existing record
                 AnswerOption.create!(answer: answer, option: option)
               end
-              answer.other_text = answer_data[:other_text] if option.is_other? && answer_data[:other_text].present?
+              answer.other_text = answer_data['other_text'] if option.is_other? && answer_data['other_text'].present?
             end
           when 'multiple_choice'
-            if answer_data[:option_ids].present?
-              answer_data[:option_ids].reject(&:blank?).each do |option_id|
+            if answer_data['option_ids'].present?
+              answer_data['option_ids'].reject(&:blank?).each do |option_id|
                 option = Option.find(option_id)
                 if answer.new_record?
                   answer.answer_options.build(option: option)
@@ -132,7 +132,7 @@ module SurveyEngine
                   AnswerOption.create!(answer: answer, option: option)
                 end
               end
-              answer.other_text = answer_data[:other_text] if answer_data[:other_text].present?
+              answer.other_text = answer_data['other_text'] if answer_data['other_text'].present?
             end
           end
           
@@ -249,6 +249,30 @@ module SurveyEngine
       missing_required = []
       
       survey.questions.required.each do |question|
+        # Skip conditional questions that shouldn't be shown
+        if question.is_conditional?
+          parent_answer = response.answers.find_by(question: question.conditional_parent)
+          if parent_answer.nil?
+            # If parent not answered, skip this conditional question
+            next
+          end
+          
+          # Get parent answer value
+          parent_value = case question.conditional_parent.question_type.name
+          when 'scale', 'number'
+            parent_answer.numeric_answer
+          when 'text', 'textarea', 'email'
+            parent_answer.text_answer
+          when 'boolean'
+            parent_answer.boolean_answer
+          else
+            nil
+          end
+          
+          # Skip if conditional question shouldn't be shown
+          next unless question.should_show?(parent_value)
+        end
+        
         answer = response.answers.find_by(question: question)
         
         # Check if answer exists and has content
