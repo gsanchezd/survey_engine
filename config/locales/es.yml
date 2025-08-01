@@ -94,6 +94,7 @@ es:
         no_responses: "Sin respuestas aún"
     flash:
       authentication_required: "Se requiere autenticación de usuario"
+      not_invited: "No tienes invitación para responder esta encuesta"
       already_completed: "Ya has completado esta encuesta"
       completion_errors: "No se puede completar la encuesta debido a errores:"
       missing_required: "Por favor responde estas preguntas obligatorias antes de completar:"

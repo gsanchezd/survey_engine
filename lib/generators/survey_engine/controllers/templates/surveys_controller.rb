@@ -47,19 +47,17 @@ module SurveyEngine
         return
       end
       
-      # Check if user already completed
-      participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
-      if participant&.completed?
-        redirect_to completed_survey_path(@survey, email: @email)
+      # Check if participant exists (invitation required)
+      @participant = SurveyEngine::Participant.find_by(survey: @survey, email: @email)
+      
+      unless @participant
+        redirect_to survey_path(@survey), alert: "You do not have an invitation to answer this survey"
         return
       end
       
-      # Create or find participant
-      @participant = SurveyEngine::Participant.find_or_create_by(
-        survey: @survey,
-        email: @email
-      ) do |p|
-        p.status = 'invited'
+      if @participant.completed?
+        redirect_to completed_survey_path(@survey, email: @email)
+        return
       end
       
       # Create response if not exists

@@ -67,7 +67,8 @@ en:
         no_responses: "No responses yet"
     flash:
       authentication_required: "User authentication required"
-      already_completed: "You have already completed this survey"
+      not_invited: "You do not have an invitation to answer this survey"
+      already_completed: "You have already completed this survey"  
       completion_errors: "Cannot complete survey due to errors:"
       missing_required: "Please answer these required questions before completing:"
       answers_saved: "answer saved successfully!"
