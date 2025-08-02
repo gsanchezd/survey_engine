@@ -119,5 +119,69 @@ module SurveyEngine
       assert_invalid answer
       assert_validation_error answer, :base
     end
+
+    # Matrix questions
+    test "should allow matrix sub question answers with parent question options" do
+      # Create matrix question type
+      matrix_question_type = QuestionType.find_or_create_by(name: "matrix_question") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+
+      # Create parent matrix question
+      matrix_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_question_type,
+        title: "Rate the following services",
+        order_position: 2,
+        is_matrix_question: true
+      )
+
+      # Create options for the matrix question
+      option1 = Option.create!(
+        question: matrix_question,
+        option_text: "Excellent",
+        option_value: "5",
+        order_position: 1
+      )
+      
+      option2 = Option.create!(
+        question: matrix_question,
+        option_text: "Good",
+        option_value: "4",
+        order_position: 2
+      )
+
+      # Create matrix sub-question (row)
+      sub_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Product Quality",
+        order_position: 3,
+        matrix_parent_id: matrix_question.id,
+        matrix_row_text: "Product Quality"
+      )
+
+      # Create answer for the sub-question using parent's option
+      answer = Answer.new(
+        response: @response,
+        question: sub_question
+      )
+
+      # Build answer option linking to parent's option
+      answer.answer_options.build(option: option1)
+      
+      # Save the answer with the built association
+      answer.save!
+
+      assert answer.valid?
+      assert_equal 1, answer.answer_options.count
+      assert_equal "Excellent", answer.selected_option_texts.first
+    end
   end
 end

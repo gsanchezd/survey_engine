@@ -39,8 +39,9 @@ module SurveyEngine
       text_answer.present? || 
       numeric_answer.present? || 
       decimal_answer.present? || 
-      boolean_answer.present? || 
-      answer_options.any?
+      !boolean_answer.nil? || 
+      answer_options.any? ||
+      answer_options.loaded?
     end
 
     def display_value
@@ -113,13 +114,15 @@ module SurveyEngine
         if boolean_answer.nil?
           errors.add(:boolean_answer, "is required for boolean questions")
         end
-      when 'single_choice', 'multiple_choice'
+      when 'single_choice', 'multiple_choice', 'matrix_scale'
         # Check both persisted and built associations
-        unless answer_options.any? || answer_options.loaded?
+        has_options = answer_options.any? || answer_options.loaded? || answer_options.size > 0
+        unless has_options
           errors.add(:base, "Must select at least one option for choice questions")
         end
         
-        if question_type == 'single_choice' && answer_options.count > 1
+        option_count = answer_options.loaded? ? answer_options.size : answer_options.count
+        if (question_type == 'single_choice' || question_type == 'matrix_scale') && option_count > 1
           errors.add(:base, "Can only select one option for single choice questions")
         end
       end

@@ -110,13 +110,15 @@ module SurveyEngine
             answer.numeric_answer = answer_data["numeric_answer"] if answer_data["numeric_answer"].present?
           when "boolean"
             answer.boolean_answer = answer_data["boolean_answer"] == "1" if answer_data["boolean_answer"].present?
-          when "single_choice"
+          when "single_choice", "matrix_scale"
             if answer_data["option_id"].present?
               option = Option.find(answer_data["option_id"])
+              # Always build the association for new records
               if answer.new_record?
                 answer.answer_options.build(option: option)
               else
-                answer.save! # Save first if existing record
+                # For existing records, save first then create association
+                answer.save!
                 AnswerOption.create!(answer: answer, option: option)
               end
               answer.other_text = answer_data["other_text"] if option.is_other? && answer_data["other_text"].present?
@@ -249,6 +251,11 @@ module SurveyEngine
       missing_required = []
 
       survey.questions.required.each do |question|
+        # Skip matrix parent questions - they don't get answered directly
+        if question.is_matrix?
+          next
+        end
+
         # Skip conditional questions that shouldn't be shown
         if question.is_conditional?
           parent_answer = response.answers.find_by(question: question.conditional_parent)
@@ -294,7 +301,7 @@ module SurveyEngine
         answer.numeric_answer.present?
       when "boolean"
         !answer.boolean_answer.nil?
-      when "single_choice", "multiple_choice"
+      when "single_choice", "multiple_choice", "matrix_scale"
         answer.answer_options.any?
       else
         false

@@ -25,8 +25,21 @@ module SurveyEngine
     def option_belongs_to_same_question
       return unless answer.present? && option.present?
       
-      unless answer.question_id == option.question_id
-        errors.add(:option, "must belong to the same question as the answer")
+      # For matrix questions, options belong to the parent matrix question,
+      # but answers belong to the matrix sub-questions (rows)
+      answer_question = answer.question
+      
+      if answer_question.is_matrix_row?
+        # Check if option belongs to the parent matrix question
+        parent_question = answer_question.matrix_parent
+        unless parent_question && option.question_id == parent_question.id
+          errors.add(:option, "must belong to the same question as the answer")
+        end
+      else
+        # Regular validation for non-matrix questions
+        unless answer.question_id == option.question_id
+          errors.add(:option, "must belong to the same question as the answer")
+        end
       end
     end
   end
