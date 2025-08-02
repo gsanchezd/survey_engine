@@ -1,18 +1,4 @@
-<div class="survey-question matrix-question" data-question-id="<%= question.id %>">
-  <div class="question-header">
-    <h3 class="question-title">
-      <span class="survey-question-number"><%= question_number %></span>. <%= question.title %>
-      <% if question.required? %>
-        <span class="survey-question-required">*</span>
-      <% end %>
-    </h3>
-    
-    <% if question.description.present? %>
-      <p class="question-description"><%= question.description %></p>
-    <% end %>
-  </div>
-
-  <div class="matrix-container">
+<div class="matrix-container">
     <table class="matrix-table">
       <thead>
         <tr>
