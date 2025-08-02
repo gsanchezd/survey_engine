@@ -187,32 +187,31 @@ window.SurveyConditionalFlow = class {
   }
 
   showQuestion(element) {
-    element.classList.remove('conditional-hidden');
-    element.classList.add('conditional-showing');
-    element.style.display = 'block';
-    
-    // Re-enable form validation
-    this.updateQuestionValidation(element, true);
-    
-    // Remove animation class after animation completes
+    // Add a slight delay before showing the question for better UX
     setTimeout(() => {
-      element.classList.remove('conditional-showing');
-    }, 500);
+      element.classList.remove('conditional-hidden');
+      element.classList.add('conditional-showing');
+      element.style.display = 'block';
+      
+      // Re-enable form validation
+      this.updateQuestionValidation(element, true);
+      
+      // Remove animation class after animation completes
+      setTimeout(() => {
+        element.classList.remove('conditional-showing');
+      }, 400);
+    }, 150);
   }
 
   hideQuestion(element) {
+    // Hide the complete card instantly - no partial hiding
     element.classList.add('conditional-hidden');
     element.classList.remove('conditional-showing');
+    element.style.display = 'none';
     
     // Clear answers and disable validation
     this.clearQuestionAnswers(element);
     this.updateQuestionValidation(element, false);
-    
-    setTimeout(() => {
-      if (element.classList.contains('conditional-hidden')) {
-        element.style.display = 'none';
-      }
-    }, 500);
   }
 
   clearQuestionAnswers(questionElement) {

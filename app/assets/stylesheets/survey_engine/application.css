@@ -735,11 +735,10 @@
 /* =========================== */
 
 .survey-question {
-  transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease;
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out;
   opacity: 1;
   transform: translateY(0);
   margin-bottom: 1.5rem;
-  max-height: 2000px;
   overflow: hidden;
 }
 
@@ -749,21 +748,20 @@
 }
 
 .survey-question.conditional-hidden {
+  /* Hide instantly - no transition for hiding */
+  transition: none !important;
   opacity: 0;
-  transform: translateY(-20px);
-  max-height: 0;
+  transform: translateY(0);
   margin-bottom: 0;
   margin-top: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  border-width: 0;
 }
 
 .survey-question.conditional-showing {
+  /* Smooth show animation with slight delay applied via JavaScript */
   opacity: 1;
   transform: translateY(0);
-  max-height: 2000px;
   margin-bottom: 1.5rem;
+  transition: opacity 0.4s ease-out, transform 0.4s ease-out, margin 0.4s ease-out;
 }
 
 .survey-conditional-indicator {
