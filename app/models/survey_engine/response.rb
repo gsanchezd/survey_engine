@@ -12,6 +12,8 @@ module SurveyEngine
     validates :participant_id, presence: true
     validate :participant_belongs_to_survey
 
+    before_destroy :revert_participant_status
+
     scope :completed, -> { where.not(completed_at: nil) }
     scope :by_completion_date, -> { order(:completed_at) }
     scope :recent, -> { order(created_at: :desc) }
@@ -70,6 +72,16 @@ module SurveyEngine
       unless participant.survey_id == survey.id
         errors.add(:participant, "must belong to the same survey")
       end
+    end
+
+    def revert_participant_status
+      return unless participant.present?
+      
+      # Revert participant back to invited status
+      participant.update!(
+        status: 'invited',
+        completed_at: nil
+      )
     end
   end
 end

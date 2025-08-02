@@ -197,5 +197,57 @@ module SurveyEngine
       assert_equal 1, rates[today.to_s]
       assert_equal 1, rates[(today + 1.day).to_s]
     end
+
+    # Response destruction behavior
+    test "should revert participant status to invited when response is destroyed" do
+      # Create a completed response
+      response = Response.create!(survey: @survey, participant: @participant)
+      response.complete!
+      @participant.complete!
+      
+      # Verify initial state
+      assert @participant.completed?
+      assert response.completed?
+      
+      # Destroy the response
+      response.destroy!
+      
+      # Participant should be reverted to invited status
+      @participant.reload
+      assert_not @participant.completed?
+      assert_equal 'invited', @participant.status
+    end
+
+    test "should revert participant status when incomplete response is destroyed" do
+      # Create an incomplete response 
+      response = Response.create!(survey: @survey, participant: @participant)
+      
+      # Participant starts as invited, no status change yet
+      assert_equal 'invited', @participant.status
+      assert_not @participant.completed?
+      
+      # Destroy the response
+      response.destroy!
+      
+      # Participant should remain invited
+      @participant.reload
+      assert_equal 'invited', @participant.status
+      assert_not @participant.completed?
+    end
+
+    test "should not affect participant status when participant has no response" do
+      # Participant with no response
+      @participant.update!(status: 'completed', completed_at: Time.current)
+      
+      # Create and destroy a response for a different participant
+      other_participant = Participant.create!(survey: @survey, email: "other@test.com")
+      other_response = Response.create!(survey: @survey, participant: other_participant)
+      other_response.destroy!
+      
+      # Original participant should be unaffected
+      @participant.reload
+      assert @participant.completed?
+      assert_equal 'completed', @participant.status
+    end
   end
 end
