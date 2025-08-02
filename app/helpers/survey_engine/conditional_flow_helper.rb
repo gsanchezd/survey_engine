@@ -110,13 +110,14 @@ module SurveyEngine
     # Options:
     # - inline: true (default) - Include JavaScript inline in the page
     # - inline: false - Use asset pipeline (requires javascript_include_tag 'survey_engine/conditional_flow')
-    def conditional_flow_javascript_tag(inline: true)
+    def conditional_flow_javascript_tag(inline: false)
       if inline
         content_tag(:script, raw(conditional_flow_javascript), type: 'text/javascript')
       else
-        # Return instructions for asset pipeline usage
+        # JavaScript is already included via asset pipeline in application.js
+        # This method exists for backwards compatibility
         content_tag(:noscript, 
-          "<!-- Include via asset pipeline: javascript_include_tag 'survey_engine/conditional_flow' -->")
+          "<!-- SurveyConditionalFlow is included via asset pipeline -->")
       end
     end
     
