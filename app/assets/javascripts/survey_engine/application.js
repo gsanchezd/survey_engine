@@ -5,7 +5,7 @@
  * Handles dynamic show/hide of conditional questions based on parent question answers
  */
 
-class SurveyConditionalFlow {
+window.SurveyConditionalFlow = class {
   constructor(config = {}) {
     this.config = config;
     this.questions = new Map();
@@ -315,10 +315,7 @@ class SurveyConditionalFlow {
       config: this.config
     };
   }
-}
-
-// Make globally available
-window.SurveyConditionalFlow = SurveyConditionalFlow;
+};
 
 // Matrix Question Interactions
 document.addEventListener('DOMContentLoaded', function() {
