@@ -56,6 +56,7 @@ es:
         answering: "Respondiendo:"
         required: "*obligatorio"
         text_placeholder: "Ingrese su respuesta aquí..."
+        textarea_placeholder: "Escriba su respuesta detallada aquí..."
         other_placeholder: "Por favor especifique..."
         other_multiple_placeholder: "Por favor especifique otra opción..."
         yes: "Sí"
