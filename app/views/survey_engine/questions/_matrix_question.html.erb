@@ -25,6 +25,7 @@
                 <%= radio_button_tag "answers[#{sub_question.id}][option_id]", 
                                    option.id, 
                                    existing_answer&.options&.include?(option),
+                                   id: "matrix_#{sub_question.id}_option_#{option.id}",
                                    class: "matrix-radio",
                                    required: sub_question.required?,
                                    data: { 

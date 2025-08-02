@@ -89,6 +89,7 @@
                   <label class="survey-question-option">
                     <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
                         existing_answer&.options&.include?(option),
+                        id: "question_#{question.id}_option_#{option.id}",
                         required: question.required? %>
                     <span><%= option.option_text %></span>
                   </label>
@@ -107,7 +108,8 @@
                 <% question.options.ordered.each do |option| %>
                   <label class="survey-question-option">
                     <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
-                        existing_answer&.options&.include?(option) %>
+                        existing_answer&.options&.include?(option),
+                        id: "question_#{question.id}_option_#{option.id}" %>
                     <span><%= option.option_text %></span>
                   </label>
                 <% end %>
