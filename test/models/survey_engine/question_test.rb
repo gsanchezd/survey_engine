@@ -759,5 +759,371 @@ module SurveyEngine
       assert_includes conditional_questions, conditional_question
       assert_not_includes conditional_questions, root_question
     end
+
+    # Matrix Question Tests
+    test "should have matrix parent association" do
+      association = Question.reflect_on_association(:matrix_parent)
+      assert_equal :belongs_to, association.macro
+      assert_equal true, association.options[:optional]
+      assert_equal 'Question', association.options[:class_name]
+    end
+
+    test "should have matrix sub-questions association" do
+      association = Question.reflect_on_association(:matrix_sub_questions)
+      assert_equal :has_many, association.macro
+      assert_equal 'Question', association.options[:class_name]
+      assert_equal 'matrix_parent_id', association.options[:foreign_key]
+      assert_equal :destroy, association.options[:dependent]
+    end
+
+    test "should create valid matrix parent question" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_question = Question.new(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "¿Qué piensas del contenido del módulo?",
+        is_matrix_question: true,
+        order_position: 1
+      )
+      
+      assert matrix_question.valid?
+      assert matrix_question.is_matrix?
+      assert matrix_question.matrix_scale?
+    end
+
+    test "matrix parent cannot have another parent" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Another Matrix",
+        is_matrix_question: true
+      )
+      
+      invalid_matrix = Question.new(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Invalid Matrix",
+        is_matrix_question: true,
+        matrix_parent: parent
+      )
+      
+      assert_invalid invalid_matrix
+      assert_validation_error invalid_matrix, :base
+    end
+
+    test "matrix questions cannot be conditional" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      scale_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "Rating",
+        scale_min: 1,
+        scale_max: 10
+      )
+      
+      invalid_matrix = Question.new(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Invalid Matrix",
+        is_matrix_question: true,
+        conditional_parent: scale_question,
+        conditional_operator: "less_than",
+        conditional_value: 5
+      )
+      
+      assert_invalid invalid_matrix
+      assert_validation_error invalid_matrix, :base
+    end
+
+    test "matrix row should require matrix_row_text" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      matrix_row = Question.new(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: nil
+      )
+      
+      assert_invalid matrix_row
+      assert_validation_error matrix_row, :matrix_row_text
+    end
+
+    test "matrix row cannot have its own options" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      # Add options to parent
+      matrix_parent.options.create!(
+        option_text: "1",
+        option_value: "1",
+        order_position: 1
+      )
+      
+      matrix_row = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row Text"
+      )
+      
+      # Try to add options to row (should fail validation)
+      matrix_row.options.build(
+        option_text: "Invalid",
+        option_value: "invalid",
+        order_position: 1
+      )
+      
+      assert_invalid matrix_row
+      assert_validation_error matrix_row, :base
+    end
+
+    test "matrix row must belong to same survey template as parent" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      other_template = SurveyTemplate.create!(name: "Other Template")
+      
+      matrix_parent = Question.create!(
+        survey_template: other_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      matrix_row = Question.new(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row Text"
+      )
+      
+      assert_invalid matrix_row
+      assert_validation_error matrix_row, :matrix_parent
+    end
+
+    test "effective_options should return parent options for matrix rows" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      # Add options to parent
+      option1 = matrix_parent.options.create!(
+        option_text: "1",
+        option_value: "1",
+        order_position: 1
+      )
+      option2 = matrix_parent.options.create!(
+        option_text: "2",
+        option_value: "2",
+        order_position: 2
+      )
+      
+      matrix_row = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row Text"
+      )
+      
+      # Row should use parent's options
+      effective_options = matrix_row.effective_options
+      assert_includes effective_options, option1
+      assert_includes effective_options, option2
+      assert_equal 2, effective_options.count
+    end
+
+    test "is_matrix_row? should return true for matrix sub-questions" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      matrix_row = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row Text"
+      )
+      
+      assert matrix_row.is_matrix_row?
+      assert_not matrix_parent.is_matrix_row?
+    end
+
+    test "matrix_questions scope should return only matrix parent questions" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      regular_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: @question_type,
+        title: "Regular Question"
+      )
+      
+      matrix_questions = @survey_template.questions.matrix_questions
+      assert_includes matrix_questions, matrix_parent
+      assert_not_includes matrix_questions, regular_question
+    end
+
+    test "matrix_rows scope should return only matrix sub-questions" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      matrix_row = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row Text"
+      )
+      
+      matrix_rows = @survey_template.questions.matrix_rows
+      assert_includes matrix_rows, matrix_row
+      assert_not_includes matrix_rows, matrix_parent
+    end
+
+    test "non_matrix_questions scope should exclude matrix questions and rows" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      matrix_row = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row Title",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row Text"
+      )
+      
+      regular_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: @question_type,
+        title: "Regular Question"
+      )
+      
+      non_matrix = @survey_template.questions.non_matrix_questions
+      assert_includes non_matrix, regular_question
+      assert_not_includes non_matrix, matrix_parent
+      assert_not_includes non_matrix, matrix_row
+    end
+
+    test "destroying matrix parent should destroy sub-questions" do
+      matrix_scale_type = QuestionType.find_or_create_by(name: "matrix_scale") do |qt|
+        qt.allows_options = true
+        qt.allows_multiple_selections = false
+      end
+      
+      matrix_parent = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Matrix Question",
+        is_matrix_question: true
+      )
+      
+      matrix_row1 = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row 1",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row 1 Text"
+      )
+      
+      matrix_row2 = Question.create!(
+        survey_template: @survey_template,
+        question_type: matrix_scale_type,
+        title: "Row 2",
+        matrix_parent: matrix_parent,
+        matrix_row_text: "Row 2 Text"
+      )
+      
+      assert_difference('Question.count', -3) do
+        matrix_parent.destroy!
+      end
+    end
   end
 end

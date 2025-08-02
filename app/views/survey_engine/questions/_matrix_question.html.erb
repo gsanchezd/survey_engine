@@ -1,0 +1,79 @@
+<div class="survey-question matrix-question" data-question-id="<%= question.id %>">
+  <div class="question-header">
+    <h3 class="question-title">
+      <span class="survey-question-number"><%= question_number %></span>. <%= question.title %>
+      <% if question.required? %>
+        <span class="survey-question-required">*</span>
+      <% end %>
+    </h3>
+    
+    <% if question.description.present? %>
+      <p class="question-description"><%= question.description %></p>
+    <% end %>
+  </div>
+
+  <div class="matrix-container">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th class="matrix-row-header"></th>
+          <% question.options.ordered.each do |option| %>
+            <th class="matrix-column-header">
+              <span class="column-label"><%= option.option_text %></span>
+            </th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% question.matrix_sub_questions.ordered.each do |sub_question| %>
+          <% existing_answer = answers[sub_question.id] if defined?(answers) %>
+          <tr class="matrix-row" data-row-id="<%= sub_question.id %>">
+            <td class="matrix-row-label">
+              <%= sub_question.matrix_row_text %>
+              <% if sub_question.required? %>
+                <span class="required-indicator">*</span>
+              <% end %>
+            </td>
+            <% question.options.ordered.each do |option| %>
+              <td class="matrix-cell">
+                <%= radio_button_tag "answers[#{sub_question.id}][option_id]", 
+                                   option.id, 
+                                   existing_answer&.options&.include?(option),
+                                   class: "matrix-radio",
+                                   required: sub_question.required?,
+                                   data: { 
+                                     question_id: sub_question.id,
+                                     option_id: option.id 
+                                   } %>
+                <%= label_tag "answers_#{sub_question.id}_option_id_#{option.id}", 
+                            option.option_text, 
+                            class: "sr-only" %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if question.help_text.present? %>
+    <p class="question-help-text"><%= question.help_text %></p>
+  <% end %>
+
+  <!-- Show current answers if they exist -->
+  <% if defined?(answers) && question.matrix_sub_questions.any? { |sq| answers[sq.id] } %>
+    <div class="survey-current-answer">
+      <strong>Respuestas actuales:</strong>
+      <ul class="matrix-answers-list">
+        <% question.matrix_sub_questions.ordered.each do |sub_question| %>
+          <% if answers[sub_question.id] %>
+            <li>
+              <strong><%= sub_question.matrix_row_text %>:</strong> 
+              <%= answers[sub_question.id].display_value %>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>

@@ -77,6 +77,18 @@ module SurveyEngine
         description: 'Entrada de email con validación',
         allows_options: false,
         allows_multiple_selections: false
+      },
+      matrix_scale: {
+        name: 'matrix_scale',
+        description: 'Matriz de escala Likert',
+        allows_options: true,
+        allows_multiple_selections: false
+      },
+      matrix_choice: {
+        name: 'matrix_choice',
+        description: 'Matriz de selección única',
+        allows_options: true,
+        allows_multiple_selections: false
       }
     }.freeze
 

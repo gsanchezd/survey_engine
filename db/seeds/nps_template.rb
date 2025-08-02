@@ -28,7 +28,7 @@ puts "Created Question 1: NPS Score"
 # Question 2: Reason for Score (Open-ended)
 reason_question = SurveyEngine::Question.create!(
   survey_template: nps_template,
-  question_type: SurveyEngine::QuestionType.find_by(name: 'textarea'),
+  question_type: SurveyEngine::QuestionType.find_by(name: 'text'),
   title: "What is the primary reason for your score?",
   description: "Please help us understand your rating",
   is_required: true,

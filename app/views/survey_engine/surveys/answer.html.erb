@@ -40,9 +40,17 @@
           
           <% existing_answer = @answers[question.id] %>
           
-          <div class="survey-question-input">
-            <% case question.question_type.name %>
-            <% when 'text' %>
+          <% if question.is_matrix? %>
+            <%= render 'survey_engine/questions/matrix_question', 
+                question: question, 
+                question_number: index + 1,
+                answers: @answers %>
+          <% elsif question.is_matrix_row? %>
+            <!-- Matrix rows are rendered by their parent matrix question -->
+          <% else %>
+            <div class="survey-question-input">
+              <% case question.question_type.name %>
+              <% when 'text' %>
               <%= text_field_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
                   placeholder: question.placeholder_text || t('survey_engine.surveys.answer.text_placeholder'),
                   class: "survey-input",
@@ -137,9 +145,10 @@
                   class: "survey-input",
                   required: question.required? %>
             <% end %>
-          </div>
+            </div>
+          <% end %>
           
-          <% if existing_answer %>
+          <% if existing_answer && !question.is_matrix? && !question.is_matrix_row? %>
             <div class="survey-current-answer">
               <strong><%= t('survey_engine.surveys.answer.current_answer') %></strong> <%= existing_answer.display_value %>
             </div>
@@ -161,3 +170,12 @@
 
 <%= conditional_flow_javascript_tag %>
 <%= initialize_conditional_flow(@survey, @questions) %>
+
+<script>
+  // Initialize matrix questions after page load
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof SurveyEngine !== 'undefined' && SurveyEngine.Matrix) {
+      SurveyEngine.Matrix.initializeMatrixQuestions();
+    }
+  });
+</script>

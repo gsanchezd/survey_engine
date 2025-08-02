@@ -30,7 +30,8 @@ module SurveyEngine
         end
       end
 
-      @questions = @survey.questions.ordered.includes(:question_type, :options)
+      # Only show non-matrix-row questions in preview (matrix rows are shown under their parent)
+      @questions = @survey.questions.ordered.includes(:question_type, :options).where(matrix_parent_id: nil)
     end
 
     def answer
@@ -62,7 +63,8 @@ module SurveyEngine
       )
 
       set_session_data(@email, @response.id)
-      @questions = @survey.questions.ordered.includes(:question_type, :options, :conditional_questions, :conditional_parent)
+      # Only show non-matrix-row questions in form (matrix rows are rendered by their parent)
+      @questions = @survey.questions.ordered.includes(:question_type, :options, :conditional_questions, :conditional_parent, :matrix_sub_questions).where(matrix_parent_id: nil)
 
       # Get existing answers
       @answers = {}

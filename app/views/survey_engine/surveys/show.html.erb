@@ -54,28 +54,49 @@
             <p class="survey-question-description"><%= question.description %></p>
           <% end %>
           
-          <div class="survey-question-meta">
-            <strong>Type:</strong> <%= question.question_type.name.humanize %>
-            
-            <% case question.question_type.name %>
-            <% when 'text' %>
-              <br><em>Participants will enter free text</em>
-            <% when 'scale' %>
-              <br><em>Scale from <%= question.scale_min %> to <%= question.scale_max %></em>
-            <% when 'single_choice', 'multiple_choice' %>
-              <br><em>Options:</em>
+          <% if question.is_matrix? %>
+            <div class="survey-question-meta">
+              <strong>Type:</strong> Matrix Question (<%= question.question_type.name.humanize %>)
+              <br><em>Matrix with <%= question.matrix_sub_questions.count %> rows and <%= question.options.count %> columns</em>
+              <br><strong>Rows:</strong>
               <ul>
-                <% question.options.ordered.each do |option| %>
-                  <li>
-                    <%= option.option_text %>
-                    <% if option.is_other? %>
-                      <em>(allows custom text)</em>
-                    <% end %>
-                  </li>
+                <% question.matrix_sub_questions.ordered.each do |sub_question| %>
+                  <li><%= sub_question.matrix_row_text %></li>
                 <% end %>
               </ul>
-            <% end %>
-          </div>
+              <br><strong>Scale Options:</strong>
+              <ul>
+                <% question.options.ordered.each do |option| %>
+                  <li><%= option.option_text %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% elsif question.is_matrix_row? %>
+            <!-- Matrix rows are shown under their parent question -->
+          <% else %>
+            <div class="survey-question-meta">
+              <strong>Type:</strong> <%= question.question_type.name.humanize %>
+              
+              <% case question.question_type.name %>
+              <% when 'text' %>
+                <br><em>Participants will enter free text</em>
+              <% when 'scale' %>
+                <br><em>Scale from <%= question.scale_min %> to <%= question.scale_max %></em>
+              <% when 'single_choice', 'multiple_choice' %>
+                <br><em>Options:</em>
+                <ul>
+                  <% question.options.ordered.each do |option| %>
+                    <li>
+                      <%= option.option_text %>
+                      <% if option.is_other? %>
+                        <em>(allows custom text)</em>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </div>
+          <% end %>
         </article>
       <% end %>
     </div>

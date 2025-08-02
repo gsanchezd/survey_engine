@@ -110,7 +110,13 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_192218) do
     t.decimal "conditional_value"
     t.boolean "show_if_condition_met", default: true
     t.integer "survey_template_id", null: false
+    t.integer "matrix_parent_id"
+    t.boolean "is_matrix_question", default: false, null: false
+    t.string "matrix_row_text"
     t.index ["conditional_parent_id"], name: "index_survey_engine_questions_on_conditional_parent_id"
+    t.index ["is_matrix_question"], name: "index_survey_engine_questions_on_is_matrix_question"
+    t.index ["matrix_parent_id", "order_position"], name: "idx_matrix_questions_parent_order"
+    t.index ["matrix_parent_id"], name: "index_survey_engine_questions_on_matrix_parent_id"
     t.index ["question_type_id"], name: "index_survey_engine_questions_on_question_type_id"
     t.index ["survey_template_id"], name: "index_survey_engine_questions_on_survey_template_id"
   end
@@ -178,6 +184,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_192218) do
   add_foreign_key "survey_engine_participants", "survey_engine_surveys", column: "survey_id"
   add_foreign_key "survey_engine_questions", "survey_engine_question_types", column: "question_type_id"
   add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "conditional_parent_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "matrix_parent_id"
   add_foreign_key "survey_engine_questions", "survey_engine_survey_templates", column: "survey_template_id"
   add_foreign_key "survey_engine_responses", "survey_engine_participants", column: "participant_id"
   add_foreign_key "survey_engine_responses", "survey_engine_surveys", column: "survey_id"

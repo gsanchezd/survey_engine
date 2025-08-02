@@ -4,6 +4,15 @@ module SurveyEngine
       "survey_engine_"
     end
 
+    def self.ransackable_attributes(auth_object = nil)
+      %w[id response_id question_id text_answer numeric_answer decimal_answer 
+         boolean_answer other_text answered_at selection_count created_at updated_at]
+    end
+
+    def self.ransackable_associations(auth_object = nil)
+      %w[response question answer_options options]
+    end
+
     belongs_to :response
     belongs_to :question
     has_many :answer_options, dependent: :destroy

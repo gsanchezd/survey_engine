@@ -4,10 +4,23 @@ module SurveyEngine
       "survey_engine_"
     end
 
+    def self.ransackable_attributes(auth_object = nil)
+      %w[id title description order_position is_required allow_other randomize_options 
+         max_characters min_selections max_selections scale_min scale_max scale_min_label 
+         scale_max_label placeholder_text help_text survey_template_id question_type_id
+         conditional_parent_id created_at updated_at]
+    end
+
+    def self.ransackable_associations(auth_object = nil)
+      %w[survey_template question_type conditional_parent conditional_questions options answers]
+    end
+
     belongs_to :survey_template, counter_cache: true
     belongs_to :question_type
     belongs_to :conditional_parent, class_name: 'Question', optional: true
     has_many :conditional_questions, class_name: 'Question', foreign_key: 'conditional_parent_id', dependent: :destroy
+    belongs_to :matrix_parent, class_name: 'Question', optional: true
+    has_many :matrix_sub_questions, class_name: 'Question', foreign_key: 'matrix_parent_id', dependent: :destroy
     has_many :options, dependent: :destroy
     has_many :answers, dependent: :destroy
 
@@ -30,6 +43,7 @@ module SurveyEngine
     validate :selection_range_is_valid
     validate :question_type_compatibility
     validate :conditional_logic_is_valid
+    validate :matrix_structure_is_valid
 
     before_validation :set_next_order_position, if: :new_record?
 
@@ -38,6 +52,9 @@ module SurveyEngine
     scope :optional, -> { where(is_required: false) }
     scope :root_questions, -> { where(conditional_parent_id: nil) }
     scope :conditional_questions, -> { where.not(conditional_parent_id: nil) }
+    scope :matrix_questions, -> { where(is_matrix_question: true) }
+    scope :matrix_rows, -> { where.not(matrix_parent_id: nil) }
+    scope :non_matrix_questions, -> { where(is_matrix_question: false, matrix_parent_id: nil) }
 
     def required?
       is_required?
@@ -81,6 +98,36 @@ module SurveyEngine
 
     def is_scale_question?
       question_type&.name == 'scale'
+    end
+
+    def is_matrix?
+      is_matrix_question?
+    end
+
+    def is_matrix_row?
+      matrix_parent_id.present?
+    end
+
+    def matrix_type?
+      return false unless is_matrix?
+      question_type&.name&.start_with?('matrix_')
+    end
+
+    def matrix_scale?
+      question_type&.name == 'matrix_scale'
+    end
+
+    def matrix_choice?
+      question_type&.name == 'matrix_choice'
+    end
+
+    # For matrix rows, use parent's options
+    def effective_options
+      if is_matrix_row? && matrix_parent.present?
+        matrix_parent.options.ordered
+      else
+        options.ordered
+      end
     end
 
     def evaluate_condition(answer_value)
@@ -183,6 +230,43 @@ module SurveyEngine
         end
         if conditional_parent.scale_max.present? && conditional_value > conditional_parent.scale_max
           errors.add(:conditional_value, 'must be within parent question scale range')
+        end
+      end
+    end
+
+    def matrix_structure_is_valid
+      # Matrix parent validations
+      if is_matrix_question?
+        unless question_type&.name&.start_with?('matrix_')
+          errors.add(:question_type, 'must be a matrix type for matrix questions')
+        end
+        
+        if matrix_parent_id.present?
+          errors.add(:base, 'Matrix parent cannot have another parent')
+        end
+        
+        if conditional_parent_id.present?
+          errors.add(:base, 'Matrix questions cannot be conditional')
+        end
+      end
+
+      # Matrix row validations
+      if matrix_parent_id.present?
+        if matrix_parent.blank?
+          errors.add(:matrix_parent, 'must exist')
+        elsif !matrix_parent.is_matrix_question?
+          errors.add(:matrix_parent, 'must be a matrix question')
+        elsif matrix_parent.survey_template_id != survey_template_id
+          errors.add(:matrix_parent, 'must belong to the same survey template')
+        end
+        
+        if matrix_row_text.blank?
+          errors.add(:matrix_row_text, 'is required for matrix rows')
+        end
+        
+        # Matrix rows shouldn't have their own options
+        if options.any?
+          errors.add(:base, 'Matrix rows cannot have their own options')
         end
       end
     end

@@ -4,6 +4,14 @@ module SurveyEngine
       "survey_engine_"
     end
 
+    def self.ransackable_attributes(auth_object = nil)
+      %w[id title uuid is_active global surveyable_type surveyable_id survey_template_id created_at updated_at]
+    end
+
+    def self.ransackable_associations(auth_object = nil)
+      %w[survey_template participants responses questions options]
+    end
+
     belongs_to :survey_template
     belongs_to :surveyable, polymorphic: true, optional: true
     has_many :participants, dependent: :destroy
