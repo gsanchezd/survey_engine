@@ -40,8 +40,8 @@ module SurveyEngine
       # Add second condition attributes for complex logic
       if question.conditional_logic_type.present? && question.conditional_logic_type != 'single'
         attributes.merge!({
-          'data-conditional-operator-2' => question.conditional_operator_2,
-          'data-conditional-value-2' => question.conditional_value_2.to_s
+          'data-conditional-operator2' => question.conditional_operator_2,
+          'data-conditional-value2' => question.conditional_value_2.to_s
         })
       end
       
@@ -87,7 +87,10 @@ module SurveyEngine
           isConditional: question.is_conditional?,
           parentId: question.conditional_parent_id,
           operator: question.conditional_operator,
-          value: question.conditional_value,
+          value: question.conditional_value&.to_i,
+          operator2: question.conditional_operator_2,
+          value2: question.conditional_value_2&.to_i,
+          logicType: question.conditional_logic_type || 'single',
           showIfMet: question.show_if_condition_met,
           hasConditionals: question.has_conditional_questions?,
           childrenIds: question.conditional_questions.pluck(:id),
@@ -286,11 +289,9 @@ module SurveyEngine
             if (!childQuestions) return;
 
             childQuestions.forEach(childQuestion => {
-              const shouldShow = this.evaluateCondition(
+              const shouldShow = this.evaluateComplexCondition(
                 selectedValue, 
-                childQuestion.operator, 
-                childQuestion.value,
-                childQuestion.showIfMet
+                childQuestion
               );
 
               this.toggleQuestion(childQuestion, shouldShow);
@@ -300,31 +301,55 @@ module SurveyEngine
             this.updateFormValidation();
           }
 
-          evaluateCondition(answerValue, operator, conditionalValue, showIfMet) {
-            if (!operator || conditionalValue === undefined) return false;
+          evaluateComplexCondition(answerValue, questionData) {
+            const { logicType, operator, value, operator2, value2, showIfMet } = questionData;
             
             let conditionMet = false;
+            
+            switch (logicType) {
+              case 'and':
+                conditionMet = this.evaluateSingleCondition(answerValue, operator, value) &&
+                              this.evaluateSingleCondition(answerValue, operator2, value2);
+                break;
+              case 'or':
+                conditionMet = this.evaluateSingleCondition(answerValue, operator, value) ||
+                              this.evaluateSingleCondition(answerValue, operator2, value2);
+                break;
+              case 'range':
+                // For range conditions, both conditions must be true (AND logic)
+                conditionMet = this.evaluateSingleCondition(answerValue, operator, value) &&
+                              this.evaluateSingleCondition(answerValue, operator2, value2);
+                break;
+              default:
+                // Single condition logic
+                conditionMet = this.evaluateSingleCondition(answerValue, operator, value);
+            }
+            
+            return showIfMet ? conditionMet : !conditionMet;
+          }
+
+          evaluateSingleCondition(answerValue, operator, conditionalValue) {
+            if (!operator || conditionalValue === undefined) return false;
 
             switch (operator) {
               case 'less_than':
-                conditionMet = answerValue < conditionalValue;
-                break;
+                return answerValue < conditionalValue;
               case 'greater_than':
-                conditionMet = answerValue > conditionalValue;
-                break;
+                return answerValue > conditionalValue;
               case 'equal_to':
-                conditionMet = answerValue === conditionalValue;
-                break;
+                return answerValue === conditionalValue;
               case 'greater_than_or_equal':
-                conditionMet = answerValue >= conditionalValue;
-                break;
+                return answerValue >= conditionalValue;
               case 'less_than_or_equal':
-                conditionMet = answerValue <= conditionalValue;
-                break;
+                return answerValue <= conditionalValue;
               default:
-                conditionMet = false;
+                return false;
             }
+          }
 
+          // Keep the old method for backwards compatibility
+          evaluateCondition(answerValue, operator, conditionalValue, showIfMet) {
+            const conditionMet = this.evaluateSingleCondition(answerValue, operator, conditionalValue);
             return showIfMet ? conditionMet : !conditionMet;
           }
 
