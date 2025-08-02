@@ -29,12 +29,23 @@ module SurveyEngine
     def conditional_question_attributes(question)
       return {} unless question.is_conditional?
       
-      {
+      attributes = {
         'data-conditional-parent' => question.conditional_parent_id.to_s,
         'data-conditional-operator' => question.conditional_operator,
         'data-conditional-value' => question.conditional_value.to_s,
+        'data-conditional-logic-type' => question.conditional_logic_type || 'single',
         'data-show-if-met' => question.show_if_condition_met.to_s
       }
+      
+      # Add second condition attributes for complex logic
+      if question.conditional_logic_type.present? && question.conditional_logic_type != 'single'
+        attributes.merge!({
+          'data-conditional-operator-2' => question.conditional_operator_2,
+          'data-conditional-value-2' => question.conditional_value_2.to_s
+        })
+      end
+      
+      attributes
     end
     
     # Generate form input attributes for questions that can trigger conditionals

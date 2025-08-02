@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_01_192218) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_02_044827) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
@@ -113,6 +113,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_01_192218) do
     t.integer "matrix_parent_id"
     t.boolean "is_matrix_question", default: false, null: false
     t.string "matrix_row_text"
+    t.string "conditional_operator_2"
+    t.decimal "conditional_value_2"
+    t.string "conditional_logic_type", default: "single"
+    t.index ["conditional_logic_type"], name: "index_survey_engine_questions_on_conditional_logic_type"
     t.index ["conditional_parent_id"], name: "index_survey_engine_questions_on_conditional_parent_id"
     t.index ["is_matrix_question"], name: "index_survey_engine_questions_on_is_matrix_question"
     t.index ["matrix_parent_id", "order_position"], name: "idx_matrix_questions_parent_order"

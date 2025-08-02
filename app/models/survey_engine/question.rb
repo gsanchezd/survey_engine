@@ -8,7 +8,8 @@ module SurveyEngine
       %w[id title description order_position is_required allow_other randomize_options 
          max_characters min_selections max_selections scale_min scale_max scale_min_label 
          scale_max_label placeholder_text help_text survey_template_id question_type_id
-         conditional_parent_id created_at updated_at]
+         conditional_parent_id conditional_operator conditional_value conditional_operator_2 
+         conditional_value_2 conditional_logic_type show_if_condition_met created_at updated_at]
     end
 
     def self.ransackable_associations(auth_object = nil)
@@ -37,6 +38,9 @@ module SurveyEngine
     validates :scale_max, numericality: { allow_nil: true }
     validates :conditional_operator, inclusion: { in: %w[less_than greater_than equal_to greater_than_or_equal less_than_or_equal], allow_nil: true }
     validates :conditional_value, numericality: { allow_nil: true }
+    validates :conditional_operator_2, inclusion: { in: %w[less_than greater_than equal_to greater_than_or_equal less_than_or_equal], allow_nil: true }
+    validates :conditional_value_2, numericality: { allow_nil: true }
+    validates :conditional_logic_type, inclusion: { in: %w[single and or range], allow_nil: true }
     validates :show_if_condition_met, inclusion: { in: [true, false], allow_nil: true }
 
     validate :scale_range_is_valid
@@ -134,21 +138,47 @@ module SurveyEngine
       return true unless is_conditional?
       return false if conditional_operator.blank? || conditional_value.blank?
 
-      case conditional_operator
+      # Handle complex conditional logic (AND, OR, range)
+      case conditional_logic_type
+      when 'and'
+        evaluate_single_condition(answer_value, conditional_operator, conditional_value) &&
+        evaluate_single_condition(answer_value, conditional_operator_2, conditional_value_2)
+      when 'or'
+        evaluate_single_condition(answer_value, conditional_operator, conditional_value) ||
+        evaluate_single_condition(answer_value, conditional_operator_2, conditional_value_2)
+      when 'range'
+        # For range conditions, assume first condition is >= and second is <=
+        # This handles cases like NPS Passives (7-8): score >= 7 AND score <= 8
+        evaluate_single_condition(answer_value, conditional_operator, conditional_value) &&
+        evaluate_single_condition(answer_value, conditional_operator_2, conditional_value_2)
+      else
+        # Default single condition logic
+        evaluate_single_condition(answer_value, conditional_operator, conditional_value)
+      end
+    end
+
+    private
+
+    def evaluate_single_condition(answer_value, operator, value)
+      return false if operator.blank? || value.blank?
+
+      case operator
       when 'less_than'
-        answer_value < conditional_value
+        answer_value < value
       when 'greater_than'
-        answer_value > conditional_value
+        answer_value > value
       when 'equal_to'
-        answer_value == conditional_value
+        answer_value == value
       when 'greater_than_or_equal'
-        answer_value >= conditional_value
+        answer_value >= value
       when 'less_than_or_equal'
-        answer_value <= conditional_value
+        answer_value <= value
       else
         false
       end
     end
+
+    public
 
     def should_show?(parent_answer_value = nil)
       return true unless is_conditional?
@@ -230,6 +260,35 @@ module SurveyEngine
         end
         if conditional_parent.scale_max.present? && conditional_value > conditional_parent.scale_max
           errors.add(:conditional_value, 'must be within parent question scale range')
+        end
+      end
+
+      # Validate complex conditional logic
+      if conditional_logic_type.present? && conditional_logic_type != 'single'
+        # For complex logic, second condition fields are required
+        if conditional_operator_2.present? || conditional_value_2.present?
+          errors.add(:conditional_operator_2, 'is required for complex conditional logic') if conditional_operator_2.blank?
+          errors.add(:conditional_value_2, 'is required for complex conditional logic') if conditional_value_2.blank?
+        else
+          errors.add(:conditional_operator_2, 'is required for complex conditional logic')
+          errors.add(:conditional_value_2, 'is required for complex conditional logic')
+        end
+
+        # Validate second conditional value is within parent's scale range
+        if conditional_parent&.is_scale_question? && conditional_value_2.present?
+          if conditional_parent.scale_min.present? && conditional_value_2 < conditional_parent.scale_min
+            errors.add(:conditional_value_2, 'must be within parent question scale range')
+          end
+          if conditional_parent.scale_max.present? && conditional_value_2 > conditional_parent.scale_max
+            errors.add(:conditional_value_2, 'must be within parent question scale range')
+          end
+        end
+
+        # Validate range logic makes sense (value1 <= value2 for range conditions)
+        if conditional_logic_type == 'range' && conditional_value.present? && conditional_value_2.present?
+          if conditional_value > conditional_value_2
+            errors.add(:conditional_value_2, 'must be greater than or equal to first conditional value for range logic')
+          end
         end
       end
     end

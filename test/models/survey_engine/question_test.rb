@@ -1125,5 +1125,260 @@ module SurveyEngine
         matrix_parent.destroy!
       end
     end
+
+    # Range Conditional Logic Tests
+    test "should support range conditional logic for NPS Passives" do
+      # Create question types
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      text_type = QuestionType.find_or_create_by(name: "text") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+
+      # Create NPS question (0-10 scale)
+      nps_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "How likely are you to recommend us?",
+        order_position: 1,
+        scale_min: 0,
+        scale_max: 10
+      )
+
+      # Create question for NPS Passives (7-8 range)
+      passives_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: text_type,
+        title: "What could we improve?",
+        order_position: 2,
+        conditional_parent: nps_question,
+        conditional_logic_type: 'range',
+        conditional_operator: 'greater_than_or_equal',
+        conditional_value: 7,
+        conditional_operator_2: 'less_than_or_equal',
+        conditional_value_2: 8
+      )
+
+      assert passives_question.valid?
+      assert passives_question.is_conditional?
+      
+      # Test range evaluation
+      assert_not passives_question.evaluate_condition(6)  # Detractor
+      assert passives_question.evaluate_condition(7)      # Passive
+      assert passives_question.evaluate_condition(8)      # Passive  
+      assert_not passives_question.evaluate_condition(9)  # Promoter
+    end
+
+    test "should support AND conditional logic" do
+      # Create question types
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      text_type = QuestionType.find_or_create_by(name: "text") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+
+      parent_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "Rate our service",
+        order_position: 1,
+        scale_min: 1,
+        scale_max: 10
+      )
+
+      # Create question that shows if score >= 5 AND score <= 7
+      and_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: text_type,
+        title: "How can we improve?",
+        order_position: 2,
+        conditional_parent: parent_question,
+        conditional_logic_type: 'and',
+        conditional_operator: 'greater_than_or_equal',
+        conditional_value: 5,
+        conditional_operator_2: 'less_than_or_equal',
+        conditional_value_2: 7
+      )
+
+      assert and_question.valid?
+      
+      # Test AND logic
+      assert_not and_question.evaluate_condition(4)  # Fails first condition
+      assert and_question.evaluate_condition(5)      # Passes both
+      assert and_question.evaluate_condition(6)      # Passes both
+      assert and_question.evaluate_condition(7)      # Passes both
+      assert_not and_question.evaluate_condition(8)  # Fails second condition
+    end
+
+    test "should support OR conditional logic" do
+      # Create question types
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      text_type = QuestionType.find_or_create_by(name: "text") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+
+      parent_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "Rate our service",
+        order_position: 1,
+        scale_min: 1,
+        scale_max: 10
+      )
+
+      # Create question that shows if score <= 3 OR score >= 9
+      or_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: text_type,
+        title: "Tell us more about your experience",
+        order_position: 2,
+        conditional_parent: parent_question,
+        conditional_logic_type: 'or',
+        conditional_operator: 'less_than_or_equal',
+        conditional_value: 3,
+        conditional_operator_2: 'greater_than_or_equal',
+        conditional_value_2: 9
+      )
+
+      assert or_question.valid?
+      
+      # Test OR logic
+      assert or_question.evaluate_condition(1)       # Passes first condition
+      assert or_question.evaluate_condition(3)       # Passes first condition
+      assert_not or_question.evaluate_condition(5)   # Fails both conditions
+      assert_not or_question.evaluate_condition(7)   # Fails both conditions
+      assert or_question.evaluate_condition(9)       # Passes second condition
+      assert or_question.evaluate_condition(10)      # Passes second condition
+    end
+
+    test "should validate complex conditional logic requires second condition" do
+      # Create question types
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      text_type = QuestionType.find_or_create_by(name: "text") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+
+      parent_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "Rate our service",
+        order_position: 1,
+        scale_min: 1,
+        scale_max: 10
+      )
+
+      # Missing second condition for range logic
+      question = Question.new(
+        survey_template: @survey_template,
+        question_type: text_type,
+        title: "Follow-up question",
+        order_position: 2,
+        conditional_parent: parent_question,
+        conditional_logic_type: 'range',
+        conditional_operator: 'greater_than_or_equal',
+        conditional_value: 7
+        # Missing conditional_operator_2 and conditional_value_2
+      )
+
+      assert_not question.valid?
+      assert_includes question.errors[:conditional_operator_2], 'is required for complex conditional logic'
+      assert_includes question.errors[:conditional_value_2], 'is required for complex conditional logic'
+    end
+
+    test "should validate range logic values are in correct order" do
+      # Create question types
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      text_type = QuestionType.find_or_create_by(name: "text") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+
+      parent_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "Rate our service",
+        order_position: 1,
+        scale_min: 1,
+        scale_max: 10
+      )
+
+      # Invalid range: first value > second value
+      question = Question.new(
+        survey_template: @survey_template,
+        question_type: text_type,
+        title: "Follow-up question",
+        order_position: 2,
+        conditional_parent: parent_question,
+        conditional_logic_type: 'range',
+        conditional_operator: 'greater_than_or_equal',
+        conditional_value: 8,
+        conditional_operator_2: 'less_than_or_equal',
+        conditional_value_2: 7  # Invalid: 8 > 7
+      )
+
+      assert_not question.valid?
+      assert_includes question.errors[:conditional_value_2], 'must be greater than or equal to first conditional value for range logic'
+    end
+
+    test "should validate conditional values are within parent scale range for complex logic" do
+      # Create question types
+      scale_type = QuestionType.find_or_create_by(name: "scale") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+      
+      text_type = QuestionType.find_or_create_by(name: "text") do |qt|
+        qt.allows_options = false
+        qt.allows_multiple_selections = false
+      end
+
+      parent_question = Question.create!(
+        survey_template: @survey_template,
+        question_type: scale_type,
+        title: "Rate our service",
+        order_position: 1,
+        scale_min: 1,
+        scale_max: 10
+      )
+
+      # Second conditional value outside parent scale range
+      question = Question.new(
+        survey_template: @survey_template,
+        question_type: text_type,
+        title: "Follow-up question",
+        order_position: 2,
+        conditional_parent: parent_question,
+        conditional_logic_type: 'range',
+        conditional_operator: 'greater_than_or_equal',
+        conditional_value: 7,
+        conditional_operator_2: 'less_than_or_equal',
+        conditional_value_2: 15  # Invalid: outside 1-10 range
+      )
+
+      assert_not question.valid?
+      assert_includes question.errors[:conditional_value_2], 'must be within parent question scale range'
+    end
   end
 end
