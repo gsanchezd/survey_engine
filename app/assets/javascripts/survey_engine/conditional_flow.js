@@ -160,8 +160,8 @@ class SurveyConditionalFlow {
   }
 
   showQuestion(element) {
-    element.classList.remove('se-conditional-hidden');
-    element.classList.add('se-conditional-showing');
+    element.classList.remove('conditional-hidden');
+    element.classList.add('conditional-showing');
     element.style.display = 'block';
     
     // Re-enable form validation
@@ -169,23 +169,23 @@ class SurveyConditionalFlow {
     
     // Remove animation class after animation completes
     setTimeout(() => {
-      element.classList.remove('se-conditional-showing');
-    }, 400);
+      element.classList.remove('conditional-showing');
+    }, 500);
   }
 
   hideQuestion(element) {
-    element.classList.add('se-conditional-hidden');
-    element.classList.remove('se-conditional-showing');
+    element.classList.add('conditional-hidden');
+    element.classList.remove('conditional-showing');
     
     // Clear answers and disable validation
     this.clearQuestionAnswers(element);
     this.updateQuestionValidation(element, false);
     
     setTimeout(() => {
-      if (element.classList.contains('se-conditional-hidden')) {
+      if (element.classList.contains('conditional-hidden')) {
         element.style.display = 'none';
       }
-    }, 300);
+    }, 500);
   }
 
   clearQuestionAnswers(questionElement) {
@@ -245,7 +245,7 @@ class SurveyConditionalFlow {
   getVisibleQuestions() {
     return Array.from(this.questions.values()).filter(questionData => {
       const element = this.getQuestionElement(questionData);
-      return element && !element.classList.contains('se-conditional-hidden') && element.style.display !== 'none';
+      return element && !element.classList.contains('conditional-hidden') && element.style.display !== 'none';
     });
   }
 

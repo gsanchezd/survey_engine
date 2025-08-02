@@ -735,44 +735,35 @@
 /* =========================== */
 
 .survey-question {
-  transition: all 1s ease-in-out;
+  transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease, margin 0.5s ease, padding 0.5s ease;
   opacity: 1;
   transform: translateY(0);
   margin-bottom: 1.5rem;
+  max-height: 2000px;
   overflow: hidden;
-}
-
-.survey-question.conditional-hidden {
-  opacity: 0;
-  transform: translateY(-10px);
-  max-height: 0;
-  margin-bottom: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-
-.survey-question.conditional-showing {
-  animation: conditionalSlideIn 1s ease-out;
-}
-
-@keyframes conditionalSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 1000px;
-  }
 }
 
 .survey-question[data-is-conditional="true"] {
   border-left: 3px solid var(--survey-primary-color);
-  padding-left: 1rem;
-  margin-left: 1rem;
   background-color: #f8f9fa;
+}
+
+.survey-question.conditional-hidden {
+  opacity: 0;
+  transform: translateY(-20px);
+  max-height: 0;
+  margin-bottom: 0;
+  margin-top: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+}
+
+.survey-question.conditional-showing {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 2000px;
+  margin-bottom: 1.5rem;
 }
 
 .survey-conditional-indicator {
