@@ -731,6 +731,99 @@
   margin-left: 0.25rem;
 }
 
+/* Conditional Flow */
+/* =========================== */
+
+.survey-question {
+  transition: all 1s ease-in-out;
+  opacity: 1;
+  transform: translateY(0);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.survey-question.conditional-hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+  max-height: 0;
+  margin-bottom: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.survey-question.conditional-showing {
+  animation: conditionalSlideIn 1s ease-out;
+}
+
+@keyframes conditionalSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
+  }
+}
+
+.survey-question[data-is-conditional="true"] {
+  border-left: 3px solid var(--survey-primary-color);
+  padding-left: 1rem;
+  margin-left: 1rem;
+  background-color: #f8f9fa;
+}
+
+.survey-conditional-indicator {
+  font-size: 0.8em;
+  color: var(--survey-primary-color);
+  background: #e3f2fd;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  margin-left: 0.5rem;
+  font-style: italic;
+}
+
+/* Scale question enhancements for conditional flow */
+.survey-scale-container[data-triggers-conditionals="true"] .survey-scale-option input {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.survey-scale-container[data-triggers-conditionals="true"] .survey-scale-option:hover {
+  background-color: #e3f2fd;
+}
+
+.survey-scale-container[data-triggers-conditionals="true"] .survey-scale-option input:checked + span {
+  background-color: var(--survey-primary-color);
+  color: white;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 2px 6px;
+}
+
+/* Loading state for conditional questions */
+.survey-conditional-loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.survey-conditional-loading::after {
+  content: "Actualizando...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 123, 255, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-size: 0.8em;
+  z-index: 10;
+}
+
 /* Responsive Design */
 /* =========================== */
 
