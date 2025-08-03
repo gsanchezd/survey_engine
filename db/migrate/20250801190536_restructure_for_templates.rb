@@ -35,8 +35,33 @@ class RestructureForTemplates < ActiveRecord::Migration[7.1]
   end
 
   def down
-    # This migration is destructive and not easily reversible
-    # You would need to restore from backup to rollback
-    raise ActiveRecord::IrreversibleMigration, "This migration destroys data and cannot be reversed"
+    # Note: This will clear all data in the affected tables as the original migration was destructive
+    # Clear all existing data to ensure clean reversal
+    execute "DELETE FROM survey_engine_answer_options"
+    execute "DELETE FROM survey_engine_answers"
+    execute "DELETE FROM survey_engine_responses"
+    execute "DELETE FROM survey_engine_participants"
+    execute "DELETE FROM survey_engine_options"
+    execute "DELETE FROM survey_engine_questions"
+    execute "DELETE FROM survey_engine_surveys"
+    
+    # Remove template reference from surveys
+    remove_reference :survey_engine_surveys, :survey_template, foreign_key: { to_table: :survey_engine_survey_templates }
+    
+    # Move questions back to reference surveys directly
+    remove_reference :survey_engine_questions, :survey_template, foreign_key: { to_table: :survey_engine_survey_templates }
+    add_reference :survey_engine_questions, :survey, null: false, foreign_key: { to_table: :survey_engine_surveys }
+    
+    # Drop the survey_templates table
+    drop_table :survey_engine_survey_templates
+    
+    # Restore removed columns to surveys table
+    add_column :survey_engine_surveys, :description, :text
+    add_column :survey_engine_surveys, :published_at, :datetime
+    add_column :survey_engine_surveys, :expires_at, :datetime
+    add_column :survey_engine_surveys, :status, :string
+    
+    # Add back the default status index
+    add_index :survey_engine_surveys, :status
   end
 end

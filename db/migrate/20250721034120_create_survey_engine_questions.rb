@@ -1,5 +1,5 @@
 class CreateSurveyEngineQuestions < ActiveRecord::Migration[7.1]
-  def change
+  def up
     create_table :survey_engine_questions do |t|
       t.references :survey, null: false, foreign_key: { to_table: :survey_engine_surveys }
       t.references :question_type, null: false, foreign_key: { to_table: :survey_engine_question_types }
@@ -24,5 +24,14 @@ class CreateSurveyEngineQuestions < ActiveRecord::Migration[7.1]
     end
 
     add_index :survey_engine_questions, [:survey_id, :order_position], unique: true
+  end
+
+  def down
+    # Only remove the index if it exists (it may have been removed by other migrations)
+    if index_exists?(:survey_engine_questions, [:survey_id, :order_position])
+      remove_index :survey_engine_questions, [:survey_id, :order_position]
+    end
+    
+    drop_table :survey_engine_questions
   end
 end
