@@ -5,8 +5,11 @@
 
   <header class="survey-header">
     <h1><%= t('survey_engine.surveys.answer.answering') %> <%= @survey.title %></h1>
-    <p><%= @survey.description %></p>
+    <% if @survey.survey_template %>
+      <p class="survey-template-info"><%= t('survey_engine.surveys.answer.template') %>: <%= @survey.survey_template.name %></p>
+    <% end %>
   </header>
+
 
   <% if notice %>
     <div class="survey-alert survey-alert-success">
@@ -37,12 +40,28 @@
           
           <% existing_answer = @answers[question.id] %>
           
-          <div class="survey-question-input">
-            <% case question.question_type.name %>
-            <% when 'text' %>
+          <% if question.is_matrix? %>
+            <%= render 'survey_engine/questions/matrix_question', 
+                question: question, 
+                question_number: index + 1,
+                answers: @answers %>
+          <% elsif question.is_matrix_row? %>
+            <!-- Matrix rows are rendered by their parent matrix question -->
+          <% else %>
+            <div class="survey-question-input">
+              <% case question.question_type.name %>
+              <% when 'text' %>
+              <%= text_field_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
+                  placeholder: question.placeholder_text || t('survey_engine.surveys.answer.text_placeholder'),
+                  class: "survey-input",
+                  maxlength: question.max_characters,
+                  required: question.required? %>
+            <% when 'textarea' %>
               <%= text_area_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer, 
-                  placeholder: t('survey_engine.surveys.answer.text_placeholder'),
+                  placeholder: question.placeholder_text || t('survey_engine.surveys.answer.textarea_placeholder'),
                   class: "survey-textarea",
+                  maxlength: question.max_characters,
+                  rows: 4,
                   required: question.required? %>
             <% when 'number' %>
               <%= number_field_tag "answers[#{question.id}][numeric_answer]", existing_answer&.numeric_answer,
@@ -70,6 +89,7 @@
                   <label class="survey-question-option">
                     <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
                         existing_answer&.options&.include?(option),
+                        id: "question_#{question.id}_option_#{option.id}",
                         required: question.required? %>
                     <span><%= option.option_text %></span>
                   </label>
@@ -88,7 +108,8 @@
                 <% question.options.ordered.each do |option| %>
                   <label class="survey-question-option">
                     <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
-                        existing_answer&.options&.include?(option) %>
+                        existing_answer&.options&.include?(option),
+                        id: "question_#{question.id}_option_#{option.id}" %>
                     <span><%= option.option_text %></span>
                   </label>
                 <% end %>
@@ -120,10 +141,16 @@
                   <% end %>
                 </div>
               </div>
+            <% when 'email' %>
+              <%= email_field_tag "answers[#{question.id}][text_answer]", existing_answer&.text_answer,
+                  placeholder: question.placeholder_text || t('survey_engine.surveys.answer.email_placeholder'),
+                  class: "survey-input",
+                  required: question.required? %>
             <% end %>
-          </div>
+            </div>
+          <% end %>
           
-          <% if existing_answer %>
+          <% if existing_answer && !question.is_matrix? && !question.is_matrix_row? %>
             <div class="survey-current-answer">
               <strong><%= t('survey_engine.surveys.answer.current_answer') %></strong> <%= existing_answer.display_value %>
             </div>
@@ -141,7 +168,16 @@
           name: "complete_survey" %>
     </div>
   <% end %>
-</div>
 
-<%= conditional_flow_javascript_tag %>
-<%= initialize_conditional_flow(@survey, @questions) %>
+  <%= conditional_flow_javascript_tag %>
+  <%= initialize_conditional_flow(@survey, @questions) %>
+
+  <script>
+    // Initialize matrix questions after page load
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof SurveyEngine !== 'undefined' && SurveyEngine.Matrix) {
+        SurveyEngine.Matrix.initializeMatrixQuestions();
+      }
+    });
+  </script>
+</div>

@@ -168,16 +168,16 @@
           name: "complete_survey" %>
     </div>
   <% end %>
+
+  <%= conditional_flow_javascript_tag %>
+  <%= initialize_conditional_flow(@survey, @questions) %>
+
+  <script>
+    // Initialize matrix questions after page load
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof SurveyEngine !== 'undefined' && SurveyEngine.Matrix) {
+        SurveyEngine.Matrix.initializeMatrixQuestions();
+      }
+    });
+  </script>
 </div>
-
-<%= conditional_flow_javascript_tag %>
-<%= initialize_conditional_flow(@survey, @questions) %>
-
-<script>
-  // Initialize matrix questions after page load
-  document.addEventListener('DOMContentLoaded', function() {
-    if (typeof SurveyEngine !== 'undefined' && SurveyEngine.Matrix) {
-      SurveyEngine.Matrix.initializeMatrixQuestions();
-    }
-  });
-</script>

@@ -1,22 +1,22 @@
 <div class="survey-container">
   <nav class="survey-breadcrumb">
-    <%= link_to t('survey_engine.surveys.show.back_to_surveys'), surveys_path %>
+    <%= link_to "← Back to Surveys", surveys_path %>
   </nav>
 
   <header class="survey-header">
     <h1><%= @survey.title %></h1>
-    <p><%= @survey.description %></p>
   </header>
 
   <div class="survey-details">
-    <span><strong><%= t('survey_engine.surveys.show.questions') %></strong> <%= @survey.questions.count %></span>
-    <span><strong><%= t('survey_engine.surveys.show.participants') %></strong> <%= @survey.participants.count %></span>
-    <span><strong><%= t('survey_engine.surveys.show.status') %></strong> <span class="survey-status"><%= t("survey_engine.statuses.#{@survey.status}") %></span></span>
+    <strong>Survey Details:</strong>
+    Template: <%= @survey.survey_template&.name || 'No template' %> |
+    <%= @survey.questions_count %> questions | 
+    <%= @survey.participants_count %> participants
   </div>
 
   <% unless @survey.can_receive_responses? %>
     <div class="survey-alert survey-alert-warning">
-      <strong>Notice:</strong> <%= t('survey_engine.surveys.show.survey_not_available') %>
+      <strong>Notice:</strong> This survey is not currently accepting responses.
     </div>
   <% end %>
 
@@ -28,54 +28,75 @@
     </div>
   <% elsif @survey.can_receive_responses? %>
     <div class="survey-start-panel">
-      <h3><%= t('survey_engine.surveys.show.start_survey') %></h3>
+      <h3>Start Survey</h3>
+      <p>Click the button below to begin the survey:</p>
       
-      <%= link_to t('survey_engine.surveys.show.start_survey'), 
-          answer_survey_path(@survey), 
+      <%= link_to "Start Survey", answer_survey_path(@survey), 
           class: "survey-btn survey-btn-success survey-btn-large" %>
     </div>
   <% end %>
 
-  <section class="se-preview-section">
+  <section class="survey-preview">
     <h3>Survey Preview</h3>
-    <p class="se-helper-text">This is what participants will see:</p>
+    <p class="survey-helper-text">This is what participants will see:</p>
     
-    <div class="se-preview-container">
+    <div class="survey-preview-container">
       <% @questions.each_with_index do |question, index| %>
-        <article class="se-question-preview">
-          <h4 class="se-question-title">
+        <article class="survey-preview-question">
+          <h4>
             <%= index + 1 %>. <%= question.title %>
             <% if question.required? %>
-              <span class="se-required">*</span>
+              <span class="survey-required">*</span>
             <% end %>
           </h4>
           
           <% if question.description.present? %>
-            <p class="se-question-description"><%= question.description %></p>
+            <p class="survey-question-description"><%= question.description %></p>
           <% end %>
           
-          <div class="se-question-meta">
-            <strong>Type:</strong> <%= question.question_type.description %>
-            
-            <% case question.question_type.name %>
-            <% when 'text' %>
-              <br><em>Participants will enter free text</em>
-            <% when 'scale' %>
-              <br><em>Scale from <%= question.scale_min %> (<%= question.scale_min_label %>) to <%= question.scale_max %> (<%= question.scale_max_label %>)</em>
-            <% when 'single_choice', 'multiple_choice' %>
-              <br><em>Options:</em>
-              <ul class="se-options-preview">
-                <% question.options.ordered.each do |option| %>
-                  <li>
-                    <%= option.option_text %>
-                    <% if option.is_other? %>
-                      <em class="se-other-option">(allows custom text)</em>
-                    <% end %>
-                  </li>
+          <% if question.is_matrix? %>
+            <div class="survey-question-meta">
+              <strong>Type:</strong> Matrix Question (<%= question.question_type.name.humanize %>)
+              <br><em>Matrix with <%= question.matrix_sub_questions.count %> rows and <%= question.options.count %> columns</em>
+              <br><strong>Rows:</strong>
+              <ul>
+                <% question.matrix_sub_questions.ordered.each do |sub_question| %>
+                  <li><%= sub_question.matrix_row_text %></li>
                 <% end %>
               </ul>
-            <% end %>
-          </div>
+              <br><strong>Scale Options:</strong>
+              <ul>
+                <% question.options.ordered.each do |option| %>
+                  <li><%= option.option_text %></li>
+                <% end %>
+              </ul>
+            </div>
+          <% elsif question.is_matrix_row? %>
+            <!-- Matrix rows are shown under their parent question -->
+          <% else %>
+            <div class="survey-question-meta">
+              <strong>Type:</strong> <%= question.question_type.name.humanize %>
+              
+              <% case question.question_type.name %>
+              <% when 'text' %>
+                <br><em>Participants will enter free text</em>
+              <% when 'scale' %>
+                <br><em>Scale from <%= question.scale_min %> to <%= question.scale_max %></em>
+              <% when 'single_choice', 'multiple_choice' %>
+                <br><em>Options:</em>
+                <ul>
+                  <% question.options.ordered.each do |option| %>
+                    <li>
+                      <%= option.option_text %>
+                      <% if option.is_other? %>
+                        <em>(allows custom text)</em>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% end %>
+            </div>
+          <% end %>
         </article>
       <% end %>
     </div>

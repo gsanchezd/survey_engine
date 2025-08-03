@@ -14,12 +14,11 @@
       <% @surveys.each do |survey| %>
         <article class="survey-card">
           <h2><%= survey.title %></h2>
-          <p><%= survey.description %></p>
           
           <div class="survey-meta">
+            <span><strong><%= t('survey_engine.surveys.index.template') %></strong> <%= survey.survey_template&.name || t('survey_engine.surveys.index.no_template') %></span>
             <span><strong><%= t('survey_engine.surveys.index.questions') %></strong> <%= survey.questions_count %></span>
             <span><strong><%= t('survey_engine.surveys.index.participants') %></strong> <%= survey.participants_count %></span>
-            <span><strong><%= t('survey_engine.surveys.index.status') %></strong> <span class="survey-status"><%= t("survey_engine.statuses.#{survey.status}") %></span></span>
           </div>
           
           <div class="survey-actions">
@@ -28,14 +27,14 @@
                 <span class="survey-btn survey-btn-completed">
                   <%= t('survey_engine.surveys.index.completed') %>
                 </span>
-                <%= link_to t('survey_engine.surveys.index.view_results'), completed_survey_path(survey), 
+                <%= link_to t('survey_engine.surveys.index.view_results'), completed_survey_path(survey.uuid), 
                     class: "survey-btn survey-btn-success" %>
               <% else %>
                 <% if @current_email.present? %>
-                  <%= link_to t('survey_engine.surveys.index.continue_survey'), survey_path(survey), 
+                  <%= link_to t('survey_engine.surveys.index.continue_survey'), survey_path(survey.uuid), 
                       class: "survey-btn survey-btn-primary" %>
                 <% else %>
-                  <%= link_to t('survey_engine.surveys.index.take_survey'), survey_path(survey), 
+                  <%= link_to t('survey_engine.surveys.index.take_survey'), survey_path(survey.uuid), 
                       class: "survey-btn survey-btn-primary" %>
                 <% end %>
               <% end %>
@@ -44,7 +43,7 @@
             <% end %>
             
             <% if survey.participants_count > 0 %>
-              <%= link_to t('survey_engine.surveys.index.view_results_icon'), results_survey_path(survey), 
+              <%= link_to t('survey_engine.surveys.index.view_results_icon'), results_survey_path(survey.uuid), 
                   class: "survey-btn survey-btn-secondary" %>
             <% else %>
               <span class="survey-btn survey-btn-disabled"><%= t('survey_engine.surveys.index.no_results_yet') %></span>
