@@ -87,8 +87,8 @@ Defines possible question types with specific multiple choice support.
 - `created_at`: Timestamp
 
 **Standard Question Types:**
-- `text`: Open-ended text input
-- `textarea`: Long text input
+- `text`: Short text input (single line input field)
+- `textarea`: Long text input (multi-line text area for extended responses)
 - `number`: Numeric input
 - `scale`: Likert scale or rating
 - `single_choice`: Radio buttons (one selection)
@@ -98,6 +98,7 @@ Defines possible question types with specific multiple choice support.
 - `boolean`: Yes/No or True/False
 - `date`: Date picker
 - `email`: Email input with validation
+- `matrix_scale`: Matrix scale questions (multiple items rated on same scale)
 
 #### questions
 Questions within surveys with enhanced multiple choice support.

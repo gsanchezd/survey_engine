@@ -17,6 +17,7 @@ module SurveyEngine
   # Ensure we have the question types we need (use existing types)
   question_types = {
     'matrix_scale' => 'Matrix question with scale ratings',
+    'text' => 'Short text answer',
     'textarea' => 'Long text answer',
     'scale' => 'Scale question (0-10 NPS style)',
     'multiple_choice' => 'Multiple choice question'

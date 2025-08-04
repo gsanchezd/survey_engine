@@ -1,38 +1,76 @@
 ===============================================================================
 
-SurveyEngine Installation Complete!
+🎉 SurveyEngine Installation Complete!
 
 ===============================================================================
 
 What was installed:
 
-  Configuration:
-    config/initializers/survey_engine.rb
-    config/initializers/locale.rb
+  ✓ Configuration:
+    - config/initializers/survey_engine.rb
+    - config/initializers/locale.rb
 
-  Translations:
-    config/locales/survey_engine.es.yml
-    config/locales/survey_engine.en.yml
+  ✓ Translations:
+    - config/locales/survey_engine.es.yml
+    - config/locales/survey_engine.en.yml
+
+  ✓ Stylesheets:
+    - app/assets/stylesheets/survey_engine.css (customizable)
 
 Next Steps:
 
-  1. Configure your authentication method in config/initializers/survey_engine.rb
-     - For Devise: config.current_user_email_method = lambda { current_user&.email }
-     - For other systems: modify as needed
-
-  2. Add routes to config/routes.rb:
-     mount SurveyEngine::Engine => "/surveys"
-
-  3. Optional: Generate custom controller for advanced customization:
-     rails generate survey_engine:install --controller
-
-  4. Run migrations:
+  1. Run migrations to set up database tables:
      rails survey_engine:install:migrations
      rails db:migrate
 
-  5. Create your first survey using Rails console or seeds:
-     SurveyEngine::Survey.create!(title: "My Survey", description: "...")
+  2. Mount the engine in config/routes.rb:
+     mount SurveyEngine::Engine => "/surveys"
 
-Documentation: https://github.com/your-repo/survey_engine
+  3. Include the CSS in your application layout (app/views/layouts/application.html.erb):
+     <%= stylesheet_link_tag "survey_engine", "data-turbo-track": "reload" %>
+
+  4. Configure authentication in config/initializers/survey_engine.rb:
+     - For Devise: config.current_user_email_method = lambda { current_user&.email }
+     - For custom auth: modify as needed
+
+  5. (Optional) Customize the CSS:
+     - Edit app/assets/stylesheets/survey_engine.css
+     - Modify CSS variables to match your design system
+
+  6. (Optional) Generate custom controller for advanced customization:
+     rails generate survey_engine:install --controller
+
+Usage Example:
+
+  # Create a survey template
+  template = SurveyEngine::SurveyTemplate.create!(name: "Customer Satisfaction")
+  
+  # Add questions to template
+  question = template.questions.create!(
+    title: "How would you rate our service?",
+    question_type: SurveyEngine::QuestionType.find_by(name: "scale"),
+    order_position: 1,
+    scale_min: 1,
+    scale_max: 5
+  )
+  
+  # Create a survey from template
+  survey = SurveyEngine::Survey.create!(
+    title: "Q1 2024 Satisfaction Survey",
+    survey_template: template,
+    surveyable: your_model # optional - attach to any model
+  )
+
+Available Question Types:
+  - text: Short text input (single line)
+  - textarea: Long text input (multi-line)
+  - single_choice: Radio buttons
+  - multiple_choice: Checkboxes
+  - scale: Rating scale
+  - boolean: Yes/No
+  - number: Numeric input
+  - matrix_scale: Matrix questions
+
+Documentation: https://github.com/gonzalosanchez/survey_engine
 
 ===============================================================================

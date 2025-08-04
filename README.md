@@ -419,12 +419,14 @@ SurveyEngine::Survey.local_surveys       # Only resource-specific surveys
 
 The engine includes these built-in question types:
 
-- **text** - Free text input
+- **text** - Short text input (single line)
+- **textarea** - Long text input (multi-line)
 - **single_choice** - Radio buttons (one selection)
 - **multiple_choice** - Checkboxes (multiple selections)
 - **scale** - Numeric scale/rating
 - **boolean** - Yes/No questions
 - **number** - Numeric input
+- **matrix_scale** - Matrix questions (multiple items rated on same scale)
 
 ## Integration Patterns
 

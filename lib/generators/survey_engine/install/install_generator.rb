@@ -30,6 +30,13 @@ module SurveyEngine
         template "survey_engine.en.yml", "config/locales/survey_engine.en.yml"
       end
       
+      def copy_stylesheets
+        source = File.expand_path("../../../../../app/assets/stylesheets/survey_engine/application.css", __FILE__)
+        copy_file source, "app/assets/stylesheets/survey_engine.css"
+        say "Copied survey_engine.css to app/assets/stylesheets/ for customization"
+        say "You can now modify the CSS variables and styles to match your application's design"
+      end
+      
       def create_controller
         if options[:controller]
           template "surveys_controller.rb", "app/controllers/surveys_controller.rb"

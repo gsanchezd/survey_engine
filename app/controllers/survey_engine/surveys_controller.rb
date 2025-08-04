@@ -322,9 +322,9 @@ module SurveyEngine
       answers = responses.map { |r| r.answer_for_question(question) }.compact
 
       case question.question_type.name
-      when "text"
+      when "text", "textarea"
         {
-          type: "text",
+          type: question.question_type.name,
           response_count: answers.count,
           responses: answers.map(&:text_answer).reject(&:blank?)
         }
@@ -435,7 +435,7 @@ module SurveyEngine
 
     def format_answer_for_export(answer)
       case answer.question.question_type.name
-      when "text"
+      when "text", "textarea"
         answer.text_answer
       when "scale", "number"
         answer.numeric_answer
