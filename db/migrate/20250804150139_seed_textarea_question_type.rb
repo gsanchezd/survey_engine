@@ -1,4 +1,4 @@
-class SeedTextareaQuestionType < ActiveRecord::Migration[8.0]
+class SeedTextareaQuestionType < ActiveRecord::Migration[7.1]
   def up
     SurveyEngine::QuestionType.find_or_create_by(name: 'textarea') do |qt|
       qt.description = 'Long text input'
