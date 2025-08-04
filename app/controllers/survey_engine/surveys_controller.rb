@@ -200,7 +200,7 @@ module SurveyEngine
     end
 
     def completed
-      @survey = Survey.includes(questions: :question_type).find_by!(uuid: params[:id])
+        @survey = Survey.includes(questions: :question_type).find_by!(uuid: params[:id])
       @email = resolve_participant_email
       @participant = Participant.find_by(survey: @survey, email: @email)
       

@@ -28,6 +28,8 @@
                                    id: "matrix_#{sub_question.id}_option_#{option.id}",
                                    class: "matrix-radio",
                                    required: sub_question.required?,
+                                   tabindex: "0",
+                                   "aria-label": "#{sub_question.matrix_row_text}: #{option.option_text}",
                                    data: { 
                                      question_id: sub_question.id,
                                      option_id: option.id 
@@ -60,3 +62,88 @@
       </ul>
     </div>
   <% end %>
+
+  <script>
+    // Enhance matrix keyboard navigation
+    document.addEventListener('DOMContentLoaded', function() {
+      const matrixTables = document.querySelectorAll('.matrix-table');
+      
+      matrixTables.forEach(table => {
+        const radioButtons = table.querySelectorAll('.matrix-radio');
+        
+        // Add arrow key navigation
+        radioButtons.forEach((radio, index) => {
+          radio.addEventListener('keydown', function(e) {
+            let newIndex = -1;
+            const currentRow = this.closest('tr');
+            const currentCell = this.closest('td');
+            const cells = Array.from(currentRow.querySelectorAll('td.matrix-cell'));
+            const currentCellIndex = cells.indexOf(currentCell);
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            const currentRowIndex = rows.indexOf(currentRow);
+            
+            switch(e.key) {
+              case 'ArrowRight':
+                // Move to next option in same row
+                if (currentCellIndex < cells.length - 1) {
+                  const nextRadio = cells[currentCellIndex + 1].querySelector('.matrix-radio');
+                  if (nextRadio) {
+                    nextRadio.focus();
+                    e.preventDefault();
+                  }
+                }
+                break;
+                
+              case 'ArrowLeft':
+                // Move to previous option in same row
+                if (currentCellIndex > 0) {
+                  const prevRadio = cells[currentCellIndex - 1].querySelector('.matrix-radio');
+                  if (prevRadio) {
+                    prevRadio.focus();
+                    e.preventDefault();
+                  }
+                }
+                break;
+                
+              case 'ArrowDown':
+                // Move to same option in next row
+                if (currentRowIndex < rows.length - 1) {
+                  const nextRow = rows[currentRowIndex + 1];
+                  const nextCells = nextRow.querySelectorAll('td.matrix-cell');
+                  if (nextCells[currentCellIndex]) {
+                    const nextRadio = nextCells[currentCellIndex].querySelector('.matrix-radio');
+                    if (nextRadio) {
+                      nextRadio.focus();
+                      e.preventDefault();
+                    }
+                  }
+                }
+                break;
+                
+              case 'ArrowUp':
+                // Move to same option in previous row
+                if (currentRowIndex > 0) {
+                  const prevRow = rows[currentRowIndex - 1];
+                  const prevCells = prevRow.querySelectorAll('td.matrix-cell');
+                  if (prevCells[currentCellIndex]) {
+                    const prevRadio = prevCells[currentCellIndex].querySelector('.matrix-radio');
+                    if (prevRadio) {
+                      prevRadio.focus();
+                      e.preventDefault();
+                    }
+                  }
+                }
+                break;
+                
+              case ' ':
+              case 'Enter':
+                // Select the radio button
+                this.checked = true;
+                e.preventDefault();
+                break;
+            }
+          });
+        });
+      });
+    });
+  </script>
