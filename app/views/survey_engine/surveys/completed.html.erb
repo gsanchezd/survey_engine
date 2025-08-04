@@ -29,11 +29,16 @@
       <section class="survey-answers-review">
         <h3>Your Answers</h3>
         
-        <% @survey.questions.ordered.each_with_index do |question, index| %>
+        <% question_number = 1 %>
+        <% @survey.questions.ordered.each do |question| %>
+          <% # Skip matrix parent questions - they don't have direct answers %>
+          <% next if question.is_matrix? %>
+          
           <% answer = @answers[question.id] %>
           <article class="survey-answer-card">
             <h4>
-              <%= index + 1 %>. <%= question.title %>
+              <%= question_number %>. <%= question.title %>
+              <% question_number += 1 %>
             </h4>
             
             <div class="survey-answer-display">
