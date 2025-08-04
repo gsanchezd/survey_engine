@@ -1,4 +1,4 @@
-class SeedMatrixScaleQuestionType < ActiveRecord::Migration[8.0]
+class SeedMatrixScaleQuestionType < ActiveRecord::Migration[7.1]
   def up
     SurveyEngine::QuestionType.find_or_create_by(name: 'matrix_scale') do |qt|
       qt.allows_options = true
