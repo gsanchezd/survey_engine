@@ -25,12 +25,12 @@
       <% end %>
     </div>
     
-    <% if @response&.answers&.any? %>
+    <% if @answers&.any? %>
       <section class="survey-answers-review">
         <h3>Your Answers</h3>
         
         <% @survey.questions.ordered.each_with_index do |question, index| %>
-          <% answer = @response.answer_for_question(question) %>
+          <% answer = @answers[question.id] %>
           <article class="survey-answer-card">
             <h4>
               <%= index + 1 %>. <%= question.title %>

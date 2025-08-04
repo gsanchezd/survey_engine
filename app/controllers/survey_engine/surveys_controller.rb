@@ -17,7 +17,16 @@ module SurveyEngine
     end
 
     def show
-      @survey = Survey.find_by!(uuid: params[:id])
+      # Preload associations to avoid N+1
+      @survey = Survey.includes(
+        :survey_template,
+        questions: [
+          :question_type, 
+          :options,
+          { matrix_sub_questions: [:question_type, :options] }
+        ]
+      ).find_by!(uuid: params[:id])
+      
       @email = resolve_participant_email
 
       if @email.present?
@@ -31,11 +40,22 @@ module SurveyEngine
       end
 
       # Only show non-matrix-row questions in preview (matrix rows are shown under their parent)
-      @questions = @survey.questions.ordered.includes(:question_type, :options).where(matrix_parent_id: nil)
+      @questions = @survey.questions.select { |q| q.matrix_parent_id.nil? }.sort_by(&:order_position)
     end
 
     def answer
-      @survey = Survey.find_by!(uuid: params[:id])
+      # Preload all associations to avoid N+1 queries
+      @survey = Survey.includes(
+        :survey_template,
+        questions: [
+          :question_type, 
+          :options, 
+          :conditional_questions, 
+          :conditional_parent, 
+          { matrix_sub_questions: [:question_type, :options] }
+        ]
+      ).find_by!(uuid: params[:id])
+      
       @email = resolve_participant_email
 
       if @email.blank?
@@ -64,7 +84,8 @@ module SurveyEngine
 
       set_session_data(@email, @response.id)
       # Only show non-matrix-row questions in form (matrix rows are rendered by their parent)
-      @questions = @survey.questions.ordered.includes(:question_type, :options, :conditional_questions, :conditional_parent, :matrix_sub_questions).where(matrix_parent_id: nil)
+      # Use already loaded questions to avoid additional queries
+      @questions = @survey.questions.select { |q| q.matrix_parent_id.nil? }.sort_by(&:order_position)
 
       # Get existing answers
       @answers = {}
@@ -179,10 +200,17 @@ module SurveyEngine
     end
 
     def completed
-      @survey = Survey.find_by!(uuid: params[:id])
+      @survey = Survey.includes(questions: :question_type).find_by!(uuid: params[:id])
       @email = resolve_participant_email
       @participant = Participant.find_by(survey: @survey, email: @email)
-      @response = @participant&.response
+      
+      if @participant
+        @response = @participant.response
+        # Preload answers with their associations to avoid N+1
+        if @response
+          @answers = @response.answers.includes(:question, :options).index_by(&:question_id)
+        end
+      end
     end
 
     def results
