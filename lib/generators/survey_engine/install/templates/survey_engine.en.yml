@@ -1,4 +1,11 @@
 en:
+  devise:
+    sessions:
+      user:
+        signed_in: "Signed in successfully."
+        signed_out: "Signed out successfully."
+      signed_in: "Signed in successfully."
+      signed_out: "Signed out successfully."
   survey_engine:
     surveys:
       index:

@@ -26,7 +26,11 @@
   <%= form_tag submit_answer_survey_path(@survey), method: :post, class: "survey-form", local: true do %>
     <div class="survey-questions-container">
       <% @questions.each_with_index do |question, index| %>
-        <div class="survey-question" <%= conditional_flow_attributes(question).map { |k, v| "#{k}=\"#{v}\"" }.join(' ').html_safe %> id="question-<%= question.id %>">
+        <div class="survey-question" 
+             <%= conditional_flow_attributes(question).map { |k, v| "#{k}=\"#{v}\"" }.join(' ').html_safe %> 
+             id="question-<%= question.id %>"
+             <%= 'data-is-matrix-question="true"' if question.is_matrix? %>
+             <%= 'data-is-matrix-row="true"' if question.is_matrix_row? %>>
           <h3>
             <span class="survey-question-number" data-original-order="<%= index + 1 %>"><%= index + 1 %></span>. <%= question.title %>
             <% if question.required? %>
@@ -169,7 +173,7 @@
     </div>
   <% end %>
 
-  <%= conditional_flow_javascript_tag %>
+  <%= conditional_flow_javascript_tag(inline: true) %>
   <%= initialize_conditional_flow(@survey, @questions) %>
 
   <script>

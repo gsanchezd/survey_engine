@@ -110,7 +110,7 @@ module SurveyEngine
     # Options:
     # - inline: true (default) - Include JavaScript inline in the page
     # - inline: false - Use asset pipeline (requires javascript_include_tag 'survey_engine/conditional_flow')
-    def conditional_flow_javascript_tag(inline: false)
+    def conditional_flow_javascript_tag(inline: true)
       if inline
         content_tag(:script, raw(conditional_flow_javascript), type: 'text/javascript')
       else
@@ -203,7 +203,7 @@ module SurveyEngine
             this.evaluateInitialState();
             this.initialized = true;
             
-            console.log('SurveyConditionalFlow initialized with', this.questions.size, 'questions');
+            // SurveyConditionalFlow initialized successfully
           }
 
           loadQuestions() {
@@ -448,12 +448,36 @@ module SurveyEngine
           }
 
           updateQuestionNumbers() {
-            const visibleQuestions = document.querySelectorAll('.survey-question:not([style*="display: none"]):not(.survey-conditional-hidden)');
-            visibleQuestions.forEach((questionElement, index) => {
-              const numberSpan = questionElement.querySelector('.survey-question-number');
-              if (numberSpan) {
-                numberSpan.textContent = index + 1;
+            // Get all questions
+            const allQuestions = document.querySelectorAll('.survey-question');
+            let questionNumber = 1;
+            
+            allQuestions.forEach((questionElement) => {
+              // Skip if hidden by conditional logic (using the correct class name)
+              const isHidden = questionElement.classList.contains('survey-conditional-hidden') || 
+                              questionElement.style.display === 'none';
+              
+              // Skip if it's a matrix row (rows don't get their own numbers)
+              const isMatrixRow = questionElement.getAttribute('data-is-matrix-row') === 'true';
+              
+              if (!isHidden && !isMatrixRow) {
+                const numberSpan = questionElement.querySelector('.survey-question-number');
+                if (numberSpan) {
+                  numberSpan.textContent = questionNumber;
+                  questionNumber++;
+                }
               }
+            });
+            
+            // Also update any progress indicators that might show question count
+            this.updateProgressWithNumbers(questionNumber - 1);
+          }
+          
+          updateProgressWithNumbers(totalVisibleQuestions) {
+            // Update any UI elements that show total question count
+            const totalCountElements = document.querySelectorAll('[data-total-questions]');
+            totalCountElements.forEach(element => {
+              element.textContent = totalVisibleQuestions;
             });
           }
 
