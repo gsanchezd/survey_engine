@@ -18,7 +18,7 @@
           <ul>
             <li><strong>Participant:</strong> <%= @participant.email %></li>
             <li><strong>Completed:</strong> <%= @response.completed_at.strftime("%B %d, %Y at %I:%M %p") %></li>
-            <li><strong>Questions answered:</strong> <%= @response.answers.count %> of <%= @survey.questions_count %></li>
+            <li><strong>Questions answered:</strong> <%= @response.answers.count %> of <%= @response.visible_questions_for_response.count %></li>
             <li><strong>Completion rate:</strong> <%= @response.completion_percentage %>%</li>
           </ul>
         </div>
