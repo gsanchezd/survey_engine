@@ -22,4 +22,5 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 7.1.0"
+  spec.add_dependency "csv", "~> 3.3.5"
 end

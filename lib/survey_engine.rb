@@ -1,6 +1,7 @@
-require "survey_engine/version"
+require "survey_engine/version"  
 require "survey_engine/engine"
 require "survey_engine/configuration"
+require "csv"
 
 module SurveyEngine
   class << self

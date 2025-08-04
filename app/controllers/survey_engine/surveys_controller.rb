@@ -400,30 +400,7 @@ module SurveyEngine
     end
 
     def generate_csv_export
-      require "csv"
-
-      CSV.generate do |csv|
-        # Header row
-        headers = [ "Participant Email", "Completed At", "Completion Time (seconds)" ]
-        @questions.each { |q| headers << q.title }
-        csv << headers
-
-        # Data rows
-        @responses.each do |response|
-          row = [
-            response.participant.email,
-            response.completed_at&.strftime("%Y-%m-%d %H:%M:%S"),
-            response.completion_time&.round(1)
-          ]
-
-          @questions.each do |question|
-            answer = response.answer_for_question(question)
-            row << (answer ? format_answer_for_export(answer) : "")
-          end
-
-          csv << row
-        end
-      end
+      CsvExporter.new(@survey, include_partial_responses: false).to_csv
     end
 
     def generate_json_export

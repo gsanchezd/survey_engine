@@ -10,7 +10,153 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_31_182638) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_04_150139) do
+  create_table "survey_engine_answer_options", force: :cascade do |t|
+    t.integer "answer_id", null: false
+    t.integer "option_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["answer_id", "option_id"], name: "index_answer_options_on_answer_option", unique: true
+    t.index ["answer_id"], name: "index_survey_engine_answer_options_on_answer_id"
+    t.index ["option_id"], name: "index_survey_engine_answer_options_on_option_id"
+  end
+
+  create_table "survey_engine_answers", force: :cascade do |t|
+    t.integer "response_id", null: false
+    t.integer "question_id", null: false
+    t.text "text_answer"
+    t.integer "numeric_answer"
+    t.decimal "decimal_answer", precision: 10, scale: 2
+    t.boolean "boolean_answer"
+    t.text "other_text"
+    t.integer "selection_count", default: 0
+    t.datetime "answered_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["answered_at"], name: "index_survey_engine_answers_on_answered_at"
+    t.index ["question_id"], name: "index_survey_engine_answers_on_question_id"
+    t.index ["response_id", "question_id"], name: "index_answers_on_response_question", unique: true
+    t.index ["response_id"], name: "index_survey_engine_answers_on_response_id"
+  end
+
+  create_table "survey_engine_options", force: :cascade do |t|
+    t.integer "question_id", null: false
+    t.string "option_text", null: false
+    t.string "option_value", null: false
+    t.integer "order_position", null: false
+    t.boolean "is_other", default: false, null: false
+    t.boolean "is_exclusive", default: false, null: false
+    t.boolean "is_active", default: true, null: false
+    t.text "skip_logic"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["question_id", "is_active"], name: "index_survey_engine_options_on_question_id_and_is_active"
+    t.index ["question_id", "order_position"], name: "index_survey_engine_options_on_question_id_and_order_position", unique: true
+    t.index ["question_id"], name: "index_survey_engine_options_on_question_id"
+  end
+
+  create_table "survey_engine_participants", force: :cascade do |t|
+    t.integer "survey_id", null: false
+    t.string "email", null: false
+    t.string "status", default: "invited", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["status"], name: "index_survey_engine_participants_on_status"
+    t.index ["survey_id", "email"], name: "index_participants_on_survey_email", unique: true
+    t.index ["survey_id"], name: "index_survey_engine_participants_on_survey_id"
+  end
+
+  create_table "survey_engine_question_types", force: :cascade do |t|
+    t.string "name", null: false
+    t.text "description"
+    t.boolean "allows_options", default: false, null: false
+    t.boolean "allows_multiple_selections", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_survey_engine_question_types_on_name", unique: true
+  end
+
+  create_table "survey_engine_questions", force: :cascade do |t|
+    t.integer "question_type_id", null: false
+    t.string "title", null: false
+    t.text "description"
+    t.boolean "is_required", default: false, null: false
+    t.integer "order_position", null: false
+    t.integer "scale_min"
+    t.integer "scale_max"
+    t.string "scale_min_label"
+    t.string "scale_max_label"
+    t.integer "max_characters"
+    t.integer "min_selections"
+    t.integer "max_selections"
+    t.boolean "allow_other", default: false, null: false
+    t.boolean "randomize_options", default: false, null: false
+    t.text "validation_rules"
+    t.string "placeholder_text"
+    t.text "help_text"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "conditional_parent_id"
+    t.string "conditional_operator"
+    t.decimal "conditional_value"
+    t.boolean "show_if_condition_met", default: true
+    t.integer "survey_template_id", null: false
+    t.integer "matrix_parent_id"
+    t.boolean "is_matrix_question", default: false, null: false
+    t.string "matrix_row_text"
+    t.string "conditional_operator_2"
+    t.decimal "conditional_value_2"
+    t.string "conditional_logic_type", default: "single"
+    t.index ["conditional_logic_type"], name: "index_survey_engine_questions_on_conditional_logic_type"
+    t.index ["conditional_parent_id"], name: "index_survey_engine_questions_on_conditional_parent_id"
+    t.index ["is_matrix_question"], name: "index_survey_engine_questions_on_is_matrix_question"
+    t.index ["matrix_parent_id", "order_position"], name: "idx_matrix_questions_parent_order"
+    t.index ["matrix_parent_id"], name: "index_survey_engine_questions_on_matrix_parent_id"
+    t.index ["question_type_id"], name: "index_survey_engine_questions_on_question_type_id"
+    t.index ["survey_template_id"], name: "index_survey_engine_questions_on_survey_template_id"
+  end
+
+  create_table "survey_engine_responses", force: :cascade do |t|
+    t.integer "survey_id", null: false
+    t.integer "participant_id", null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["completed_at"], name: "index_survey_engine_responses_on_completed_at"
+    t.index ["participant_id"], name: "index_survey_engine_responses_on_participant_id"
+    t.index ["survey_id"], name: "index_survey_engine_responses_on_survey_id"
+  end
+
+  create_table "survey_engine_survey_templates", force: :cascade do |t|
+    t.string "name", null: false
+    t.boolean "is_active", default: true, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "questions_count", default: 0, null: false
+    t.index ["is_active"], name: "index_survey_engine_survey_templates_on_is_active"
+    t.index ["name"], name: "index_survey_engine_survey_templates_on_name"
+  end
+
+  create_table "survey_engine_surveys", force: :cascade do |t|
+    t.string "title", null: false
+    t.boolean "is_active", default: false, null: false
+    t.boolean "global", default: false, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "uuid"
+    t.string "surveyable_type"
+    t.integer "surveyable_id"
+    t.integer "questions_count", default: 0, null: false
+    t.integer "participants_count", default: 0, null: false
+    t.integer "survey_template_id", null: false
+    t.index ["global", "is_active"], name: "index_survey_engine_surveys_on_global_and_is_active"
+    t.index ["is_active"], name: "index_survey_engine_surveys_on_is_active"
+    t.index ["survey_template_id"], name: "index_survey_engine_surveys_on_survey_template_id"
+    t.index ["surveyable_type", "surveyable_id"], name: "index_survey_engine_surveys_on_surveyable"
+    t.index ["uuid"], name: "index_survey_engine_surveys_on_uuid", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -22,4 +168,18 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_182638) do
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
+
+  add_foreign_key "survey_engine_answer_options", "survey_engine_answers", column: "answer_id"
+  add_foreign_key "survey_engine_answer_options", "survey_engine_options", column: "option_id"
+  add_foreign_key "survey_engine_answers", "survey_engine_questions", column: "question_id"
+  add_foreign_key "survey_engine_answers", "survey_engine_responses", column: "response_id"
+  add_foreign_key "survey_engine_options", "survey_engine_questions", column: "question_id"
+  add_foreign_key "survey_engine_participants", "survey_engine_surveys", column: "survey_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_question_types", column: "question_type_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "conditional_parent_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "matrix_parent_id"
+  add_foreign_key "survey_engine_questions", "survey_engine_survey_templates", column: "survey_template_id"
+  add_foreign_key "survey_engine_responses", "survey_engine_participants", column: "participant_id"
+  add_foreign_key "survey_engine_responses", "survey_engine_surveys", column: "survey_id"
+  add_foreign_key "survey_engine_surveys", "survey_engine_survey_templates", column: "survey_template_id"
 end

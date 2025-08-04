@@ -15,6 +15,9 @@ gem "propshaft"
 # Authentication for dummy app
 gem "devise"
 
+# CSV support for survey exports
+gem "csv", "~> 3.0"
+
 # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
 gem "rubocop-rails-omakase", require: false
 
