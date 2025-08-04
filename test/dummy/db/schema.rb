@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_02_044827) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_04_155128) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
@@ -37,14 +37,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_02_044827) do
     t.index ["question_id"], name: "index_survey_engine_answers_on_question_id"
     t.index ["response_id", "question_id"], name: "index_answers_on_response_question", unique: true
     t.index ["response_id"], name: "index_survey_engine_answers_on_response_id"
-  end
-
-  create_table "survey_engine_groups", force: :cascade do |t|
-    t.string "name", null: false
-    t.text "description"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["name"], name: "index_survey_engine_groups_on_name"
   end
 
   create_table "survey_engine_options", force: :cascade do |t|
@@ -157,13 +149,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_02_044827) do
     t.integer "surveyable_id"
     t.integer "questions_count", default: 0, null: false
     t.integer "participants_count", default: 0, null: false
-    t.integer "group_id"
     t.integer "survey_template_id", null: false
     t.index ["global", "is_active"], name: "index_survey_engine_surveys_on_global_and_is_active"
-    t.index ["group_id"], name: "index_survey_engine_surveys_on_group_id"
     t.index ["is_active"], name: "index_survey_engine_surveys_on_is_active"
     t.index ["survey_template_id"], name: "index_survey_engine_surveys_on_survey_template_id"
-    t.index ["surveyable_type", "surveyable_id"], name: "idx_on_surveyable_type_surveyable_id_ffe4fd0636"
     t.index ["surveyable_type", "surveyable_id"], name: "index_survey_engine_surveys_on_surveyable"
     t.index ["uuid"], name: "index_survey_engine_surveys_on_uuid", unique: true
   end
@@ -192,6 +181,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_02_044827) do
   add_foreign_key "survey_engine_questions", "survey_engine_survey_templates", column: "survey_template_id"
   add_foreign_key "survey_engine_responses", "survey_engine_participants", column: "participant_id"
   add_foreign_key "survey_engine_responses", "survey_engine_surveys", column: "survey_id"
-  add_foreign_key "survey_engine_surveys", "survey_engine_groups", column: "group_id"
   add_foreign_key "survey_engine_surveys", "survey_engine_survey_templates", column: "survey_template_id"
 end
