@@ -1,0 +1,6 @@
+es:
+  devise:
+    failure:
+      user:
+        unauthenticated: "Necesitas iniciar sesión antes de continuar."
+      unauthenticated: "Necesitas iniciar sesión o registrarte antes de continuar."
