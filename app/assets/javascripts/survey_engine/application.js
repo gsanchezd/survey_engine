@@ -196,6 +196,9 @@ window.SurveyConditionalFlow = class {
       // Re-enable form validation
       this.updateQuestionValidation(element, true);
       
+      // Update question numbers
+      this.updateQuestionNumbers();
+      
       // Remove animation class after animation completes
       setTimeout(() => {
         element.classList.remove('conditional-showing');
@@ -212,6 +215,9 @@ window.SurveyConditionalFlow = class {
     // Clear answers and disable validation
     this.clearQuestionAnswers(element);
     this.updateQuestionValidation(element, false);
+    
+    // Update question numbers
+    this.updateQuestionNumbers();
   }
 
   clearQuestionAnswers(questionElement) {
@@ -256,6 +262,9 @@ window.SurveyConditionalFlow = class {
         });
       }
     });
+    
+    // Update question numbers after initial evaluation
+    this.updateQuestionNumbers();
   }
 
   updateProgress() {
@@ -309,6 +318,40 @@ window.SurveyConditionalFlow = class {
     if (form && typeof form.checkValidity === 'function') {
       form.checkValidity();
     }
+  }
+
+  updateQuestionNumbers() {
+    // Get all questions
+    const allQuestions = document.querySelectorAll('.survey-question');
+    let questionNumber = 1;
+    
+    allQuestions.forEach((questionElement) => {
+      // Skip if hidden by conditional logic (using the correct class name)
+      const isHidden = questionElement.classList.contains('conditional-hidden') || 
+                      questionElement.style.display === 'none';
+      
+      // Skip if it's a matrix row (rows don't get their own numbers)
+      const isMatrixRow = questionElement.getAttribute('data-is-matrix-row') === 'true';
+      
+      if (!isHidden && !isMatrixRow) {
+        const numberSpan = questionElement.querySelector('.survey-question-number');
+        if (numberSpan) {
+          numberSpan.textContent = questionNumber;
+          questionNumber++;
+        }
+      }
+    });
+    
+    // Also update any progress indicators that might show question count
+    this.updateProgressWithNumbers(questionNumber - 1);
+  }
+  
+  updateProgressWithNumbers(totalVisibleQuestions) {
+    // Update any UI elements that show total question count
+    const totalCountElements = document.querySelectorAll('[data-total-questions]');
+    totalCountElements.forEach(element => {
+      element.textContent = totalVisibleQuestions;
+    });
   }
 
   getQuestionElement(questionData) {
