@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_11_205825) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_11_220635) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
@@ -68,6 +68,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_205825) do
     t.index ["survey_id"], name: "index_survey_engine_participants_on_survey_id"
   end
 
+  create_table "survey_engine_question_conditional_options", force: :cascade do |t|
+    t.integer "question_id", null: false
+    t.integer "option_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["option_id"], name: "index_survey_engine_question_conditional_options_on_option_id"
+    t.index ["question_id", "option_id"], name: "index_question_conditional_options_unique", unique: true
+    t.index ["question_id"], name: "idx_on_question_id_cb5e31ff0b"
+  end
+
   create_table "survey_engine_question_types", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -109,8 +119,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_205825) do
     t.string "conditional_operator_2"
     t.decimal "conditional_value_2"
     t.string "conditional_logic_type", default: "single"
+    t.string "conditional_type", default: "scale"
     t.index ["conditional_logic_type"], name: "index_survey_engine_questions_on_conditional_logic_type"
     t.index ["conditional_parent_id"], name: "index_survey_engine_questions_on_conditional_parent_id"
+    t.index ["conditional_type"], name: "index_survey_engine_questions_on_conditional_type"
     t.index ["is_matrix_question"], name: "index_survey_engine_questions_on_is_matrix_question"
     t.index ["matrix_parent_id", "order_position"], name: "idx_matrix_questions_parent_order"
     t.index ["matrix_parent_id"], name: "index_survey_engine_questions_on_matrix_parent_id"
@@ -176,6 +188,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_205825) do
   add_foreign_key "survey_engine_answers", "survey_engine_responses", column: "response_id"
   add_foreign_key "survey_engine_options", "survey_engine_questions", column: "question_id"
   add_foreign_key "survey_engine_participants", "survey_engine_surveys", column: "survey_id"
+  add_foreign_key "survey_engine_question_conditional_options", "survey_engine_options", column: "option_id"
+  add_foreign_key "survey_engine_question_conditional_options", "survey_engine_questions", column: "question_id"
   add_foreign_key "survey_engine_questions", "survey_engine_question_types", column: "question_type_id"
   add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "conditional_parent_id"
   add_foreign_key "survey_engine_questions", "survey_engine_questions", column: "matrix_parent_id"

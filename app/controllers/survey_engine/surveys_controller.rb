@@ -304,20 +304,9 @@ module SurveyEngine
             next
           end
 
-          # Get parent answer value
-          parent_value = case question.conditional_parent.question_type.name
-          when "scale", "number"
-            parent_answer.numeric_answer
-          when "text", "textarea", "email"
-            parent_answer.text_answer
-          when "boolean"
-            parent_answer.boolean_answer
-          else
-            nil
-          end
-
           # Skip if conditional question shouldn't be shown
-          next unless question.should_show?(parent_value)
+          # Pass the full Answer object to handle both scale and option conditionals
+          next unless question.should_show?(parent_answer)
         end
 
         answer = response.answers.find_by(question: question)

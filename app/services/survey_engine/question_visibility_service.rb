@@ -19,15 +19,15 @@ module SurveyEngine
     # Get all possible questions for the survey (excluding matrix parents)
     def all_answerable_questions
       @all_answerable_questions ||= response.survey.questions
-        .where(is_matrix_question: [false, nil])
+        .where(is_matrix_question: [ false, nil ])
     end
 
     private
 
     def calculate_visible_questions
-      all_questions = response.survey.questions.where(is_matrix_question: [false, nil])
+      all_questions = response.survey.questions.where(is_matrix_question: [ false, nil ])
       visible = []
-      
+
       all_questions.each do |question|
         if question.conditional_parent_id.nil?
           # Non-conditional questions are always visible
@@ -37,35 +37,27 @@ module SurveyEngine
           visible << question
         end
       end
-      
+
       visible
     end
 
     def should_show_conditional_question?(question)
       return true unless question.conditional_parent_id
-      
+
       parent_answer = response.answers.find_by(question_id: question.conditional_parent_id)
       return false unless parent_answer  # Parent not answered, so child is hidden
-      
-      # Check if the condition is met based on the parent's answer
-      parent_value = extract_answer_value(parent_answer, question.conditional_parent)
-      return false if parent_value.nil?
-      
-      # Evaluate the condition
-      if question.conditional_logic_type == 'range'
-        evaluate_range_condition(parent_value, question)
-      else
-        evaluate_single_condition(parent_value, question)
-      end
+
+      # Use the question's should_show? method which handles both scale and option conditionals
+      question.should_show?(parent_answer)
     end
 
     def extract_answer_value(answer, question)
       case question.question_type.name
-      when 'scale', 'number'
+      when "scale", "number"
         answer.numeric_answer
-      when 'boolean'
+      when "boolean"
         answer.boolean_answer ? 1 : 0
-      when 'single_choice'
+      when "single_choice"
         answer.options.first&.option_value&.to_i
       else
         nil
@@ -74,44 +66,44 @@ module SurveyEngine
 
     def evaluate_single_condition(value, question)
       target = question.conditional_value.to_f
-      
+
       result = case question.conditional_operator
-      when 'equal_to'
+      when "equal_to"
         value == target
-      when 'not_equals'
+      when "not_equals"
         value != target
-      when 'greater_than'
+      when "greater_than"
         value > target
-      when 'greater_than_or_equal'
+      when "greater_than_or_equal"
         value >= target
-      when 'less_than'
+      when "less_than"
         value < target
-      when 'less_than_or_equal'
+      when "less_than_or_equal"
         value <= target
       else
         false
       end
-      
+
       question.show_if_condition_met ? result : !result
     end
 
     def evaluate_range_condition(value, question)
       min_value = question.conditional_value.to_f
       max_value = question.conditional_value_2.to_f
-      
-      in_range = case [question.conditional_operator, question.conditional_operator_2]
-      when ['greater_than_or_equal', 'less_than_or_equal']
+
+      in_range = case [ question.conditional_operator, question.conditional_operator_2 ]
+      when [ "greater_than_or_equal", "less_than_or_equal" ]
         value >= min_value && value <= max_value
-      when ['greater_than', 'less_than']
+      when [ "greater_than", "less_than" ]
         value > min_value && value < max_value
-      when ['greater_than_or_equal', 'less_than']
+      when [ "greater_than_or_equal", "less_than" ]
         value >= min_value && value < max_value
-      when ['greater_than', 'less_than_or_equal']
+      when [ "greater_than", "less_than_or_equal" ]
         value > min_value && value <= max_value
       else
         false
       end
-      
+
       question.show_if_condition_met ? in_range : !in_range
     end
   end
