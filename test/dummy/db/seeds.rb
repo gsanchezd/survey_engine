@@ -42,6 +42,12 @@ multiple_choice_type = SurveyEngine::QuestionType.find_or_create_by(name: "multi
   qt.allows_multiple_selections = true
 end
 
+ranking_type = SurveyEngine::QuestionType.find_or_create_by(name: "ranking") do |qt|
+  qt.description = "Ordenar elementos por prioridad"
+  qt.allows_options = true
+  qt.allows_multiple_selections = true
+end
+
 # Create survey templates
 template1 = SurveyEngine::SurveyTemplate.find_or_create_by(name: "Customer Satisfaction") do |template|
   template.is_active = true
@@ -210,6 +216,39 @@ q8 = SurveyEngine::Question.find_or_create_by(survey_template: template3, order_
   q.question_type = text_type
   q.title = "Any additional comments?"
   q.is_required = false
+end
+
+# Ranking question for product features
+q9 = SurveyEngine::Question.find_or_create_by(survey_template: template3, order_position: 8) do |q|
+  q.question_type = ranking_type
+  q.title = "Ordena las siguientes características del producto por importancia"
+  q.description = "Arrastra las características para ordenarlas según lo que más valoras (1 = más importante)"
+  q.is_required = true
+  q.allow_other = false
+  q.randomize_options = false
+end
+
+# Create ranking options
+ranking_options_data = [
+  { text: "Calidad del producto", value: "quality" },
+  { text: "Precio competitivo", value: "price" },
+  { text: "Servicio al cliente", value: "service" },
+  { text: "Tiempo de entrega", value: "delivery" },
+  { text: "Facilidad de uso", value: "usability" },
+  { text: "Diseño y estética", value: "design" }
+]
+
+ranking_options_data.each_with_index do |option_data, index|
+  SurveyEngine::Option.find_or_create_by(
+    question: q9, 
+    option_value: option_data[:value]
+  ) do |opt|
+    opt.option_text = option_data[:text]
+    opt.order_position = index + 1
+    opt.is_other = false
+    opt.is_exclusive = false
+    opt.is_active = true
+  end
 end
 
 puts "Created questions for all three templates"
