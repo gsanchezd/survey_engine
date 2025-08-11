@@ -20,8 +20,6 @@ window.SurveyConditionalFlow = class {
     this.bindEvents();
     this.evaluateInitialState();
     this.initialized = true;
-    
-    console.log('SurveyConditionalFlow initialized with', this.questions.size, 'questions');
   }
 
   loadQuestions() {
@@ -54,10 +52,13 @@ window.SurveyConditionalFlow = class {
         element: questionEl,
         type: questionEl.dataset.questionType,
         parentId: parentId,
+        conditionalType: questionEl.dataset.conditionalType || 'scale',
         operator: questionEl.dataset.conditionalOperator,
         value: parseFloat(questionEl.dataset.conditionalValue),
         operator2: questionEl.dataset.conditionalOperator2,
         value2: questionEl.dataset.conditionalValue2 ? parseFloat(questionEl.dataset.conditionalValue2) : undefined,
+        triggerOptionIds: questionEl.dataset.conditionalOptionIds ? 
+          questionEl.dataset.conditionalOptionIds.split(',').map(id => parseInt(id)) : [],
         logicType: questionEl.dataset.conditionalLogicType || 'single',
         showIfMet: questionEl.dataset.showIfMet === 'true',
         isConditional: parentId !== null,
@@ -87,33 +88,49 @@ window.SurveyConditionalFlow = class {
     const input = event.target;
     
     // Check if this input can trigger conditionals
-    if (!input.dataset.triggersConditionals) return;
-    
-    const questionId = parseInt(input.dataset.questionId);
-    let selectedValue;
-    
-    if (input.type === 'radio' || input.type === 'range') {
-      selectedValue = parseFloat(input.value);
-    } else if (input.type === 'checkbox') {
-      // Handle checkbox logic if needed
+    if (!input.dataset.triggersConditionals) {
       return;
-    } else {
-      // Handle other input types
-      selectedValue = input.value;
     }
     
-    this.handleQuestionChange(questionId, selectedValue);
+    const questionId = parseInt(input.dataset.questionId);
+    
+    // Handle different input types
+    if (input.type === 'radio' && input.name.includes('numeric_answer')) {
+      // Scale questions - pass numeric value
+      const selectedValue = parseFloat(input.value);
+      this.handleQuestionChange(questionId, selectedValue, 'scale');
+    } else if (input.type === 'radio' && input.name.includes('option_id')) {
+      // Single choice questions - pass selected option ID
+      const selectedOptionId = parseInt(input.value);
+      this.handleQuestionChange(questionId, selectedOptionId, 'option');
+    } else if (input.type === 'checkbox' && input.name.includes('option_ids')) {
+      // Multiple choice questions - pass all selected option IDs
+      const selectedOptionIds = this.getSelectedOptionIds(questionId);
+      this.handleQuestionChange(questionId, selectedOptionIds, 'option');
+    } else {
+      // Other input types (text, etc.) - for scale-based conditionals
+      const selectedValue = input.value;
+      this.handleQuestionChange(questionId, selectedValue, 'scale');
+    }
   }
 
-  handleQuestionChange(parentQuestionId, selectedValue) {
+  getSelectedOptionIds(questionId) {
+    const checkboxes = document.querySelectorAll(`input[type="checkbox"][name*="[${questionId}]"][name*="option_ids"]:checked`);
+    return Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
+  }
+
+  handleQuestionChange(parentQuestionId, selectedValue, answerType = 'scale') {
     const childQuestions = this.conditionalQuestions.get(parentQuestionId);
     
-    if (!childQuestions) return;
+    if (!childQuestions) {
+      return;
+    }
 
     childQuestions.forEach(childQuestion => {
       const shouldShow = this.evaluateComplexCondition(
         selectedValue, 
-        childQuestion
+        childQuestion,
+        answerType
       );
 
       this.toggleQuestion(childQuestion, shouldShow);
@@ -123,31 +140,54 @@ window.SurveyConditionalFlow = class {
     this.updateFormValidation();
   }
 
-  evaluateComplexCondition(answerValue, questionData) {
-    const { logicType, operator, value, operator2, value2, showIfMet } = questionData;
+  evaluateComplexCondition(answerValue, questionData, answerType = 'scale') {
+    const { conditionalType, logicType, operator, value, operator2, value2, showIfMet, triggerOptionIds } = questionData;
     
     let conditionMet = false;
     
-    switch (logicType) {
-      case 'and':
-        conditionMet = this.evaluateSingleCondition(answerValue, operator, value) &&
-                      this.evaluateSingleCondition(answerValue, operator2, value2);
-        break;
-      case 'or':
-        conditionMet = this.evaluateSingleCondition(answerValue, operator, value) ||
-                      this.evaluateSingleCondition(answerValue, operator2, value2);
-        break;
-      case 'range':
-        // For range conditions, both conditions must be true (AND logic)
-        conditionMet = this.evaluateSingleCondition(answerValue, operator, value) &&
-                      this.evaluateSingleCondition(answerValue, operator2, value2);
-        break;
-      default:
-        // Single condition logic
-        conditionMet = this.evaluateSingleCondition(answerValue, operator, value);
+    // Handle option-based conditionals
+    if (conditionalType === 'option') {
+      conditionMet = this.evaluateOptionCondition(answerValue, triggerOptionIds, answerType);
+    } else {
+      // Handle scale-based conditionals (existing logic)
+      switch (logicType) {
+        case 'and':
+          conditionMet = this.evaluateSingleCondition(answerValue, operator, value) &&
+                        this.evaluateSingleCondition(answerValue, operator2, value2);
+          break;
+        case 'or':
+          conditionMet = this.evaluateSingleCondition(answerValue, operator, value) ||
+                        this.evaluateSingleCondition(answerValue, operator2, value2);
+          break;
+        case 'range':
+          // For range conditions, both conditions must be true (AND logic)
+          conditionMet = this.evaluateSingleCondition(answerValue, operator, value) &&
+                        this.evaluateSingleCondition(answerValue, operator2, value2);
+          break;
+        default:
+          // Single condition logic
+          conditionMet = this.evaluateSingleCondition(answerValue, operator, value);
+      }
     }
     
     return showIfMet ? conditionMet : !conditionMet;
+  }
+
+  evaluateOptionCondition(answerValue, triggerOptionIds, answerType) {
+    if (!triggerOptionIds || triggerOptionIds.length === 0) {
+      return false;
+    }
+    
+    if (answerType === 'option') {
+      // For single choice: answerValue is a single option ID
+      // For multiple choice: answerValue is an array of option IDs
+      const selectedIds = Array.isArray(answerValue) ? answerValue : [answerValue];
+      
+      // Return true if any of the selected options matches any trigger option (OR logic)
+      return selectedIds.some(selectedId => triggerOptionIds.includes(selectedId));
+    }
+    
+    return false;
   }
 
   evaluateSingleCondition(answerValue, operator, conditionalValue) {
@@ -255,11 +295,26 @@ window.SurveyConditionalFlow = class {
         const element = this.getQuestionElement(questionData);
         if (!element) return;
         
-        const inputs = element.querySelectorAll('input[type="radio"]:checked, input[type="range"]');
-        inputs.forEach(input => {
+        // Handle scale-based triggers
+        const scaleInputs = element.querySelectorAll('input[type="radio"][name*="numeric_answer"]:checked, input[type="range"]');
+        scaleInputs.forEach(input => {
           const selectedValue = parseFloat(input.value);
-          this.handleQuestionChange(questionData.id, selectedValue);
+          this.handleQuestionChange(questionData.id, selectedValue, 'scale');
         });
+        
+        // Handle option-based triggers (single choice)
+        const singleChoiceInputs = element.querySelectorAll('input[type="radio"][name*="option_id"]:checked');
+        singleChoiceInputs.forEach(input => {
+          const selectedOptionId = parseInt(input.value);
+          this.handleQuestionChange(questionData.id, selectedOptionId, 'option');
+        });
+        
+        // Handle option-based triggers (multiple choice)
+        const multipleChoiceInputs = element.querySelectorAll('input[type="checkbox"][name*="option_ids"]:checked');
+        if (multipleChoiceInputs.length > 0) {
+          const selectedOptionIds = Array.from(multipleChoiceInputs).map(input => parseInt(input.value));
+          this.handleQuestionChange(questionData.id, selectedOptionIds, 'option');
+        }
       }
     });
     

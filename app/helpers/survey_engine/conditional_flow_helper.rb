@@ -31,18 +31,29 @@ module SurveyEngine
       
       attributes = {
         'data-conditional-parent' => question.conditional_parent_id.to_s,
-        'data-conditional-operator' => question.conditional_operator,
-        'data-conditional-value' => question.conditional_value.to_s,
+        'data-conditional-type' => question.conditional_type || 'scale',
         'data-conditional-logic-type' => question.conditional_logic_type || 'single',
         'data-show-if-met' => question.show_if_condition_met.to_s
       }
       
-      # Add second condition attributes for complex logic
-      if question.conditional_logic_type.present? && question.conditional_logic_type != 'single'
+      if question.conditional_type == 'option'
+        # For option-based conditionals, store the trigger option IDs
+        trigger_option_ids = question.conditional_options.pluck(:id)
+        attributes['data-conditional-option-ids'] = trigger_option_ids.join(',')
+      else
+        # For scale-based conditionals, store operator and value
         attributes.merge!({
-          'data-conditional-operator2' => question.conditional_operator_2,
-          'data-conditional-value2' => question.conditional_value_2.to_s
+          'data-conditional-operator' => question.conditional_operator,
+          'data-conditional-value' => question.conditional_value.to_s
         })
+        
+        # Add second condition attributes for complex logic
+        if question.conditional_logic_type.present? && question.conditional_logic_type != 'single'
+          attributes.merge!({
+            'data-conditional-operator2' => question.conditional_operator_2,
+            'data-conditional-value2' => question.conditional_value_2.to_s
+          })
+        end
       end
       
       attributes
@@ -55,8 +66,7 @@ module SurveyEngine
       {
         'data-triggers-conditionals' => 'true',
         'data-question-id' => question.id.to_s,
-        'data-input-name' => input_name,
-        'onchange' => "SurveyConditionalFlow.handleInputChange(this)"
+        'data-input-name' => input_name
       }
     end
     
@@ -79,23 +89,35 @@ module SurveyEngine
     
     # Generate JavaScript configuration for the entire survey
     def conditional_flow_config(survey, questions = nil)
-      questions_to_use = questions || survey.questions.includes(:conditional_parent, :conditional_questions)
+      questions_to_use = questions || survey.questions.includes(:conditional_parent, :conditional_questions, :conditional_options)
       questions_data = questions_to_use.map do |question|
-        {
+        question_data = {
           id: question.id,
           type: question.question_type.name,
           isConditional: question.is_conditional?,
           parentId: question.conditional_parent_id,
-          operator: question.conditional_operator,
-          value: question.conditional_value&.to_i,
-          operator2: question.conditional_operator_2,
-          value2: question.conditional_value_2&.to_i,
+          conditionalType: question.conditional_type || 'scale',
           logicType: question.conditional_logic_type || 'single',
           showIfMet: question.show_if_condition_met,
           hasConditionals: question.has_conditional_questions?,
           childrenIds: question.conditional_questions.pluck(:id),
           required: question.is_required?
-        }.compact
+        }
+        
+        if question.is_conditional?
+          if question.conditional_type == 'option'
+            question_data[:triggerOptionIds] = question.conditional_options.pluck(:id)
+          else
+            question_data.merge!({
+              operator: question.conditional_operator,
+              value: question.conditional_value&.to_i,
+              operator2: question.conditional_operator_2,
+              value2: question.conditional_value_2&.to_i
+            })
+          end
+        end
+        
+        question_data.compact
       end
       
       {

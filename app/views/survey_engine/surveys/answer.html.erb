@@ -94,7 +94,8 @@
                     <%= radio_button_tag "answers[#{question.id}][option_id]", option.id, 
                         existing_answer&.options&.include?(option),
                         id: "question_#{question.id}_option_#{option.id}",
-                        required: question.required? %>
+                        required: question.required?,
+                        **conditional_trigger_attributes(question, "answers[#{question.id}][option_id]") %>
                     <span><%= option.option_text %></span>
                   </label>
                   
@@ -113,7 +114,8 @@
                   <label class="survey-question-option">
                     <%= check_box_tag "answers[#{question.id}][option_ids][]", option.id, 
                         existing_answer&.options&.include?(option),
-                        id: "question_#{question.id}_option_#{option.id}" %>
+                        id: "question_#{question.id}_option_#{option.id}",
+                        **conditional_trigger_attributes(question, "answers[#{question.id}][option_ids][]") %>
                     <span><%= option.option_text %></span>
                   </label>
                 <% end %>
@@ -211,7 +213,7 @@
     </div>
   <% end %>
 
-  <%= conditional_flow_javascript_tag(inline: true) %>
+  <%= conditional_flow_javascript_tag(inline: false) %>
   <%= initialize_conditional_flow(@survey, @questions) %>
 
   <script>

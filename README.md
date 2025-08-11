@@ -427,6 +427,194 @@ The engine includes these built-in question types:
 - **boolean** - Yes/No questions
 - **number** - Numeric input
 - **matrix_scale** - Matrix questions (multiple items rated on same scale)
+- **ranking** - Drag-and-drop ranking of options
+
+## Conditional Questions
+
+SurveyEngine supports advanced conditional logic to show/hide questions based on previous answers. Questions can be conditionally displayed based on either scale values or specific option selections.
+
+### Types of Conditional Logic
+
+#### 1. Scale-Based Conditionals
+Show questions based on numeric scale responses (ratings, NPS scores, etc.):
+
+```ruby
+# Create parent scale question
+parent_question = SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: SurveyEngine::QuestionType.find_by(name: "scale"),
+  title: "How satisfied are you with our service?",
+  scale_min: 1,
+  scale_max: 5,
+  order_position: 1
+)
+
+# Create conditional follow-up question
+follow_up = SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: SurveyEngine::QuestionType.find_by(name: "text"),
+  title: "What could we do to improve?",
+  order_position: 2,
+  # Conditional logic: show only if rating is 3 or below
+  conditional_parent: parent_question,
+  conditional_type: 'scale',
+  conditional_operator: 'less_than_or_equal',
+  conditional_value: 3,
+  show_if_condition_met: true
+)
+```
+
+#### 2. Option-Based Conditionals
+Show questions based on specific option selections from single or multiple choice questions:
+
+```ruby
+# Create parent single choice question
+satisfaction_question = SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: SurveyEngine::QuestionType.find_by(name: "single_choice"),
+  title: "Are you satisfied with our service?",
+  order_position: 1
+)
+
+# Add options
+yes_option = SurveyEngine::Option.create!(
+  question: satisfaction_question,
+  option_text: "Yes",
+  option_value: "yes",
+  order_position: 1
+)
+
+no_option = SurveyEngine::Option.create!(
+  question: satisfaction_question,
+  option_text: "No", 
+  option_value: "no",
+  order_position: 2
+)
+
+# Create conditional question that shows only when "No" is selected
+improvement_question = SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: SurveyEngine::QuestionType.find_by(name: "textarea"),
+  title: "What specific improvements would you like to see?",
+  order_position: 2,
+  # Conditional logic: show only if "No" option is selected
+  conditional_parent: satisfaction_question,
+  conditional_type: 'option',
+  show_if_condition_met: true
+)
+
+# Link the trigger option
+SurveyEngine::QuestionConditionalOption.create!(
+  question: improvement_question,
+  option: no_option
+)
+```
+
+### Advanced Conditional Logic
+
+#### Multiple Conditions (AND/OR Logic)
+```ruby
+# Create question that shows if rating is between 6-8 (NPS passives)
+SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: SurveyEngine::QuestionType.find_by(name: "text"),
+  title: "What would make you more likely to recommend us?",
+  conditional_parent: nps_question,
+  conditional_type: 'scale',
+  conditional_logic_type: 'range',  # Both conditions must be true
+  conditional_operator: 'greater_than_or_equal',
+  conditional_value: 6,
+  conditional_operator_2: 'less_than_or_equal', 
+  conditional_value_2: 8,
+  show_if_condition_met: true
+)
+```
+
+#### Multiple Trigger Options
+A conditional question can be triggered by multiple options:
+
+```ruby
+# Create question triggered by either "No" or "Not Sure" options
+conditional_question = SurveyEngine::Question.create!(
+  survey: survey,
+  question_type: SurveyEngine::QuestionType.find_by(name: "textarea"),
+  title: "Please explain your concerns:",
+  conditional_parent: satisfaction_question,
+  conditional_type: 'option',
+  show_if_condition_met: true
+)
+
+# Link multiple trigger options
+SurveyEngine::QuestionConditionalOption.create!(question: conditional_question, option: no_option)
+SurveyEngine::QuestionConditionalOption.create!(question: conditional_question, option: not_sure_option)
+```
+
+### Conditional Logic Reference
+
+#### Scale-Based Operators
+- `equal_to` - Exact match
+- `greater_than` - Greater than value
+- `less_than` - Less than value  
+- `greater_than_or_equal` - Greater than or equal to value
+- `less_than_or_equal` - Less than or equal to value
+
+#### Logic Types for Multiple Conditions
+- `single` - Single condition (default)
+- `and` - Both conditions must be true
+- `or` - Either condition can be true
+- `range` - Value must be between two values (uses AND logic)
+
+#### Show/Hide Behavior
+- `show_if_condition_met: true` - Show question when condition is met
+- `show_if_condition_met: false` - Hide question when condition is met (show when NOT met)
+
+### Frontend Behavior
+
+The conditional logic automatically handles:
+
+- **Dynamic Show/Hide**: Questions appear/disappear instantly based on selections
+- **Question Renumbering**: Visible questions are automatically renumbered
+- **Form Validation**: Hidden questions are excluded from validation
+- **Answer Clearing**: Answers are cleared when questions become hidden
+- **Smooth Animations**: CSS transitions for showing/hiding questions
+
+### Conditional Questions API
+
+#### Check if Question is Conditional
+```ruby
+question.is_conditional?  # Returns true if question has conditional logic
+question.conditional_type # Returns 'scale' or 'option'
+```
+
+#### Evaluate Conditions Programmatically
+```ruby
+# For scale-based conditionals
+question.should_show?(numeric_value)
+
+# For option-based conditionals  
+answer = SurveyEngine::Answer.find(answer_id)
+question.should_show?(answer)
+```
+
+#### Query Conditional Relationships
+```ruby
+# Get all conditional questions for a parent
+parent_question.conditional_questions
+
+# Get all questions that have conditional children
+Survey.questions.joins(:conditional_questions).distinct
+
+# Get trigger options for option-based conditionals
+conditional_question.conditional_options
+```
+
+### Best Practices
+
+1. **Logical Flow**: Ensure conditional questions follow a logical sequence
+2. **Clear Triggers**: Use clear, unambiguous trigger conditions
+3. **Avoid Deep Nesting**: Limit conditional chains to 2-3 levels deep
+4. **Test Thoroughly**: Test all conditional paths before deployment
+5. **User Experience**: Consider the user journey and avoid confusing branching
 
 ## Integration Patterns
 
