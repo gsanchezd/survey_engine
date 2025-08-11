@@ -10,12 +10,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_04_150139) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_11_205825) do
   create_table "survey_engine_answer_options", force: :cascade do |t|
     t.integer "answer_id", null: false
     t.integer "option_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "ranking_order"
     t.index ["answer_id", "option_id"], name: "index_answer_options_on_answer_option", unique: true
     t.index ["answer_id"], name: "index_survey_engine_answer_options_on_answer_id"
     t.index ["option_id"], name: "index_survey_engine_answer_options_on_option_id"

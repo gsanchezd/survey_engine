@@ -636,10 +636,150 @@ function getMatrixCompletionStatus(matrixQuestion) {
   };
 }
 
+// Ranking Question Functionality
+document.addEventListener('DOMContentLoaded', function() {
+  initializeRankingQuestions();
+});
+
+function initializeRankingQuestions() {
+  const rankingContainers = document.querySelectorAll('.survey-ranking-container');
+  
+  rankingContainers.forEach(function(container) {
+    setupRankingQuestion(container);
+  });
+}
+
+function setupRankingQuestion(container) {
+  const questionId = container.dataset.questionId;
+  const availableList = container.querySelector(`#available-options-${questionId}`);
+  const rankedList = container.querySelector(`#ranked-options-${questionId}`);
+  const inputsContainer = container.querySelector(`#ranking-inputs-${questionId}`);
+  
+  // Enable drag and drop for both lists
+  enableDragAndDrop(availableList, rankedList, inputsContainer, questionId);
+  enableDragAndDrop(rankedList, availableList, inputsContainer, questionId);
+}
+
+function enableDragAndDrop(sourceList, targetList, inputsContainer, questionId) {
+  const items = sourceList.querySelectorAll('.survey-ranking-item');
+  
+  items.forEach(function(item) {
+    item.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('text/plain', JSON.stringify({
+        optionId: item.dataset.optionId,
+        optionText: item.textContent.trim(),
+        sourceListId: sourceList.id
+      }));
+      item.classList.add('dragging');
+    });
+    
+    item.addEventListener('dragend', function(e) {
+      item.classList.remove('dragging');
+    });
+  });
+  
+  // Handle drop events on lists
+  [sourceList, targetList].forEach(function(list) {
+    list.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      list.classList.add('drag-over');
+    });
+    
+    list.addEventListener('dragleave', function(e) {
+      list.classList.remove('drag-over');
+    });
+    
+    list.addEventListener('drop', function(e) {
+      e.preventDefault();
+      list.classList.remove('drag-over');
+      
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      const draggedItem = document.querySelector(`[data-option-id="${data.optionId}"]`);
+      
+      if (draggedItem) {
+        moveRankingItem(draggedItem, list, inputsContainer, questionId);
+      }
+    });
+  });
+}
+
+function moveRankingItem(item, targetList, inputsContainer, questionId) {
+  const optionId = item.dataset.optionId;
+  
+  // Remove from current position
+  item.remove();
+  
+  // Add to target list
+  targetList.appendChild(item);
+  
+  // Re-enable drag and drop for the moved item
+  setupDragForItem(item, inputsContainer, questionId);
+  
+  // Update hidden inputs
+  updateRankingInputs(targetList, inputsContainer, questionId);
+}
+
+function setupDragForItem(item, inputsContainer, questionId) {
+  item.addEventListener('dragstart', function(e) {
+    e.dataTransfer.setData('text/plain', JSON.stringify({
+      optionId: item.dataset.optionId,
+      optionText: item.textContent.trim()
+    }));
+    item.classList.add('dragging');
+  });
+  
+  item.addEventListener('dragend', function(e) {
+    item.classList.remove('dragging');
+  });
+}
+
+function updateRankingInputs(rankedList, inputsContainer, questionId) {
+  // Clear existing inputs
+  inputsContainer.innerHTML = '';
+  
+  // Create new inputs based on current ranking order
+  const rankedItems = rankedList.querySelectorAll('.survey-ranking-item');
+  rankedItems.forEach(function(item, index) {
+    const optionId = item.dataset.optionId;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = `answers[${questionId}][ranking][${optionId}]`;
+    input.value = index + 1;
+    inputsContainer.appendChild(input);
+  });
+}
+
+// Add click-to-move functionality for mobile/accessibility
+function addClickToMoveRanking() {
+  const rankingItems = document.querySelectorAll('.survey-ranking-item');
+  
+  rankingItems.forEach(function(item) {
+    item.addEventListener('click', function(e) {
+      if (item.classList.contains('selected-for-move')) {
+        item.classList.remove('selected-for-move');
+      } else {
+        // Clear other selections
+        document.querySelectorAll('.survey-ranking-item.selected-for-move')
+          .forEach(function(selected) {
+            selected.classList.remove('selected-for-move');
+          });
+        
+        item.classList.add('selected-for-move');
+      }
+    });
+  });
+}
+
 // Export functions for potential external use
 window.SurveyEngine = window.SurveyEngine || {};
 window.SurveyEngine.Matrix = {
   validateAllMatrixRows: validateAllMatrixRows,
   getMatrixCompletionStatus: getMatrixCompletionStatus,
   initializeMatrixQuestions: initializeMatrixQuestions
+};
+
+window.SurveyEngine.Ranking = {
+  initializeRankingQuestions: initializeRankingQuestions,
+  setupRankingQuestion: setupRankingQuestion,
+  updateRankingInputs: updateRankingInputs
 };

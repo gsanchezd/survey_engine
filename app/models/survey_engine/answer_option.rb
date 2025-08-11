@@ -10,9 +10,12 @@ module SurveyEngine
     validates :answer_id, presence: true, unless: :new_record_with_built_answer?
     validates :option_id, presence: true
     validates :answer_id, uniqueness: { scope: :option_id, message: "cannot select the same option twice" }
+    validates :ranking_order, numericality: { greater_than: 0, allow_nil: true }
     validate :option_belongs_to_same_question
+    validate :ranking_order_uniqueness_for_ranking_questions
 
     scope :recent, -> { order(created_at: :desc) }
+    scope :by_ranking_order, -> { order(:ranking_order) }
 
     delegate :option_text, :option_value, :is_other?, :is_exclusive?, to: :option
 
@@ -40,6 +43,22 @@ module SurveyEngine
         unless answer.question_id == option.question_id
           errors.add(:option, "must belong to the same question as the answer")
         end
+      end
+    end
+
+    def ranking_order_uniqueness_for_ranking_questions
+      return unless answer.present? && answer.question.present?
+      return unless answer.question.is_ranking_question?
+      return unless ranking_order.present?
+
+      # Check for duplicate ranking orders within the same answer
+      duplicate_exists = answer.answer_options
+                              .where(ranking_order: ranking_order)
+                              .where.not(id: id)
+                              .exists?
+
+      if duplicate_exists
+        errors.add(:ranking_order, "must be unique within the answer")
       end
     end
   end

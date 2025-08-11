@@ -150,6 +150,44 @@
                   placeholder: question.placeholder_text || t('survey_engine.surveys.answer.email_placeholder'),
                   class: "survey-input",
                   required: question.required? %>
+            <% when 'ranking' %>
+              <div class="survey-ranking-container" data-question-id="<%= question.id %>">
+                <p class="survey-ranking-instructions"><%= t('survey_engine.surveys.answer.ranking_instructions') %></p>
+                
+                <% ranked_options = existing_answer&.ranked_options || [] %>
+                <% unranked_options = question.options.ordered.reject { |opt| ranked_options.any? { |ro| ro.option_id == opt.id } } %>
+                
+                <div class="survey-ranking-lists">
+                  <div class="survey-ranking-available">
+                    <h4><%= t('survey_engine.surveys.answer.available_options') %></h4>
+                    <ul class="survey-ranking-list" id="available-options-<%= question.id %>">
+                      <% unranked_options.each do |option| %>
+                        <li class="survey-ranking-item" data-option-id="<%= option.id %>" draggable="true">
+                          <%= option.option_text %>
+                        </li>
+                      <% end %>
+                    </ul>
+                  </div>
+                  
+                  <div class="survey-ranking-ranked">
+                    <h4><%= t('survey_engine.surveys.answer.your_ranking') %></h4>
+                    <ol class="survey-ranking-list" id="ranked-options-<%= question.id %>">
+                      <% ranked_options.each do |ranked_option| %>
+                        <li class="survey-ranking-item" data-option-id="<%= ranked_option.option_id %>" draggable="true">
+                          <%= ranked_option.option.option_text %>
+                        </li>
+                      <% end %>
+                    </ol>
+                  </div>
+                </div>
+                
+                <!-- Hidden inputs to store ranking data -->
+                <div class="survey-ranking-inputs" id="ranking-inputs-<%= question.id %>">
+                  <% ranked_options.each_with_index do |ranked_option, index| %>
+                    <input type="hidden" name="answers[<%= question.id %>][ranking][<%= ranked_option.option_id %>]" value="<%= index + 1 %>">
+                  <% end %>
+                </div>
+              </div>
             <% end %>
             </div>
           <% end %>
@@ -177,10 +215,15 @@
   <%= initialize_conditional_flow(@survey, @questions) %>
 
   <script>
-    // Initialize matrix questions after page load
+    // Initialize matrix and ranking questions after page load
     document.addEventListener('DOMContentLoaded', function() {
-      if (typeof SurveyEngine !== 'undefined' && SurveyEngine.Matrix) {
-        SurveyEngine.Matrix.initializeMatrixQuestions();
+      if (typeof SurveyEngine !== 'undefined') {
+        if (SurveyEngine.Matrix) {
+          SurveyEngine.Matrix.initializeMatrixQuestions();
+        }
+        if (SurveyEngine.Ranking) {
+          SurveyEngine.Ranking.initializeRankingQuestions();
+        }
       }
     });
   </script>

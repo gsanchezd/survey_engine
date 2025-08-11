@@ -89,6 +89,12 @@ module SurveyEngine
         description: 'Matriz de selección única',
         allows_options: true,
         allows_multiple_selections: false
+      },
+      ranking: {
+        name: 'ranking',
+        description: 'Ordenar elementos por prioridad',
+        allows_options: true,
+        allows_multiple_selections: true
       }
     }.freeze
 

@@ -49,6 +49,7 @@ module SurveyEngine
       return numeric_answer.to_s if numeric_answer.present?
       return decimal_answer.to_s if decimal_answer.present?
       return boolean_answer? ? "Yes" : "No" if boolean_answer.present?
+      return ranking_display_value if question.is_ranking_question? && answer_options.any?
       return selected_option_texts.join(", ") if answer_options.any?
       
       "No answer"
@@ -70,6 +71,19 @@ module SurveyEngine
       base_answer = display_value
       return "#{base_answer} (Other: #{other_text})" if has_other_text?
       base_answer
+    end
+
+    def ranked_options
+      return [] unless question.is_ranking_question?
+      answer_options.includes(:option).by_ranking_order
+    end
+
+    def ranking_display_value
+      return display_value unless question.is_ranking_question?
+      
+      ranked_options.map.with_index(1) do |answer_option, index|
+        "#{index}. #{answer_option.option_text}"
+      end.join(", ")
     end
 
     private
@@ -124,6 +138,17 @@ module SurveyEngine
         option_count = answer_options.loaded? ? answer_options.size : answer_options.count
         if (question_type == 'single_choice' || question_type == 'matrix_scale') && option_count > 1
           errors.add(:base, "Can only select one option for single choice questions")
+        end
+      when 'ranking'
+        # Ranking questions require all options to be ranked
+        has_options = answer_options.any? || answer_options.loaded? || answer_options.size > 0
+        unless has_options
+          errors.add(:base, "Must rank all options for ranking questions")
+        end
+        
+        # Validate that all answer_options have ranking_order
+        if answer_options.any? { |ao| ao.ranking_order.blank? }
+          errors.add(:base, "All selected options must have a ranking order")
         end
       end
     end

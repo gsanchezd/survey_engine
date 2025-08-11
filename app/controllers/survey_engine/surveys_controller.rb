@@ -157,6 +157,18 @@ module SurveyEngine
               end
               answer.other_text = answer_data["other_text"] if answer_data["other_text"].present?
             end
+          when "ranking"
+            if answer_data["ranking"].present?
+              answer_data["ranking"].each do |option_id, ranking_order|
+                option = Option.find(option_id)
+                if answer.new_record?
+                  answer.answer_options.build(option: option, ranking_order: ranking_order.to_i)
+                else
+                  answer.save! # Save first if existing record
+                  AnswerOption.create!(answer: answer, option: option, ranking_order: ranking_order.to_i)
+                end
+              end
+            end
           end
 
           if answer.save
@@ -329,7 +341,7 @@ module SurveyEngine
         answer.numeric_answer.present?
       when "boolean"
         !answer.boolean_answer.nil?
-      when "single_choice", "multiple_choice", "matrix_scale"
+      when "single_choice", "multiple_choice", "matrix_scale", "ranking"
         answer.answer_options.any?
       else
         false
@@ -394,6 +406,37 @@ module SurveyEngine
           option_counts: option_counts,
           other_responses: other_responses
         }
+      when "ranking"
+        ranking_data = {}
+        position_counts = {}
+
+        answers.each do |answer|
+          ranking_options = answer.answer_options.includes(:option).order(:ranking_order)
+          ranking_options.each_with_index do |answer_option, index|
+            option_text = answer_option.option.option_text
+            position = index + 1
+            
+            ranking_data[option_text] ||= []
+            ranking_data[option_text] << position
+            
+            position_counts[position] ||= {}
+            position_counts[position][option_text] = (position_counts[position][option_text] || 0) + 1
+          end
+        end
+
+        # Calculate average ranking positions
+        average_rankings = {}
+        ranking_data.each do |option_text, positions|
+          average_rankings[option_text] = (positions.sum.to_f / positions.count).round(2)
+        end
+
+        {
+          type: "ranking",
+          response_count: answers.count,
+          average_rankings: average_rankings.sort_by { |_, avg| avg },
+          position_counts: position_counts,
+          ranking_data: ranking_data
+        }
       else
         { type: "unknown", response_count: 0 }
       end
@@ -451,6 +494,8 @@ module SurveyEngine
         result = option_texts.join(", ")
         result += " (Other: #{answer.other_text})" if answer.other_text.present?
         result
+      when "ranking"
+        answer.ranking_display_value
       else
         "Unknown"
       end

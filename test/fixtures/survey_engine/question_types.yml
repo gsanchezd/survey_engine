@@ -23,3 +23,9 @@ scale:
   description: Escala Likert o de valoración
   allows_options: false
   allows_multiple_selections: false
+
+ranking:
+  name: ranking
+  description: Ordenar elementos por prioridad
+  allows_options: true
+  allows_multiple_selections: true

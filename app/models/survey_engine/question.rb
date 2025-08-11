@@ -125,6 +125,10 @@ module SurveyEngine
       question_type&.name == 'matrix_choice'
     end
 
+    def is_ranking_question?
+      question_type&.name == 'ranking'
+    end
+
     # For matrix rows, use parent's options
     def effective_options
       if is_matrix_row? && matrix_parent.present?
