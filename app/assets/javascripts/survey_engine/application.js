@@ -713,49 +713,152 @@ function setupRankingQuestion(container) {
   // Enable drag and drop for both lists
   enableDragAndDrop(availableList, rankedList, inputsContainer, questionId);
   enableDragAndDrop(rankedList, availableList, inputsContainer, questionId);
+  
+  // Initialize ranking numbers if there are already ranked items
+  updateRankingNumbers(rankedList);
+  
+  // Add helpful instructions
+  addRankingInstructions(container);
 }
 
 function enableDragAndDrop(sourceList, targetList, inputsContainer, questionId) {
   const items = sourceList.querySelectorAll('.survey-ranking-item');
   
   items.forEach(function(item) {
-    item.addEventListener('dragstart', function(e) {
-      e.dataTransfer.setData('text/plain', JSON.stringify({
-        optionId: item.dataset.optionId,
-        optionText: item.textContent.trim(),
-        sourceListId: sourceList.id
-      }));
-      item.classList.add('dragging');
-    });
-    
-    item.addEventListener('dragend', function(e) {
-      item.classList.remove('dragging');
-    });
+    setupDragForItem(item, inputsContainer, questionId);
   });
   
-  // Handle drop events on lists
+  // Handle drop events on lists with enhanced visual feedback
   [sourceList, targetList].forEach(function(list) {
-    list.addEventListener('dragover', function(e) {
-      e.preventDefault();
-      list.classList.add('drag-over');
-    });
-    
-    list.addEventListener('dragleave', function(e) {
-      list.classList.remove('drag-over');
-    });
-    
-    list.addEventListener('drop', function(e) {
-      e.preventDefault();
-      list.classList.remove('drag-over');
-      
-      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-      const draggedItem = document.querySelector(`[data-option-id="${data.optionId}"]`);
-      
-      if (draggedItem) {
-        moveRankingItem(draggedItem, list, inputsContainer, questionId);
-      }
-    });
+    setupEnhancedDropZone(list, inputsContainer, questionId);
   });
+}
+
+function setupEnhancedDropZone(list, inputsContainer, questionId) {
+  let dragOverTimeout;
+  let dropIndicator = null;
+  
+  list.addEventListener('dragover', function(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Clear any existing timeout
+    clearTimeout(dragOverTimeout);
+    
+    // Add visual feedback
+    list.classList.add('drag-over');
+    
+    // Get the position where the item would be inserted
+    const afterElement = getDragAfterElement(list, e.clientY);
+    const dropPosition = getDropPosition(list, afterElement);
+    
+    // Show drop indicator
+    showDropIndicator(list, dropPosition, afterElement);
+  });
+  
+  list.addEventListener('dragleave', function(e) {
+    // Only remove visual feedback if we're truly leaving the container
+    dragOverTimeout = setTimeout(function() {
+      list.classList.remove('drag-over');
+      removeDropIndicator(list);
+    }, 50);
+  });
+  
+  list.addEventListener('drop', function(e) {
+    e.preventDefault();
+    clearTimeout(dragOverTimeout);
+    list.classList.remove('drag-over');
+    removeDropIndicator(list);
+    
+    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+    const draggedItem = document.querySelector(`[data-option-id="${data.optionId}"]`);
+    
+    if (draggedItem) {
+      const afterElement = getDragAfterElement(list, e.clientY);
+      moveRankingItemToPosition(draggedItem, list, afterElement, inputsContainer, questionId);
+    }
+  });
+}
+
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.survey-ranking-item:not(.dragging)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+function getDropPosition(list, afterElement) {
+  if (!afterElement) {
+    return 'end'; // Insert at the end
+  }
+  return 'before'; // Insert before the afterElement
+}
+
+function showDropIndicator(list, position, afterElement) {
+  // Remove any existing indicator
+  removeDropIndicator(list);
+  
+  // Create drop indicator
+  const indicator = document.createElement('div');
+  indicator.className = 'ranking-drop-indicator';
+  indicator.innerHTML = '<div class="drop-line"></div><div class="drop-arrow">▼</div>';
+  
+  // Position the indicator
+  if (position === 'end' || !afterElement) {
+    list.appendChild(indicator);
+  } else {
+    list.insertBefore(indicator, afterElement);
+  }
+}
+
+function removeDropIndicator(list) {
+  const indicator = list.querySelector('.ranking-drop-indicator');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+function moveRankingItemToPosition(item, targetList, afterElement, inputsContainer, questionId) {
+  // Add smooth transition effect
+  item.style.transition = 'all 0.3s ease';
+  
+  // Remove from current position
+  item.remove();
+  
+  // Insert at the correct position
+  if (!afterElement) {
+    targetList.appendChild(item);
+  } else {
+    targetList.insertBefore(item, afterElement);
+  }
+  
+  // Add insertion animation
+  item.classList.add('just-moved');
+  setTimeout(function() {
+    item.classList.remove('just-moved');
+    item.style.transition = '';
+  }, 300);
+  
+  // Re-enable drag and drop for the moved item
+  setupDragForItem(item, inputsContainer, questionId);
+  
+  // Update hidden inputs and numbering
+  updateRankingInputs(targetList, inputsContainer, questionId);
+  updateRankingNumbers(targetList);
+  
+  // Update empty states for both lists
+  const container = targetList.closest('.survey-ranking-container');
+  const availableList = container.querySelector('.survey-ranking-available .survey-ranking-list');
+  const rankedList = container.querySelector('.survey-ranking-ranked .survey-ranking-list');
+  updateEmptyStates(availableList, rankedList);
 }
 
 function moveRankingItem(item, targetList, inputsContainer, questionId) {
@@ -775,16 +878,55 @@ function moveRankingItem(item, targetList, inputsContainer, questionId) {
 }
 
 function setupDragForItem(item, inputsContainer, questionId) {
+  // Enhanced drag start with better visual feedback
   item.addEventListener('dragstart', function(e) {
     e.dataTransfer.setData('text/plain', JSON.stringify({
       optionId: item.dataset.optionId,
       optionText: item.textContent.trim()
     }));
-    item.classList.add('dragging');
+    
+    // Add dragging class with delay to allow for grab effect
+    setTimeout(function() {
+      item.classList.add('dragging');
+    }, 0);
+    
+    // Set drag image to be slightly transparent
+    e.dataTransfer.effectAllowed = 'move';
   });
   
   item.addEventListener('dragend', function(e) {
     item.classList.remove('dragging');
+    
+    // Clean up any remaining visual states
+    document.querySelectorAll('.ranking-drop-indicator').forEach(function(indicator) {
+      indicator.remove();
+    });
+    document.querySelectorAll('.drag-over').forEach(function(element) {
+      element.classList.remove('drag-over');
+    });
+  });
+  
+  // Add hover effects for better UX
+  item.addEventListener('mouseenter', function() {
+    item.classList.add('hover');
+  });
+  
+  item.addEventListener('mouseleave', function() {
+    item.classList.remove('hover');
+  });
+}
+
+function updateRankingNumbers(rankedList) {
+  const rankedItems = rankedList.querySelectorAll('.survey-ranking-item');
+  rankedItems.forEach(function(item, index) {
+    // Add or update ranking number
+    let numberElement = item.querySelector('.ranking-number');
+    if (!numberElement) {
+      numberElement = document.createElement('span');
+      numberElement.className = 'ranking-number';
+      item.insertBefore(numberElement, item.firstChild);
+    }
+    numberElement.textContent = (index + 1) + '.';
   });
 }
 
@@ -825,6 +967,51 @@ function addClickToMoveRanking() {
   });
 }
 
+function addRankingInstructions(container) {
+  // Add enhanced visual feedback and instructions
+  const availableList = container.querySelector('.survey-ranking-available .survey-ranking-list');
+  const rankedList = container.querySelector('.survey-ranking-ranked .survey-ranking-list');
+  
+  // Get i18n translations from data attributes
+  const i18nAvailable = container.dataset.i18nAvailable || 'Available options';
+  const i18nRanking = container.dataset.i18nRanking || 'Your ranking';
+  const i18nDragToRank = container.dataset.i18nDragToRank || 'Drag to "Your ranking"';
+  const i18nDragHere = container.dataset.i18nDragHere || 'Drag here to order';
+  
+  // Add visual feedback for empty states
+  if (!availableList.querySelector('.empty-state-message')) {
+    const availableEmptyMessage = document.createElement('div');
+    availableEmptyMessage.className = 'empty-state-message';
+    availableEmptyMessage.innerHTML = i18nAvailable + '<br><small>' + i18nDragToRank + '</small>';
+    availableList.appendChild(availableEmptyMessage);
+  }
+  
+  if (!rankedList.querySelector('.empty-state-message')) {
+    const rankedEmptyMessage = document.createElement('div');
+    rankedEmptyMessage.className = 'empty-state-message';
+    rankedEmptyMessage.innerHTML = i18nRanking + '<br><small>' + i18nDragHere + '</small>';
+    rankedList.appendChild(rankedEmptyMessage);
+  }
+  
+  // Update empty state visibility
+  updateEmptyStates(availableList, rankedList);
+}
+
+function updateEmptyStates(availableList, rankedList) {
+  const availableMessage = availableList.querySelector('.empty-state-message');
+  const rankedMessage = rankedList.querySelector('.empty-state-message');
+  const availableItems = availableList.querySelectorAll('.survey-ranking-item');
+  const rankedItems = rankedList.querySelectorAll('.survey-ranking-item');
+  
+  if (availableMessage) {
+    availableMessage.style.display = availableItems.length === 0 ? 'block' : 'none';
+  }
+  
+  if (rankedMessage) {
+    rankedMessage.style.display = rankedItems.length === 0 ? 'block' : 'none';
+  }
+}
+
 // Export functions for potential external use
 window.SurveyEngine = window.SurveyEngine || {};
 window.SurveyEngine.Matrix = {
@@ -836,5 +1023,6 @@ window.SurveyEngine.Matrix = {
 window.SurveyEngine.Ranking = {
   initializeRankingQuestions: initializeRankingQuestions,
   setupRankingQuestion: setupRankingQuestion,
-  updateRankingInputs: updateRankingInputs
+  updateRankingInputs: updateRankingInputs,
+  updateRankingNumbers: updateRankingNumbers
 };

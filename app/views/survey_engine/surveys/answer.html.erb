@@ -153,7 +153,12 @@
                   class: "survey-input",
                   required: question.required? %>
             <% when 'ranking' %>
-              <div class="survey-ranking-container" data-question-id="<%= question.id %>">
+              <div class="survey-ranking-container" 
+                   data-question-id="<%= question.id %>"
+                   data-i18n-available="<%= t('survey_engine.surveys.answer.available_options') %>"
+                   data-i18n-ranking="<%= t('survey_engine.surveys.answer.your_ranking') %>"
+                   data-i18n-drag-to-rank="<%= t('survey_engine.surveys.answer.drag_to_rank') %>"
+                   data-i18n-drag-here="<%= t('survey_engine.surveys.answer.drag_here_to_order') %>">
                 <p class="survey-ranking-instructions"><%= t('survey_engine.surveys.answer.ranking_instructions') %></p>
                 
                 <% ranked_options = existing_answer&.ranked_options || [] %>
