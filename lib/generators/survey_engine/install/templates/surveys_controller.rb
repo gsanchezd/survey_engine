@@ -116,11 +116,21 @@ class SurveysController < ApplicationController
           answer.boolean_answer = answer_data[:boolean_answer] == '1' if answer_data[:boolean_answer].present?
         when 'single_choice'
           if answer_data[:option_id].present?
-            # SECURITY: Validate option belongs to current question
-            option = question.options.find_by(id: answer_data[:option_id])
-            unless option
-              errors << "Invalid option ID: #{answer_data[:option_id]} for question #{question_id}"
-              next
+            # SECURITY: Validate option belongs to current question or its matrix parent
+            if question.matrix_parent_id.present?
+              # For matrix rows, use parent question's options
+              parent_question = question.matrix_parent
+              option = parent_question.options.find_by(id: answer_data[:option_id])
+              unless option
+                errors << "Invalid option ID: #{answer_data[:option_id]} for matrix question #{question_id}"
+                next
+              end
+            else
+              option = question.options.find_by(id: answer_data[:option_id])
+              unless option
+                errors << "Invalid option ID: #{answer_data[:option_id]} for question #{question_id}"
+                next
+              end
             end
             
             if answer.new_record?
