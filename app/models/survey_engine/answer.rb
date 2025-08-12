@@ -143,7 +143,7 @@ module SurveyEngine
         # Ranking questions require all options to be ranked
         has_options = answer_options.any? || answer_options.loaded? || answer_options.size > 0
         unless has_options
-          errors.add(:base, "Must rank all options for ranking questions")
+          errors.add(:base, :must_rank_all_options)
           return
         end
 
@@ -158,7 +158,7 @@ module SurveyEngine
         ranked_option_count = answer_options.size
 
         if ranked_option_count != question_option_count
-          errors.add(:base, "Must rank all #{question_option_count} options for ranking questions (currently ranked: #{ranked_option_count})")
+          errors.add(:base, :must_rank_all_options_with_count, count: question_option_count, ranked: ranked_option_count)
           return
         end
 
@@ -167,7 +167,7 @@ module SurveyEngine
         expected_orders = (1..question_option_count).to_a
 
         unless ranking_orders == expected_orders
-          errors.add(:base, "Ranking order must be sequential from 1 to #{question_option_count} with no duplicates or gaps")
+          errors.add(:base, :ranking_order_sequential, count: question_option_count)
         end
       end
     end

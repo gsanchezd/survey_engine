@@ -1,6 +1,13 @@
 es:
   activerecord:
     errors:
+      models:
+        survey_engine/answer:
+          attributes:
+            base:
+              must_rank_all_options: "Debes ordenar todas las opciones"
+              must_rank_all_options_with_count: "Debes ordenar todas las %{count} opciones (actualmente ordenadas: %{ranked})"
+              ranking_order_sequential: "El orden de clasificación debe ser secuencial de 1 a %{count} sin duplicados o vacíos"
       messages:
         record_invalid: "Error de validación: %{errors}"
         blank: "no puede estar en blanco"
@@ -105,6 +112,7 @@ es:
       answers_saved: "respuesta guardada exitosamente!"
       answers_saved_plural: "respuestas guardadas exitosamente!"
       save_errors: "Algunas respuestas no pudieron ser guardadas:"
+      ranking_incomplete: "Debes ordenar todas las opciones"
     question_types:
       text: "Texto"
       number: "Número"

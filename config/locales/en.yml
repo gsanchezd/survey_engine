@@ -1,4 +1,13 @@
 en:
+  activerecord:
+    errors:
+      models:
+        survey_engine/answer:
+          attributes:
+            base:
+              must_rank_all_options: "You must rank all options"
+              must_rank_all_options_with_count: "You must rank all %{count} options (currently ranked: %{ranked})"
+              ranking_order_sequential: "Ranking order must be sequential from 1 to %{count} with no duplicates or gaps"
   survey_engine:
     surveys:
       index:
@@ -74,6 +83,7 @@ en:
       answers_saved: "answer saved successfully!"
       answers_saved_plural: "answers saved successfully!"
       save_errors: "Some answers couldn't be saved:"
+      ranking_incomplete: "You must rank all options"
     question_types:
       text: "Text"
       number: "Number"
