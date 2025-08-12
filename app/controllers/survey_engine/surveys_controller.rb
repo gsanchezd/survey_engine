@@ -202,11 +202,12 @@ module SurveyEngine
             end
           when "ranking"
             if answer_data["ranking"].present?
+              ranking_errors = []
               answer_data["ranking"].each do |option_id, ranking_order|
                 # SECURITY: Validate option belongs to current question
                 option = question.options.find_by(id: option_id)
                 unless option
-                  errors << "Invalid option ID: #{option_id} for question #{question_id}"
+                  ranking_errors << "Invalid option ID: #{option_id}"
                   next
                 end
                 
@@ -216,14 +217,20 @@ module SurveyEngine
                   if answer.save # Save first if existing record
                     answer_option = AnswerOption.create(answer: answer, option: option, ranking_order: ranking_order.to_i)
                     unless answer_option.persisted?
-                      errors << "#{question.title}: Failed to save ranking answer option - #{answer_option.errors.full_messages.join(', ')}"
+                      ranking_errors << "Failed to save ranking option"
                       next
                     end
                   else
-                    errors << "#{question.title}: #{answer.errors.full_messages.join(', ')}"
+                    ranking_errors << answer.errors.full_messages.join(', ')
                     next
                   end
                 end
+              end
+              
+              # Add consolidated error if any ranking errors occurred
+              if ranking_errors.any?
+                errors << "#{question.title}: #{ranking_errors.uniq.join('; ')}"
+                next
               end
             end
           end
