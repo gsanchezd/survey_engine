@@ -203,6 +203,9 @@ module SurveyEngine
           when "ranking"
             if answer_data["ranking"].present?
               ranking_errors = []
+              valid_rankings = []
+              
+              # First, validate all rankings and collect valid ones
               answer_data["ranking"].each do |option_id, ranking_order|
                 # SECURITY: Validate option belongs to current question
                 option = question.options.find_by(id: option_id)
@@ -211,23 +214,40 @@ module SurveyEngine
                   next
                 end
                 
+                valid_rankings << { option: option, ranking_order: ranking_order.to_i }
+              end
+              
+              # If we have ranking errors, add them and skip
+              if ranking_errors.any?
+                errors << "#{question.title}: #{ranking_errors.uniq.join('; ')}"
+                next
+              end
+              
+              # Clear existing answer_options for ranking questions to avoid duplicates
+              if answer.persisted?
+                answer.answer_options.destroy_all
+              end
+              
+              # Build all ranking options at once
+              valid_rankings.each do |ranking_data|
                 if answer.new_record?
-                  answer.answer_options.build(option: option, ranking_order: ranking_order.to_i)
+                  answer.answer_options.build(
+                    option: ranking_data[:option], 
+                    ranking_order: ranking_data[:ranking_order]
+                  )
                 else
-                  if answer.save # Save first if existing record
-                    answer_option = AnswerOption.create(answer: answer, option: option, ranking_order: ranking_order.to_i)
-                    unless answer_option.persisted?
-                      ranking_errors << "Failed to save ranking option"
-                      next
-                    end
-                  else
-                    ranking_errors << answer.errors.full_messages.join(', ')
-                    next
+                  # For existing answers, create the options directly
+                  answer_option = answer.answer_options.create(
+                    option: ranking_data[:option], 
+                    ranking_order: ranking_data[:ranking_order]
+                  )
+                  unless answer_option.persisted?
+                    ranking_errors << "Failed to save ranking option: #{answer_option.errors.full_messages.join(', ')}"
                   end
                 end
               end
               
-              # Add consolidated error if any ranking errors occurred
+              # Add consolidated error if any ranking errors occurred during creation
               if ranking_errors.any?
                 errors << "#{question.title}: #{ranking_errors.uniq.join('; ')}"
                 next
