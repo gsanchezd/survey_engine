@@ -104,7 +104,12 @@ module SurveyEngine
       # Process all submitted answers
       if params[:answers].present?
         params[:answers].each do |question_id, answer_data|
-          question = Question.find(question_id)
+          # SECURITY: Validate question belongs to current survey
+          question = @survey.questions.find_by(id: question_id)
+          unless question
+            errors << "Invalid question ID: #{question_id}"
+            next
+          end
 
           # Skip if no data provided for this question
           next if answer_data.values.all?(&:blank?)
@@ -133,7 +138,13 @@ module SurveyEngine
             answer.boolean_answer = answer_data["boolean_answer"] == "1" if answer_data["boolean_answer"].present?
           when "single_choice", "matrix_scale"
             if answer_data["option_id"].present?
-              option = Option.find(answer_data["option_id"])
+              # SECURITY: Validate option belongs to current question
+              option = question.options.find_by(id: answer_data["option_id"])
+              unless option
+                errors << "Invalid option ID: #{answer_data['option_id']} for question #{question_id}"
+                next
+              end
+              
               # Always build the association for new records
               if answer.new_record?
                 answer.answer_options.build(option: option)
@@ -147,7 +158,13 @@ module SurveyEngine
           when "multiple_choice"
             if answer_data["option_ids"].present?
               answer_data["option_ids"].reject(&:blank?).each do |option_id|
-                option = Option.find(option_id)
+                # SECURITY: Validate option belongs to current question
+                option = question.options.find_by(id: option_id)
+                unless option
+                  errors << "Invalid option ID: #{option_id} for question #{question_id}"
+                  next
+                end
+                
                 if answer.new_record?
                   answer.answer_options.build(option: option)
                 else
@@ -160,7 +177,13 @@ module SurveyEngine
           when "ranking"
             if answer_data["ranking"].present?
               answer_data["ranking"].each do |option_id, ranking_order|
-                option = Option.find(option_id)
+                # SECURITY: Validate option belongs to current question
+                option = question.options.find_by(id: option_id)
+                unless option
+                  errors << "Invalid option ID: #{option_id} for question #{question_id}"
+                  next
+                end
+                
                 if answer.new_record?
                   answer.answer_options.build(option: option, ranking_order: ranking_order.to_i)
                 else

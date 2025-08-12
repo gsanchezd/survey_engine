@@ -81,7 +81,12 @@ class SurveysController < ApplicationController
       # Process all submitted answers
       if params[:answers].present?
         params[:answers].each do |question_id, answer_data|
-          question = SurveyEngine::Question.find(question_id)
+          # SECURITY: Validate question belongs to current survey
+          question = @survey.questions.find_by(id: question_id)
+          unless question
+            errors << "Invalid question ID: #{question_id}"
+            next
+          end
           
           # Skip if no data provided for this question
           next if answer_data.values.all?(&:blank?)
@@ -110,7 +115,12 @@ class SurveysController < ApplicationController
             answer.boolean_answer = answer_data[:boolean_answer] == '1' if answer_data[:boolean_answer].present?
           when 'single_choice'
             if answer_data[:option_id].present?
-              option = SurveyEngine::Option.find(answer_data[:option_id])
+              # SECURITY: Validate option belongs to current question
+              option = question.options.find_by(id: answer_data[:option_id])
+              unless option
+                errors << "Invalid option ID: #{answer_data[:option_id]} for question #{question_id}"
+                next
+              end
               if answer.new_record?
                 answer.answer_options.build(option: option)
               else
@@ -122,7 +132,12 @@ class SurveysController < ApplicationController
           when 'multiple_choice'
             if answer_data[:option_ids].present?
               answer_data[:option_ids].reject(&:blank?).each do |option_id|
-                option = SurveyEngine::Option.find(option_id)
+                # SECURITY: Validate option belongs to current question
+                option = question.options.find_by(id: option_id)
+                unless option
+                  errors << "Invalid option ID: #{option_id} for question #{question_id}"
+                  next
+                end
                 if answer.new_record?
                   answer.answer_options.build(option: option)
                 else
