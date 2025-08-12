@@ -1,4 +1,4 @@
-class SeedRankingQuestionType < ActiveRecord::Migration[8.0]
+class SeedRankingQuestionType < ActiveRecord::Migration[7.1]
   def up
     SurveyEngine::QuestionType.find_or_create_by(name: "ranking") do |qt|
       qt.description = "Ordenar elementos por prioridad"
