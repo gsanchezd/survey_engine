@@ -160,8 +160,16 @@ module SurveyEngine
                 answer.answer_options.build(option: option)
               else
                 # For existing records, save first then create association
-                answer.save!
-                AnswerOption.create!(answer: answer, option: option)
+                if answer.save
+                  answer_option = AnswerOption.create(answer: answer, option: option)
+                  unless answer_option.persisted?
+                    errors << "#{question.title}: Failed to save answer option - #{answer_option.errors.full_messages.join(', ')}"
+                    next
+                  end
+                else
+                  errors << "#{question.title}: #{answer.errors.full_messages.join(', ')}"
+                  next
+                end
               end
               answer.other_text = answer_data["other_text"] if option.is_other? && answer_data["other_text"].present?
             end
@@ -178,8 +186,16 @@ module SurveyEngine
                 if answer.new_record?
                   answer.answer_options.build(option: option)
                 else
-                  answer.save! # Save first if existing record
-                  AnswerOption.create!(answer: answer, option: option)
+                  if answer.save # Save first if existing record
+                    answer_option = AnswerOption.create(answer: answer, option: option)
+                    unless answer_option.persisted?
+                      errors << "#{question.title}: Failed to save answer option - #{answer_option.errors.full_messages.join(', ')}"
+                      next
+                    end
+                  else
+                    errors << "#{question.title}: #{answer.errors.full_messages.join(', ')}"
+                    next
+                  end
                 end
               end
               answer.other_text = answer_data["other_text"] if answer_data["other_text"].present?
@@ -197,8 +213,16 @@ module SurveyEngine
                 if answer.new_record?
                   answer.answer_options.build(option: option, ranking_order: ranking_order.to_i)
                 else
-                  answer.save! # Save first if existing record
-                  AnswerOption.create!(answer: answer, option: option, ranking_order: ranking_order.to_i)
+                  if answer.save # Save first if existing record
+                    answer_option = AnswerOption.create(answer: answer, option: option, ranking_order: ranking_order.to_i)
+                    unless answer_option.persisted?
+                      errors << "#{question.title}: Failed to save ranking answer option - #{answer_option.errors.full_messages.join(', ')}"
+                      next
+                    end
+                  else
+                    errors << "#{question.title}: #{answer.errors.full_messages.join(', ')}"
+                    next
+                  end
                 end
               end
             end
