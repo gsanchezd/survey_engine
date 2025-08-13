@@ -417,17 +417,37 @@ SurveyEngine::Survey.local_surveys       # Only resource-specific surveys
 
 ## Question Types
 
-The engine includes these built-in question types:
+The engine includes 14 built-in question types with conditional question support:
 
-- **text** - Short text input (single line)
-- **textarea** - Long text input (multi-line)
-- **single_choice** - Radio buttons (one selection)
-- **multiple_choice** - Checkboxes (multiple selections)
-- **scale** - Numeric scale/rating
-- **boolean** - Yes/No questions
-- **number** - Numeric input
-- **matrix_scale** - Matrix questions (multiple items rated on same scale)
-- **ranking** - Drag-and-drop ranking of options
+### Basic Input Types
+- **text** - follow up: no
+- **textarea** - follow up: no  
+- **number** - follow up: yes, type: scale
+- **email** - follow up: no
+- **date** - follow up: no
+- **boolean** - follow up: yes, type: both (option-based and scale-based)
+
+### Choice Types  
+- **single_choice** - follow up: yes, type: option
+- **multiple_choice** - follow up: yes, type: option
+- **dropdown_single** - follow up: yes, type: option
+- **dropdown_multiple** - follow up: yes, type: option
+
+### Scale and Rating
+- **scale** - follow up: yes, type: scale
+
+### Advanced Types
+- **ranking** - follow up: yes, type: option
+- **matrix_scale** - follow up: yes, type: scale
+- **matrix_choice** - follow up: yes, type: option
+
+### Conditional Logic Support
+
+Question types with **follow up: yes** can trigger conditional questions:
+
+- **Option-based conditionals**: Show/hide questions based on specific option selections from choice questions
+- **Scale-based conditionals**: Show/hide questions based on numeric values from scale/number questions  
+- **Both types**: Boolean questions support both option-based and scale-based conditional logic
 
 ## Conditional Questions
 

@@ -148,15 +148,23 @@ module SurveyEngine
       javascript_tag do
         raw <<~JS
           document.addEventListener('DOMContentLoaded', function() {
-            if (typeof SurveyConditionalFlow !== 'undefined') {
+            // Check if the class is available in the global scope (loaded via asset pipeline)
+            if (typeof window.SurveyConditionalFlow !== 'undefined') {
               const config = #{conditional_flow_config(survey, questions)};
-              const conditionalFlow = new SurveyConditionalFlow(config);
+              const conditionalFlow = new window.SurveyConditionalFlow(config);
               conditionalFlow.initialize();
               
               // Make it globally accessible for debugging
               window.surveyConditionalFlow = conditionalFlow;
+              
+              console.log('SurveyConditionalFlow initialized successfully with', config.questions?.length || 0, 'questions');
             } else {
-              console.warn('SurveyConditionalFlow class not found. Make sure to include the conditional flow JavaScript.');
+              console.warn('SurveyConditionalFlow class not found. Make sure survey_engine/application.js is included in your asset pipeline.');
+              
+              // Fallback: try to load questions from DOM
+              if (typeof window.SurveyEngine !== 'undefined' && window.SurveyEngine.ConditionalFlow) {
+                window.SurveyEngine.ConditionalFlow.initializeFromDOM();
+              }
             }
           });
         JS
@@ -388,8 +396,8 @@ module SurveyEngine
           }
 
           showQuestion(element) {
-            element.classList.remove('survey-conditional-hidden');
-            element.classList.add('survey-conditional-showing');
+            element.classList.remove('conditional-hidden');
+            element.classList.add('conditional-showing');
             element.style.display = 'block';
             
             // Re-enable form validation
@@ -400,13 +408,13 @@ module SurveyEngine
             
             // Remove animation class after animation completes
             setTimeout(() => {
-              element.classList.remove('survey-conditional-showing');
+              element.classList.remove('conditional-showing');
             }, 400);
           }
 
           hideQuestion(element) {
-            element.classList.add('survey-conditional-hidden');
-            element.classList.remove('survey-conditional-showing');
+            element.classList.add('conditional-hidden');
+            element.classList.remove('conditional-showing');
             
             // Clear answers and disable validation
             this.clearQuestionAnswers(element);
@@ -416,7 +424,7 @@ module SurveyEngine
             this.updateQuestionNumbers();
             
             setTimeout(() => {
-              if (element.classList.contains('survey-conditional-hidden')) {
+              if (element.classList.contains('conditional-hidden')) {
                 element.style.display = 'none';
               }
             }, 300);
