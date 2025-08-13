@@ -20,6 +20,9 @@
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     
+    <%# Include SurveyEngine JavaScript %>
+    <%= javascript_include_tag "survey_engine/application", "data-turbo-track": "reload" %>
+    
     <style>
       body {
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
