@@ -714,6 +714,10 @@ function setupRankingQuestion(container) {
   enableDragAndDrop(availableList, rankedList, inputsContainer, questionId);
   enableDragAndDrop(rankedList, availableList, inputsContainer, questionId);
   
+  // Enable touch support for mobile devices
+  enableTouchSupport(availableList, rankedList, inputsContainer, questionId);
+  enableTouchSupport(rankedList, availableList, inputsContainer, questionId);
+  
   // Initialize ranking numbers if there are already ranked items
   updateRankingNumbers(rankedList);
   
@@ -1010,6 +1014,191 @@ function updateEmptyStates(availableList, rankedList) {
   if (rankedMessage) {
     rankedMessage.style.display = rankedItems.length === 0 ? 'block' : 'none';
   }
+}
+
+// Touch support for mobile devices
+function enableTouchSupport(sourceList, targetList, inputsContainer, questionId) {
+  const items = sourceList.querySelectorAll('.survey-ranking-item');
+  
+  items.forEach(function(item) {
+    setupTouchForItem(item, sourceList, targetList, inputsContainer, questionId);
+  });
+}
+
+function setupTouchForItem(item, sourceList, targetList, inputsContainer, questionId) {
+  let touchItem = null;
+  let touchOffset = { x: 0, y: 0 };
+  let dragElement = null;
+  let placeholder = null;
+  
+  item.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    touchItem = item;
+    
+    // Calculate offset
+    const rect = item.getBoundingClientRect();
+    touchOffset.x = touch.clientX - rect.left;
+    touchOffset.y = touch.clientY - rect.top;
+    
+    // Create a dragging element
+    dragElement = item.cloneNode(true);
+    dragElement.style.position = 'fixed';
+    dragElement.style.zIndex = '10000';
+    dragElement.style.opacity = '0.8';
+    dragElement.style.pointerEvents = 'none';
+    dragElement.style.width = rect.width + 'px';
+    dragElement.style.left = (touch.clientX - touchOffset.x) + 'px';
+    dragElement.style.top = (touch.clientY - touchOffset.y) + 'px';
+    dragElement.classList.add('dragging-touch');
+    document.body.appendChild(dragElement);
+    
+    // Create placeholder
+    placeholder = document.createElement('li');
+    placeholder.className = 'survey-ranking-placeholder';
+    placeholder.style.height = rect.height + 'px';
+    placeholder.style.backgroundColor = '#f0f4f8';
+    placeholder.style.border = '2px dashed #cbd5e0';
+    placeholder.style.borderRadius = '4px';
+    placeholder.style.margin = '4px 0';
+    
+    // Hide original item and insert placeholder
+    item.style.opacity = '0.3';
+    item.parentNode.insertBefore(placeholder, item);
+    
+    // Add visual feedback to lists
+    sourceList.classList.add('touch-active');
+    targetList.classList.add('touch-active');
+  }, { passive: false });
+  
+  item.addEventListener('touchmove', function(e) {
+    if (!touchItem || !dragElement) return;
+    
+    e.preventDefault();
+    const touch = e.touches[0];
+    
+    // Update drag element position
+    dragElement.style.left = (touch.clientX - touchOffset.x) + 'px';
+    dragElement.style.top = (touch.clientY - touchOffset.y) + 'px';
+    
+    // Find element under touch point
+    dragElement.style.display = 'none';
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    dragElement.style.display = '';
+    
+    if (!elementBelow) return;
+    
+    // Check if we're over a list
+    const listBelow = elementBelow.closest('.survey-ranking-list');
+    if (listBelow) {
+      // Visual feedback for the list
+      document.querySelectorAll('.survey-ranking-list').forEach(function(list) {
+        list.classList.remove('drag-over');
+      });
+      listBelow.classList.add('drag-over');
+      
+      // Find the closest item to insert before/after
+      const afterElement = getTouchDragAfterElement(listBelow, touch.clientY);
+      
+      if (afterElement == null) {
+        listBelow.appendChild(placeholder);
+      } else {
+        listBelow.insertBefore(placeholder, afterElement);
+      }
+    }
+  }, { passive: false });
+  
+  item.addEventListener('touchend', function(e) {
+    if (!touchItem || !dragElement) return;
+    
+    e.preventDefault();
+    
+    // Remove drag element
+    if (dragElement) {
+      dragElement.remove();
+      dragElement = null;
+    }
+    
+    // Get the list where placeholder is
+    const newList = placeholder.parentNode;
+    
+    // Move item to placeholder position
+    if (newList) {
+      newList.insertBefore(item, placeholder);
+      
+      // Re-enable touch events for the moved item
+      setupTouchForItem(item, newList, 
+        newList.id.includes('available') ? targetList : sourceList, 
+        inputsContainer, questionId);
+      
+      // Update inputs and numbering if moved to ranked list
+      if (newList.id.includes('ranked')) {
+        updateRankingInputs(newList, inputsContainer, questionId);
+        updateRankingNumbers(newList);
+      } else if (sourceList.id.includes('ranked')) {
+        // If moved from ranked list, update that too
+        updateRankingInputs(sourceList, inputsContainer, questionId);
+        updateRankingNumbers(sourceList);
+      }
+      
+      // Update empty states
+      const container = newList.closest('.survey-ranking-container');
+      const availableList = container.querySelector('.survey-ranking-available .survey-ranking-list');
+      const rankedList = container.querySelector('.survey-ranking-ranked .survey-ranking-list');
+      updateEmptyStates(availableList, rankedList);
+    }
+    
+    // Clean up
+    if (placeholder) {
+      placeholder.remove();
+      placeholder = null;
+    }
+    
+    // Reset item opacity
+    item.style.opacity = '';
+    touchItem = null;
+    
+    // Remove visual feedback
+    document.querySelectorAll('.survey-ranking-list').forEach(function(list) {
+      list.classList.remove('drag-over', 'touch-active');
+    });
+  }, { passive: false });
+  
+  // Prevent default touch behavior on the item
+  item.addEventListener('touchcancel', function(e) {
+    // Clean up on cancel
+    if (dragElement) {
+      dragElement.remove();
+      dragElement = null;
+    }
+    if (placeholder) {
+      placeholder.remove();
+      placeholder = null;
+    }
+    if (item) {
+      item.style.opacity = '';
+    }
+    touchItem = null;
+    
+    document.querySelectorAll('.survey-ranking-list').forEach(function(list) {
+      list.classList.remove('drag-over', 'touch-active');
+    });
+  });
+}
+
+function getTouchDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll('.survey-ranking-item:not(.dragging-touch)')];
+  
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
 // Export functions for potential external use

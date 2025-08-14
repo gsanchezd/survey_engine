@@ -1159,3 +1159,79 @@
     top: -8px;
   }
 }
+
+/* Touch-specific styles for mobile devices */
+.touch-active {
+  border-color: var(--survey-primary-color) !important;
+  background: rgba(0, 123, 255, 0.03) !important;
+}
+
+.dragging-touch {
+  transform: rotate(3deg) scale(1.05) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3) !important;
+  border: 2px solid var(--survey-primary-color) !important;
+  background: white !important;
+}
+
+.survey-ranking-placeholder {
+  background: linear-gradient(135deg, #f0f4f8, #e2e8f0) !important;
+  border: 2px dashed #cbd5e0 !important;
+  border-radius: 4px !important;
+  margin: 4px 0 !important;
+  opacity: 0.7;
+  animation: placeholderPulse 1s ease-in-out infinite;
+}
+
+@keyframes placeholderPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 0.5; }
+}
+
+/* Better touch target sizes for mobile */
+@media (max-width: 768px) {
+  .survey-ranking-item {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    touch-action: none;
+  }
+  
+  .survey-ranking-ranked .survey-ranking-item {
+    padding-left: 50px;
+  }
+  
+  .survey-ranking-ranked .survey-ranking-item::before {
+    width: 24px;
+    height: 24px;
+    font-size: 14px;
+    left: 15px;
+  }
+  
+  .survey-ranking-list {
+    padding: 10px;
+    min-height: 180px;
+  }
+  
+  /* Visual feedback for touch interactions */
+  .survey-ranking-item:active {
+    background: rgba(0, 123, 255, 0.05) !important;
+    transform: scale(0.98);
+  }
+  
+  /* Improve empty state messages for mobile */
+  .empty-state-message {
+    padding: 40px 20px;
+    font-size: 15px;
+  }
+  
+  .empty-state-message small {
+    font-size: 13px;
+    margin-top: 10px;
+  }
+}
