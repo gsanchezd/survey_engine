@@ -1021,7 +1021,11 @@ function enableTouchSupport(sourceList, targetList, inputsContainer, questionId)
   const items = sourceList.querySelectorAll('.survey-ranking-item');
   
   items.forEach(function(item) {
-    setupTouchForItem(item, sourceList, targetList, inputsContainer, questionId);
+    // Check if touch events are already set up for this item
+    if (!item.dataset.touchEnabled) {
+      setupTouchForItem(item, sourceList, targetList, inputsContainer, questionId);
+      item.dataset.touchEnabled = 'true';
+    }
   });
 }
 
@@ -1031,7 +1035,7 @@ function setupTouchForItem(item, sourceList, targetList, inputsContainer, questi
   let dragElement = null;
   let placeholder = null;
   
-  item.addEventListener('touchstart', function(e) {
+  const touchStartHandler = function(e) {
     e.preventDefault();
     const touch = e.touches[0];
     touchItem = item;
@@ -1067,11 +1071,12 @@ function setupTouchForItem(item, sourceList, targetList, inputsContainer, questi
     item.parentNode.insertBefore(placeholder, item);
     
     // Add visual feedback to lists
-    sourceList.classList.add('touch-active');
-    targetList.classList.add('touch-active');
-  }, { passive: false });
+    const container = item.closest('.survey-ranking-container');
+    const allLists = container.querySelectorAll('.survey-ranking-list');
+    allLists.forEach(list => list.classList.add('touch-active'));
+  };
   
-  item.addEventListener('touchmove', function(e) {
+  const touchMoveHandler = function(e) {
     if (!touchItem || !dragElement) return;
     
     e.preventDefault();
@@ -1106,9 +1111,9 @@ function setupTouchForItem(item, sourceList, targetList, inputsContainer, questi
         listBelow.insertBefore(placeholder, afterElement);
       }
     }
-  }, { passive: false });
+  };
   
-  item.addEventListener('touchend', function(e) {
+  const touchEndHandler = function(e) {
     if (!touchItem || !dragElement) return;
     
     e.preventDefault();
@@ -1120,31 +1125,34 @@ function setupTouchForItem(item, sourceList, targetList, inputsContainer, questi
     }
     
     // Get the list where placeholder is
-    const newList = placeholder.parentNode;
+    const newList = placeholder ? placeholder.parentNode : null;
     
     // Move item to placeholder position
-    if (newList) {
+    if (newList && placeholder) {
       newList.insertBefore(item, placeholder);
       
-      // Re-enable touch events for the moved item
-      setupTouchForItem(item, newList, 
-        newList.id.includes('available') ? targetList : sourceList, 
-        inputsContainer, questionId);
+      // Mark item as needing re-initialization with its new parent lists
+      item.dataset.touchEnabled = 'false';
       
-      // Update inputs and numbering if moved to ranked list
+      // Update inputs and numbering
+      const container = item.closest('.survey-ranking-container');
+      const rankedList = container.querySelector('.survey-ranking-ranked .survey-ranking-list');
+      const availableList = container.querySelector('.survey-ranking-available .survey-ranking-list');
+      
       if (newList.id.includes('ranked')) {
-        updateRankingInputs(newList, inputsContainer, questionId);
-        updateRankingNumbers(newList);
-      } else if (sourceList.id.includes('ranked')) {
-        // If moved from ranked list, update that too
-        updateRankingInputs(sourceList, inputsContainer, questionId);
-        updateRankingNumbers(sourceList);
+        updateRankingInputs(rankedList, inputsContainer, questionId);
+        updateRankingNumbers(rankedList);
+      } else {
+        // Clear ranking inputs if moved back to available
+        updateRankingInputs(rankedList, inputsContainer, questionId);
+        updateRankingNumbers(rankedList);
       }
       
+      // Re-initialize touch support for all items in both lists
+      enableTouchSupport(availableList, rankedList, inputsContainer, questionId);
+      enableTouchSupport(rankedList, availableList, inputsContainer, questionId);
+      
       // Update empty states
-      const container = newList.closest('.survey-ranking-container');
-      const availableList = container.querySelector('.survey-ranking-available .survey-ranking-list');
-      const rankedList = container.querySelector('.survey-ranking-ranked .survey-ranking-list');
       updateEmptyStates(availableList, rankedList);
     }
     
@@ -1162,10 +1170,9 @@ function setupTouchForItem(item, sourceList, targetList, inputsContainer, questi
     document.querySelectorAll('.survey-ranking-list').forEach(function(list) {
       list.classList.remove('drag-over', 'touch-active');
     });
-  }, { passive: false });
+  };
   
-  // Prevent default touch behavior on the item
-  item.addEventListener('touchcancel', function(e) {
+  const touchCancelHandler = function(e) {
     // Clean up on cancel
     if (dragElement) {
       dragElement.remove();
@@ -1183,7 +1190,13 @@ function setupTouchForItem(item, sourceList, targetList, inputsContainer, questi
     document.querySelectorAll('.survey-ranking-list').forEach(function(list) {
       list.classList.remove('drag-over', 'touch-active');
     });
-  });
+  };
+  
+  // Add event listeners
+  item.addEventListener('touchstart', touchStartHandler, { passive: false });
+  item.addEventListener('touchmove', touchMoveHandler, { passive: false });
+  item.addEventListener('touchend', touchEndHandler, { passive: false });
+  item.addEventListener('touchcancel', touchCancelHandler, { passive: false });
 }
 
 function getTouchDragAfterElement(container, y) {
