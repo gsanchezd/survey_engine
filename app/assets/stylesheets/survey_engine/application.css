@@ -8,7 +8,6 @@
 
 /* SurveyEngine Styles */
 /* =========================== */
-
 /* CSS Variables for easy customization */
 :root {
   --survey-primary-color: #007cba;
@@ -24,6 +23,7 @@
   --survey-border-radius: 5px;
   --survey-spacing: 20px;
   --survey-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 16px; /* Base font size in px */
 }
 
 /* Base Styles */
@@ -64,7 +64,7 @@
 
 .survey-header p {
   color: var(--survey-muted-color);
-  font-size: 1.1rem;
+  font-size: 1.125rem;
   margin-bottom: var(--survey-spacing);
 }
 
@@ -105,7 +105,7 @@
 
 .survey-alert h3 {
   margin: 0 0 15px 0;
-  font-size: 1.2rem;
+  font-size: 1.25rem;
 }
 
 .survey-alert p {
@@ -133,7 +133,7 @@
   border-radius: 3px;
   flex: 1;
   min-width: 250px;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .survey-form-group {
@@ -153,7 +153,7 @@
   padding: 10px;
   border: 1px solid var(--survey-border-color);
   border-radius: 3px;
-  font-size: 16px;
+  font-size: 1rem;
   width: 100%;
   max-width: 100%;
 }
@@ -168,7 +168,7 @@
 }
 
 .survey-helper-text {
-  font-size: 0.9em;
+  font-size: 0.875rem;
   color: var(--survey-muted-color);
   margin: 10px 0 0 0;
   font-style: italic;
@@ -184,7 +184,7 @@
   border-radius: 3px;
   cursor: pointer;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   text-align: center;
   transition: background-color 0.2s, transform 0.1s;
@@ -240,7 +240,7 @@
 
 .survey-btn-large {
   padding: 12px 24px;
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .survey-btn-submit {
@@ -248,7 +248,7 @@
   color: white;
   padding: 15px 30px;
   border-radius: var(--survey-border-radius);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: bold;
 }
 
@@ -284,7 +284,7 @@
 
 .survey-meta {
   color: var(--survey-muted-color);
-  font-size: 0.9em;
+  font-size: 0.875rem;
   margin: 10px 0;
 }
 
@@ -366,12 +366,12 @@
 .survey-question-description {
   color: var(--survey-muted-color);
   margin: 5px 0 15px 0;
-  font-size: 0.9em;
+  font-size: 0.875rem;
 }
 
 .survey-question-meta {
   color: #888;
-  font-size: 0.85em;
+  font-size: 0.8125rem;
 }
 
 .survey-question-meta ul {
@@ -409,7 +409,7 @@
 
 .survey-question-required {
   color: var(--survey-danger-color);
-  font-size: 0.8em;
+  font-size: 0.75rem;
   font-weight: normal;
 }
 
@@ -452,7 +452,7 @@
 }
 
 .survey-scale-labels span {
-  font-size: 0.9em;
+  font-size: 0.875rem;
   color: var(--survey-muted-color);
 }
 
@@ -467,14 +467,19 @@
   flex-direction: column;
   align-items: center;
   cursor: pointer;
+  min-height: 44px;
+  justify-content: flex-start;
 }
 
 .survey-scale-option input {
-  margin-bottom: 5px;
+  margin-bottom: 8px;
+  margin-left: 4px;
+  width: 22px;
+  height: 22px;
 }
 
 .survey-scale-option span {
-  font-size: 0.9em;
+  font-size: 0.875rem;
 }
 
 .survey-current-answer {
@@ -482,7 +487,7 @@
   padding: 10px;
   border-radius: 3px;
   margin-top: 15px;
-  font-size: 0.9em;
+  font-size: 0.875rem;
 }
 
 /* Survey Completion */
@@ -535,7 +540,7 @@
 }
 
 .survey-completed-thank-you {
-  font-size: 1.1em;
+  font-size: 1.125rem;
   margin: 15px 0;
 }
 
@@ -630,7 +635,7 @@
   background: #e9ecef;
   padding: 2px 6px;
   border-radius: 3px;
-  font-size: 0.9em;
+  font-size: 0.875rem;
 }
 
 /* Text Utilities */
@@ -654,6 +659,30 @@
 .matrix-container {
   overflow-x: auto;
   background: white;
+  border-radius: var(--survey-border-radius);
+  border: 1px solid #e2e8f0;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+/* Webkit scrollbar styling */
+.matrix-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.matrix-container::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.matrix-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.matrix-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 
 .matrix-table {
@@ -712,9 +741,11 @@
 
 .matrix-radio {
   margin: 0;
-  transform: scale(1.3);
+  width: 22px;
+  height: 22px;
   cursor: pointer;
 }
+
 
 .required-indicator,
 .survey-question-required {
@@ -757,7 +788,7 @@
 }
 
 .survey-conditional-indicator {
-  font-size: 0.8em;
+  font-size: 0.75rem;
   color: var(--survey-primary-color);
   background: #e3f2fd;
   padding: 0.2rem 0.5rem;
@@ -801,49 +832,120 @@
   color: white;
   padding: 0.5rem 1rem;
   border-radius: 0.25rem;
-  font-size: 0.8em;
+  font-size: 0.75rem;
   z-index: 10;
 }
 
 /* Responsive Design */
 /* =========================== */
 
-@media (max-width: 768px) {
-  .survey-container {
+/* Tablet responsive styles */
+@media screen and (max-width: 1024px) and (min-width: 769px) {
+  .survey-ranking-lists {
+    gap: 20px;
+  }
+  
+  .survey-ranking-item {
+    padding: 14px 18px;
+    font-size: 1.0625rem;
+  }
+  
+  /* Matrix adjustments for tablet */
+  .matrix-table {
+    min-width: 500px;
+  }
+  
+  .matrix-cell {
+    width: 70px;
     padding: 10px;
   }
   
-  .survey-form-row {
+  .matrix-column-header {
+    min-width: 70px;
+  }
+}
+
+/* Intermediate screen sizes - optimize matrix table */
+@media screen and (max-width: 900px) and (min-width: 769px) {
+  .matrix-table {
+    min-width: 450px;
+  }
+  
+  .matrix-cell {
+    width: 60px;
+    padding: 8px;
+  }
+  
+  .matrix-column-header {
+    min-width: 60px;
+    padding: 0.375rem;
+  }
+  
+  .matrix-row-label {
+    width: 35%;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Mobile responsive styles */  
+@media screen and (max-width: 768px) {
+  /* Ranking questions - stack vertically on mobile */
+  .survey-ranking-lists {
     flex-direction: column;
-    align-items: stretch;
+    gap: 20px;
   }
   
-  .survey-email-input {
-    min-width: auto;
-    width: 100%;
+  .survey-ranking-available,
+  .survey-ranking-ranked {
+    min-height: 160px;
   }
   
-  .survey-actions {
-    flex-direction: column;
-    align-items: stretch;
+  /* Matrix questions - optimize table for mobile */
+  .matrix-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
   }
   
-  .survey-actions .survey-btn {
-    margin: 5px 0;
-    width: 100%;
+  .matrix-table {
+    min-width: 400px; /* Reduced for mobile */
   }
   
-  /* Keep submit buttons full width on mobile */
-  .survey-btn-submit {
-    width: 100%;
+  .matrix-table th,
+  .matrix-table td {
+    padding: 0.5rem;
+    font-size: 0.875rem;
   }
   
-  /* Keep inline buttons at auto width */
-  .survey-btn:not(.survey-btn-submit) {
-    width: auto;
-    display: inline-block;
+  .matrix-row-header,
+  .matrix-row-label {
+    width: 30%;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.3;
   }
   
+  .matrix-column-header {
+    min-width: 50px;
+    padding: 0.25rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    word-break: break-word;
+  }
+  
+  .matrix-cell {
+    width: 50px;
+    padding: 8px 4px;
+    min-height: 44px; /* Touch-friendly */
+  }
+  
+  .matrix-radio {
+    width: 22px;
+    height: 22px;
+  }
+
   .survey-scale-options {
     flex-wrap: wrap;
     gap: 10px;
@@ -882,12 +984,6 @@
   margin-bottom: 20px;
 }
 
-@media (max-width: 768px) {
-  .survey-ranking-lists {
-    flex-direction: column;
-    gap: 20px;
-  }
-}
 
 .survey-ranking-available,
 .survey-ranking-ranked {
@@ -899,7 +995,7 @@
 .survey-ranking-ranked h4 {
   margin: 0 0 15px 0;
   color: var(--survey-text-color);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -955,7 +1051,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: bold;
 }
 
@@ -995,22 +1091,6 @@
   display: none;
 }
 
-/* Touch-friendly improvements for mobile */
-@media (max-width: 768px) {
-  .survey-ranking-item {
-    padding: 15px;
-    font-size: 16px;
-    touch-action: none;
-  }
-  
-  .survey-ranking-lists {
-    gap: 15px;
-  }
-  
-  .survey-ranking-list {
-    min-height: 120px;
-  }
-}
 
 /* Enhanced Ranking UI Improvements */
 /* =================================== */
@@ -1089,7 +1169,7 @@
   left: 50%;
   transform: translateX(-50%);
   color: var(--survey-primary-color);
-  font-size: 12px;
+  font-size: 0.75rem;
   text-shadow: 0 0 4px rgba(0, 123, 255, 0.5);
   animation: bounce 1s ease-in-out infinite;
 }
@@ -1108,7 +1188,7 @@
   text-align: center;
   padding: 30px 20px;
   color: var(--survey-muted-color);
-  font-size: 16px;
+  font-size: 1rem;
   background: rgba(0, 123, 255, 0.02);
   border: 2px dashed rgba(0, 123, 255, 0.2);
   border-radius: 12px;
@@ -1118,7 +1198,7 @@
 .empty-state-message small {
   display: block;
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   opacity: 0.7;
 }
 
@@ -1155,8 +1235,110 @@
   }
   
   .drop-arrow {
-    font-size: 14px;
+    font-size: 0.875rem;
     top: -8px;
+  }
+}
+
+/* Additional ranking responsive improvements */
+@media screen and (max-width: 480px) {
+  /* Extra small screens - further optimize ranking */
+  .survey-ranking-container {
+    margin: 15px 0;
+  }
+  
+  .survey-ranking-lists {
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .survey-ranking-available,
+  .survey-ranking-ranked {
+    min-height: 120px;
+  }
+  
+  .survey-ranking-list {
+    min-height: 120px;
+    padding: 8px;
+  }
+  
+  .survey-ranking-item {
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    font-size: 1rem;
+  }
+  
+  .survey-ranking-ranked .survey-ranking-item {
+    padding-left: 40px;
+  }
+  
+  .survey-ranking-ranked .survey-ranking-item::before {
+    width: 18px;
+    height: 18px;
+    font-size: 0.75rem;
+    left: 12px;
+  }
+  
+  .survey-ranking-available h4,
+  .survey-ranking-ranked h4 {
+    font-size: 0.9375rem;
+    margin-bottom: 10px;
+  }
+  
+  .survey-ranking-instructions {
+    font-size: 0.9375rem;
+    margin-bottom: 15px;
+  }
+  
+  .empty-state-message {
+    padding: 25px 15px;
+    font-size: 0.9375rem;
+  }
+  
+  .empty-state-message small {
+    font-size: 0.8125rem;
+  }
+  
+  /* Matrix questions - extra compact for very small screens */
+  .matrix-container {
+    margin: 1rem 0;
+    border-radius: 6px;
+  }
+  
+  .matrix-table {
+    min-width: 320px; /* Ultra compact */
+    font-size: 0.875rem;
+  }
+  
+  .matrix-table th,
+  .matrix-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .matrix-row-header,
+  .matrix-row-label {
+    width: 25%;
+    padding: 0.75rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.2;
+  }
+  
+  .matrix-column-header {
+    min-width: 42px;
+    padding: 0.25rem 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+  
+  .matrix-cell {
+    width: 42px;
+    padding: 8px 4px;
+    min-height: 44px;
+  }
+  
+  .matrix-radio {
+    width: 22px;
+    height: 22px;
   }
 }
 
@@ -1187,15 +1369,60 @@
   50% { opacity: 0.5; }
 }
 
-/* Better touch target sizes for mobile */
-@media (max-width: 768px) {
+/* Comprehensive Mobile Optimizations */
+@media screen and (max-width: 768px) {
+  /* Base container and typography */
+  .survey-container {
+    padding: 15px;
+    font-size: 1rem;
+  }
+  
+  /* Force larger text on all elements */
+  .survey-container * {
+    font-size: inherit;
+  }
+  
+  /* Form layout adjustments */
+  .survey-form-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .survey-email-input {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .survey-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .survey-actions .survey-btn {
+    margin: 5px 0;
+    width: 100%;
+  }
+  
+  /* Keep submit buttons full width on mobile */
+  .survey-btn-submit {
+    width: 100%;
+  }
+  
+  /* Ranking lists layout */
+  .survey-ranking-lists {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  /* Ranking items - touch optimized */
   .survey-ranking-item {
-    min-height: 50px;
+    min-height: 48px;
     display: flex;
     align-items: center;
-    padding: 15px 20px;
+    padding: 14px 18px;
     margin-bottom: 12px;
-    font-size: 16px;
+    font-size: 1.0625rem;
     line-height: 1.5;
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -1209,7 +1436,7 @@
   .survey-ranking-ranked .survey-ranking-item::before {
     width: 24px;
     height: 24px;
-    font-size: 14px;
+    font-size: 0.875rem;
     left: 15px;
   }
   
@@ -1220,18 +1447,278 @@
   
   /* Visual feedback for touch interactions */
   .survey-ranking-item:active {
-    background: rgba(0, 123, 255, 0.05) !important;
+    background: rgba(0, 123, 255, 0.05);
     transform: scale(0.98);
   }
   
   /* Improve empty state messages for mobile */
   .empty-state-message {
-    padding: 40px 20px;
-    font-size: 15px;
+    padding: 36px 20px;
+    font-size: 1rem;
   }
   
   .empty-state-message small {
-    font-size: 13px;
+    font-size: 0.9375rem;
+    margin-top: 12px;
+  }
+  
+  /* Headers - larger for better readability */
+  .survey-header h1 {
+    font-size: 2rem;
+    line-height: 1.3;
+    margin-bottom: 15px;
+  }
+  
+  .survey-header p {
+    font-size: 1.125rem;
+    line-height: 1.5;
+  }
+  
+  /* Questions - improved spacing and font sizes */
+  .survey-question {
+    padding: 20px 15px;
+    margin: 15px 0;
+  }
+  
+  .survey-question h3 {
+    font-size: 1.1875rem;
+    line-height: 1.4;
+    margin-bottom: 12px;
+  }
+  
+  .survey-question-description {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+  }
+  
+  /* Form inputs - larger touch targets */
+  .survey-input,
+  .survey-textarea,
+  .survey-select,
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 1rem; /* Still prevents iOS zoom */
+    padding: 12px 14px;
+    min-height: 48px;
+  }
+  
+  /* Radio buttons and checkboxes - better spacing */
+  .survey-question-option {
+    margin: 14px 0;
+    font-size: 1rem;
+    line-height: 1.5;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  .survey-question-option input[type="radio"],
+  .survey-question-option input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+  
+  .survey-question-option label {
+    font-size: 1rem;
+    line-height: 1.4;
+    cursor: pointer;
+    flex: 1;
+  }
+  
+  /* Scale questions - larger touch targets */
+  .survey-scale-options {
+    gap: 12px;
+  }
+  
+  .survey-scale-option {
+    min-width: 52px;
+    min-height: 52px;
+    justify-content: flex-start;
+  }
+  
+  .survey-scale-option input {
+    margin-bottom: 10px;
+    margin-left: 4px;
+  }
+  
+  .survey-scale-option span {
+    font-size: 1rem;
+    text-align: center;
+    line-height: 1.2;
+  }
+  
+  /* Buttons - larger and more accessible */
+  .survey-btn,
+  .btn,
+  button[type="submit"] {
+    font-size: 1rem;
+    padding: 14px 22px;
+    min-height: 48px;
+    min-width: 120px;
+    margin: 8px 0;
+  }
+  
+  /* Progress bar - better visibility */
+  .survey-progress {
+    padding: 18px;
+    font-size: 1rem;
+  }
+  
+  .survey-progress-bar {
+    height: 12px;
+  }
+  
+  /* Alert messages - improved readability */
+  .survey-alert {
+    font-size: 1rem;
+    padding: 18px;
+    line-height: 1.5;
+  }
+  
+  /* Required indicator - more visible */
+  .survey-question-required {
+    font-size: 1rem;
+    margin-left: 6px;
+  }
+  
+  /* Help text and metadata */
+  .survey-question-meta {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  .survey-help-text {
+    font-size: 1rem;
+    line-height: 1.4;
     margin-top: 10px;
+  }
+  
+  /* Matrix questions - optimize table for mobile */
+  .matrix-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    margin: 1.25rem 0;
+    background: white;
+  }
+  
+  .matrix-table {
+    min-width: 380px; /* Very compact for mobile */
+    font-size: 1rem;
+  }
+  
+  .matrix-table th,
+  .matrix-table td {
+    padding: 0.625rem 0.375rem;
+  }
+  
+  .matrix-row-header,
+  .matrix-row-label {
+    width: 28%;
+    padding: 0.875rem 0.625rem;
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+  
+  .matrix-column-header {
+    min-width: 48px;
+    padding: 0.375rem 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1.1;
+    text-align: center;
+    word-break: break-word;
+  }
+  
+  .matrix-cell {
+    width: 48px;
+    padding: 10px 6px;
+    min-height: 48px; /* Touch-friendly target */
+  }
+  
+  .matrix-radio {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+  }
+  
+  /* Ranking titles */
+  .survey-ranking-available h4,
+  .survey-ranking-ranked h4 {
+    font-size: 1.125rem;
+    margin-bottom: 12px;
+  }
+  
+  .survey-ranking-instructions {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 18px;
+  }
+  
+  /* Navigation and actions */
+  .survey-navigation {
+    margin-top: 25px;
+  }
+  
+  .survey-actions {
+    gap: 10px;
+  }
+  
+  /* List items */
+  .survey-list li {
+    font-size: 1rem;
+    line-height: 1.5;
+    margin: 10px 0;
+  }
+  
+  /* Links - better touch targets */
+  a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 0;
+  }
+  
+  /* Error messages */
+  .survey-error,
+  .survey-field-error {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  /* Breadcrumbs */
+  .survey-breadcrumb {
+    font-size: 1rem;
+    margin-bottom: 18px;
+  }
+  
+  /* Cards and panels */
+  .survey-card {
+    padding: 20px;
+  }
+  
+  .survey-card h3 {
+    font-size: 1.25rem;
+  }
+  
+  .survey-card p {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* Other input field */
+  .survey-other-input {
+    margin-left: 36px;
+    margin-top: 12px;
+  }
+  
+  .survey-other-input input {
+    font-size: 1rem;
   }
 }
