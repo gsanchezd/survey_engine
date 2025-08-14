@@ -72,7 +72,7 @@
                   class: "survey-input survey-number-input",
                   required: question.required? %>
             <% when 'boolean' %>
-              <div class="survey-question-options">
+              <div class="survey-question-options survey-boolean-inline">
                 <label class="survey-question-option">
                   <%= radio_button_tag "answers[#{question.id}][boolean_answer]", '1', 
                       existing_answer&.boolean_answer == true,

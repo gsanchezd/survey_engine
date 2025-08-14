@@ -76,8 +76,8 @@
             <% when 'boolean' %>
               <div class="survey-form-row">
                 <div class="survey-meta">
-                  <strong>Yes:</strong> <%= analytics[:yes_count] %> (<%= analytics[:yes_percentage] %>%) | 
-                  <strong>No:</strong> <%= analytics[:no_count] %> (<%= (100 - analytics[:yes_percentage]).round(1) %>%)
+                  <strong><%= t('survey_engine.surveys.answer.yes') %>:</strong> <%= analytics[:yes_count] %> (<%= analytics[:yes_percentage] %>%) | 
+                  <strong><%= t('survey_engine.surveys.answer.no') %>:</strong> <%= analytics[:no_count] %> (<%= (100 - analytics[:yes_percentage]).round(1) %>%)
                 </div>
               </div>
               

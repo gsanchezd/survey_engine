@@ -428,6 +428,18 @@
   margin-right: 8px;
 }
 
+/* Boolean questions inline layout */
+.survey-boolean-inline {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.survey-boolean-inline .survey-question-option {
+  flex: none;
+  margin: 0;
+}
+
 .survey-other-input {
   margin-left: 25px;
   margin-top: 5px;
