@@ -923,14 +923,16 @@ function setupDragForItem(item, inputsContainer, questionId) {
 function updateRankingNumbers(rankedList) {
   const rankedItems = rankedList.querySelectorAll('.survey-ranking-item');
   rankedItems.forEach(function(item, index) {
-    // Add or update ranking number
+    // Keep the span element structure but don't add text content
+    // The CSS counter handles visual numbering with styled bullets
     let numberElement = item.querySelector('.ranking-number');
     if (!numberElement) {
       numberElement = document.createElement('span');
       numberElement.className = 'ranking-number';
       item.insertBefore(numberElement, item.firstChild);
     }
-    numberElement.textContent = (index + 1) + '.';
+    // Remove text content - CSS counter handles numbering
+    numberElement.textContent = '';
   });
 }
 

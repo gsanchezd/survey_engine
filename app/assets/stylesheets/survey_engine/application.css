@@ -1015,10 +1015,6 @@
   background-color: rgba(0, 124, 186, 0.1);
 }
 
-.survey-ranking-ranked .survey-ranking-list {
-  counter-reset: ranking-counter;
-}
-
 .survey-ranking-item {
   background: white;
   border: 1px solid var(--survey-border-color);
@@ -1029,6 +1025,13 @@
   user-select: none;
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  list-style: none;
+}
+
+/* Style the ordered list numbers for ranked items */
+.survey-ranking-ranked .survey-ranking-list {
+  list-style: none;
+  counter-reset: ranking-counter;
 }
 
 .survey-ranking-ranked .survey-ranking-item {
@@ -1088,6 +1091,11 @@
 
 /* Hidden inputs container */
 .survey-ranking-inputs {
+  display: none;
+}
+
+/* Hide JavaScript-generated ranking numbers - CSS counter handles numbering */
+.ranking-number {
   display: none;
 }
 
