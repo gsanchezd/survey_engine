@@ -169,7 +169,8 @@
     </div>
   <% end %>
 
-  <%= conditional_flow_javascript_tag %>
+  <%# Make sure to include survey_engine/application.js in your asset pipeline %>
+  <%# Add this to your layout: <%= javascript_include_tag "survey_engine/application" %> %>
   <%= initialize_conditional_flow(@survey, @questions) %>
 
   <script>

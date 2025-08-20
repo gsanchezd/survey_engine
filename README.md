@@ -61,17 +61,21 @@ rails generate survey_engine:install --controller
 
 # Install with both options
 rails generate survey_engine:install --locale=en --controller
+
+# Export JavaScript files for customization
+rails generate survey_engine:javascript
 ```
 
-**What the generator creates:**
+**What the generators create:**
 
-| File | Purpose |
-|------|---------|
-| `config/initializers/survey_engine.rb` | Authentication configuration |
-| `config/initializers/locale.rb` | i18n locale settings |
-| `config/locales/survey_engine.es.yml` | Spanish translations |
-| `config/locales/survey_engine.en.yml` | English translations |
-| `app/controllers/surveys_controller.rb` | Custom controller (if --controller) |
+| Generator | File | Purpose |
+|-----------|------|---------|
+| `install` | `config/initializers/survey_engine.rb` | Authentication configuration |
+| `install` | `config/initializers/locale.rb` | i18n locale settings |
+| `install` | `config/locales/survey_engine.es.yml` | Spanish translations |
+| `install` | `config/locales/survey_engine.en.yml` | English translations |
+| `install --controller` | `app/controllers/surveys_controller.rb` | Custom controller |
+| `javascript` | `app/assets/javascripts/survey_engine/survey_engine.js` | JavaScript functionality |
 
 **Generator Features:**
 - ✅ **Zero Configuration**: Works out of the box with Devise
@@ -195,6 +199,169 @@ The engine includes a comprehensive CSS system with:
 - `.survey-btn-*` - Button variants (primary, success, secondary)
 - `.survey-question` - Individual question containers
 - `.survey-form-*` - Form elements and layout
+
+### JavaScript Customization
+
+SurveyEngine includes advanced JavaScript functionality for conditional questions, matrix interactions, and ranking drag-and-drop. You can export and customize these JavaScript files for your specific needs.
+
+#### Export JavaScript Files
+
+```bash
+rails generate survey_engine:javascript
+```
+
+**What the generator creates:**
+- `app/assets/javascripts/survey_engine/survey_engine.js` - Complete JavaScript functionality
+
+**Generator Options:**
+```bash
+# Export to default location
+rails generate survey_engine:javascript
+
+# Export to custom location
+rails generate survey_engine:javascript --output_path="app/assets/javascripts/custom"
+```
+
+#### JavaScript Features Included
+
+**Conditional Questions:**
+- Dynamic show/hide of questions based on answers
+- Scale-based and option-based conditional logic
+- Real-time question renumbering
+- Form validation updates
+- Smooth animations
+
+**Matrix Questions:**
+- Enhanced radio button interactions
+- Keyboard navigation support
+- Visual feedback for selections
+- Accessibility features
+- Row validation
+
+**Ranking Questions:**
+- Drag-and-drop functionality
+- Touch support for mobile devices
+- Visual drop indicators
+- Automatic numbering
+- Empty state messaging
+
+#### Setup Instructions
+
+After exporting the JavaScript files:
+
+**1. Include the JavaScript file in your application:**
+```erb
+<%= javascript_include_tag 'survey_engine/survey_engine' %>
+```
+
+**2. Initialize the conditional flow system:**
+```erb
+<!-- In your survey view -->
+<%= initialize_conditional_flow(@survey, @questions) %>
+```
+
+Or manually with JavaScript:
+```html
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof SurveyConditionalFlow !== 'undefined') {
+      window.surveyConditionalFlow = new SurveyConditionalFlow();
+      window.surveyConditionalFlow.initialize();
+    }
+  });
+</script>
+```
+
+**3. Advanced Configuration (Optional):**
+```javascript
+// Initialize with custom configuration
+window.surveyConditionalFlow = new SurveyConditionalFlow({
+  questions: customQuestionData,  // Pre-load question data
+  debug: true                     // Enable debug logging
+});
+```
+
+#### Customization Examples
+
+**Custom Conditional Logic:**
+```javascript
+// Add custom evaluation logic
+SurveyConditionalFlow.prototype.customEvaluateCondition = function(value, condition) {
+  // Your custom logic here
+  return value > condition.threshold;
+};
+```
+
+**Custom Matrix Interactions:**
+```javascript
+// Override matrix behavior
+function handleCustomMatrixChange(radio) {
+  // Your custom matrix logic
+  const row = radio.closest('.matrix-row');
+  // Add custom styling or validation
+}
+```
+
+**Custom Ranking Behavior:**
+```javascript
+// Custom ranking validation
+function validateRankingCompletion(container) {
+  const rankedItems = container.querySelectorAll('.ranked-item');
+  // Your custom validation logic
+  return rankedItems.length >= minimumRequired;
+}
+```
+
+#### Integration with Asset Pipeline
+
+**For Rails with Sprockets:**
+```javascript
+//= require survey_engine/survey_engine
+```
+
+**For Rails with Propshaft:**
+```javascript
+import 'survey_engine/survey_engine';
+```
+
+**For Webpack/esbuild:**
+```javascript
+// If using importmap or bundling
+import { SurveyConditionalFlow } from './survey_engine/survey_engine';
+```
+
+#### API Reference
+
+**SurveyConditionalFlow Class:**
+```javascript
+// Initialize
+const flow = new SurveyConditionalFlow(config);
+flow.initialize();
+
+// Debug information
+console.log(flow.getDebugInfo());
+
+// Manual evaluation
+flow.handleQuestionChange(questionId, value, answerType);
+```
+
+**Matrix Question Functions:**
+```javascript
+// Validate all matrix rows
+const isComplete = validateAllMatrixRows(matrixQuestion);
+
+// Get completion status
+const status = getMatrixCompletionStatus(matrixQuestion);
+```
+
+**Ranking Question Functions:**
+```javascript
+// Initialize ranking questions
+initializeRankingQuestions();
+
+// Setup specific ranking question
+setupRankingQuestion(container);
+```
 
 ### 3. Create Your First Survey
 
