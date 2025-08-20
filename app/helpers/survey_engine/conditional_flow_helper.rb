@@ -473,6 +473,31 @@ module SurveyEngine
               }
             });
             
+            // IMPORTANT: Also check all conditional questions to see if they should be visible
+            // This handles the case where the page is reloaded with existing answers
+            this.questions.forEach((questionData) => {
+              if (questionData.isConditional) {
+                const parentQuestion = this.questions.get(questionData.parentId);
+                if (parentQuestion) {
+                  const parentElement = this.getQuestionElement(parentQuestion);
+                  if (parentElement) {
+                    // Check if parent question has an answer that should trigger this conditional
+                    let parentValue = null;
+                    
+                    // Check all possible input types that could contain values
+                    const checkedInput = parentElement.querySelector('input[type="radio"]:checked, input[type="range"]');
+                    if (checkedInput) {
+                      parentValue = parseFloat(checkedInput.value);
+                      
+                      // If parent has a value, evaluate if this conditional should be shown
+                      const shouldShow = this.evaluateComplexCondition(parentValue, questionData);
+                      this.toggleQuestion(questionData, shouldShow);
+                    }
+                  }
+                }
+              }
+            });
+            
             // Update question numbers after initial evaluation
             this.updateQuestionNumbers();
           }

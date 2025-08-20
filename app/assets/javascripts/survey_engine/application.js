@@ -315,6 +315,64 @@ window.SurveyConditionalFlow = class {
           const selectedOptionIds = Array.from(multipleChoiceInputs).map(input => parseInt(input.value));
           this.handleQuestionChange(questionData.id, selectedOptionIds, 'option');
         }
+        
+        // Handle boolean questions that might trigger conditionals
+        const booleanInputs = element.querySelectorAll('input[type="radio"][name*="boolean_answer"]:checked');
+        booleanInputs.forEach(input => {
+          // Convert boolean value to numeric for scale-based conditionals
+          const booleanValue = input.value === '1' ? 1 : 0;
+          this.handleQuestionChange(questionData.id, booleanValue, 'scale');
+        });
+      }
+    });
+    
+    // IMPORTANT: Also check all conditional questions to see if they should be visible
+    // This handles the case where the page is reloaded with existing answers
+    this.questions.forEach((questionData) => {
+      if (questionData.isConditional) {
+        const parentQuestion = this.questions.get(questionData.parentId);
+        if (parentQuestion) {
+          const parentElement = this.getQuestionElement(parentQuestion);
+          if (parentElement) {
+            // Check if parent question has an answer that should trigger this conditional
+            let parentValue = null;
+            let answerType = 'scale';
+            
+            // Check scale/numeric answers
+            const scaleInput = parentElement.querySelector('input[type="radio"][name*="numeric_answer"]:checked');
+            if (scaleInput) {
+              parentValue = parseFloat(scaleInput.value);
+              answerType = 'scale';
+            }
+            
+            // Check single choice answers
+            const singleChoiceInput = parentElement.querySelector('input[type="radio"][name*="option_id"]:checked');
+            if (singleChoiceInput) {
+              parentValue = parseInt(singleChoiceInput.value);
+              answerType = 'option';
+            }
+            
+            // Check multiple choice answers
+            const multipleChoiceInputs = parentElement.querySelectorAll('input[type="checkbox"][name*="option_ids"]:checked');
+            if (multipleChoiceInputs.length > 0) {
+              parentValue = Array.from(multipleChoiceInputs).map(input => parseInt(input.value));
+              answerType = 'option';
+            }
+            
+            // Check boolean answers
+            const booleanInput = parentElement.querySelector('input[type="radio"][name*="boolean_answer"]:checked');
+            if (booleanInput) {
+              parentValue = booleanInput.value === '1' ? 1 : 0;
+              answerType = 'scale';
+            }
+            
+            // If parent has a value, evaluate if this conditional should be shown
+            if (parentValue !== null) {
+              const shouldShow = this.evaluateComplexCondition(parentValue, questionData, answerType);
+              this.toggleQuestion(questionData, shouldShow);
+            }
+          }
+        }
       }
     });
     
