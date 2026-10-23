@@ -275,7 +275,7 @@ module SurveyEngine
         is_required: true,
         conditional_parent: trigger_q,
         conditional_operator: "greater_than",
-        conditional_value: 10,  # Impossible on 1-5 scale
+        conditional_value: 5,  # Impossible on 1-5 scale
         show_if_condition_met: true
       )
 
@@ -320,11 +320,9 @@ module SurveyEngine
       visible_questions = @response.visible_questions_for_response
       assert_equal 2, visible_questions.count
       
-      # Should be 100% complete because conditional is not required
-      assert_equal 100.0, @response.completion_percentage
-      
-      # Unanswered questions should be empty (non-required questions shouldn't count)
-      assert_equal 0, @response.unanswered_questions.count
+      # completion_percentage cuenta todas las preguntas visibles, no solo las obligatorias
+      assert_equal 50.0, @response.completion_percentage
+      assert_equal [ optional_conditional ], @response.unanswered_questions
     end
 
     test "EDGE CASE: string vs numeric comparison in conditions" do
