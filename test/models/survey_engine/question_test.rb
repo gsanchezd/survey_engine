@@ -175,13 +175,13 @@ module SurveyEngine
       association = Question.reflect_on_association(:conditional_parent)
       assert_equal :belongs_to, association.macro
       assert_equal true, association.options[:optional]
-      assert_equal 'Question', association.options[:class_name]
+      assert_equal 'SurveyEngine::Question', association.options[:class_name]
     end
 
     test "should have conditional questions association" do
       association = Question.reflect_on_association(:conditional_questions)
       assert_equal :has_many, association.macro
-      assert_equal 'Question', association.options[:class_name]
+      assert_equal 'SurveyEngine::Question', association.options[:class_name]
       assert_equal 'conditional_parent_id', association.options[:foreign_key]
       assert_equal :destroy, association.options[:dependent]
     end
@@ -765,13 +765,13 @@ module SurveyEngine
       association = Question.reflect_on_association(:matrix_parent)
       assert_equal :belongs_to, association.macro
       assert_equal true, association.options[:optional]
-      assert_equal 'Question', association.options[:class_name]
+      assert_equal 'SurveyEngine::Question', association.options[:class_name]
     end
 
     test "should have matrix sub-questions association" do
       association = Question.reflect_on_association(:matrix_sub_questions)
       assert_equal :has_many, association.macro
-      assert_equal 'Question', association.options[:class_name]
+      assert_equal 'SurveyEngine::Question', association.options[:class_name]
       assert_equal 'matrix_parent_id', association.options[:foreign_key]
       assert_equal :destroy, association.options[:dependent]
     end

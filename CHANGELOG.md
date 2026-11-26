@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.19] - 2026-11-25
+
+### Fixed
+- Las relaciones de `SurveyEngine::Question` consigo misma (`conditional_parent`,
+  `conditional_questions`, `matrix_parent` y `matrix_sub_questions`) nombran la clase con su
+  módulo (`class_name: "SurveyEngine::Question"`). Con `"Question"` a secas, Rails
+  (`ActiveRecord::Reflection#_klass`) ve que es igual al nombre de la clase dueña sin el módulo y
+  busca primero `::Question`: en una app con su propio modelo `Question` las relaciones apuntaban
+  a ese modelo. En empieza2 (que tiene `Question` para sus quizzes) validar una fila de matriz
+  reventaba (`NoMethodError: is_matrix_question?`) y la validación de las respuestas de matriz
+  comparaba contra una pregunta de quiz. La app dummy no tiene `::Question`, por eso los tests no
+  lo veían; `question_class_name_test.rb` define uno para reproducirlo.
+
 ## [0.1.0] - 2025-01-22
 
 ### Added

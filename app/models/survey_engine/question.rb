@@ -19,10 +19,10 @@ module SurveyEngine
 
     belongs_to :survey_template, counter_cache: true
     belongs_to :question_type
-    belongs_to :conditional_parent, class_name: "Question", optional: true
-    has_many :conditional_questions, class_name: "Question", foreign_key: "conditional_parent_id", dependent: :destroy
-    belongs_to :matrix_parent, class_name: "Question", optional: true
-    has_many :matrix_sub_questions, class_name: "Question", foreign_key: "matrix_parent_id", dependent: :destroy
+    belongs_to :conditional_parent, class_name: "SurveyEngine::Question", optional: true
+    has_many :conditional_questions, class_name: "SurveyEngine::Question", foreign_key: "conditional_parent_id", dependent: :destroy
+    belongs_to :matrix_parent, class_name: "SurveyEngine::Question", optional: true
+    has_many :matrix_sub_questions, class_name: "SurveyEngine::Question", foreign_key: "matrix_parent_id", dependent: :destroy
     has_many :options, dependent: :destroy
     has_many :answers, dependent: :destroy
 
