@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    survey_engine (0.1.19)
+    survey_engine (0.1.20)
       csv (~> 3.3.5)
       rails (>= 7.1.0)
 
