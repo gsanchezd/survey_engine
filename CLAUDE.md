@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@AGENTS.md
+
 ## Project Overview
 
 SurveyEngine is a Rails Engine gem for building survey functionality. It follows the standard Rails Engine architecture with isolated namespace and modular design.
